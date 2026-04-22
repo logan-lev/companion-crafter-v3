@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm create *)",
+      "Bash(mv companion-crafter/* .)",
+      "Bash(mv companion-crafter/.* .)",
+      "Bash(rmdir companion-crafter *)",
+      "Bash(npm install *)",
+      "Bash(npx tsc *)",
+      "Bash(npm run *)",
+      "Bash(curl -s http://localhost:5173)"
+    ]
+  }
+}
