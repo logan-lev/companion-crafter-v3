@@ -105,6 +105,7 @@ export function getAllOtherProficiencies(state: WizardState): string[] {
   return unique([
     ...((race?.proficiencies ?? []).filter(item => !SKILL_NAMES.has(item))),
     ...((subrace?.proficiencies ?? []).filter(item => !SKILL_NAMES.has(item))),
+    ...(state.dwarfToolProficiency ? [state.dwarfToolProficiency] : []),
     ...(background?.toolProfs ?? []),
     ...(cls?.armorProf ?? []),
     ...(cls?.weaponProf ?? []),
@@ -138,6 +139,14 @@ export function getTraitEntries(state: WizardState): string[] {
 
   if (state.highElfCantrip) {
     entries.push(`High Elf Cantrip: You know ${state.highElfCantrip}.`);
+  }
+
+  if (state.dwarfToolProficiency) {
+    entries.push(`Dwarven Tool Proficiency: You chose proficiency with ${state.dwarfToolProficiency}.`);
+  }
+
+  if (state.dragonbornAncestry) {
+    entries.push(`Draconic Ancestry: You chose ${state.dragonbornAncestry}.`);
   }
 
   return entries;

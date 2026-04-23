@@ -21,7 +21,8 @@ At its core, the project is about translating a rules-heavy system into a respon
 - Live build feedback showing how character choices affect stats, proficiencies, traits, languages, and future progression
 - Support for standard array, point buy, and rolled ability scores
 - Auto-assignment helpers for ability scores based on class and racial priorities
-- Bonus language and feature choice handling during creation
+- Bonus language, ancestry, tool, spell, and feature choice handling during creation
+- Race and subrace screens that surface flavor text, trait descriptions, and derived effects like proficiencies, resistances, darkvision, and movement changes
 
 ### Interactive Character Sheet
 
@@ -66,4 +67,4 @@ Starter equipment, proficiencies, and features often arrive in human-readable te
 
 ### Product-Focused Iteration
 
-The interface went through multiple layout and interaction revisions to improve readability, reduce clutter, and better match how users actually build characters. A large part of the work in this project was not just implementing features, but refining how they feel to use.
+The interface went through multiple layout and interaction revisions to improve readability, reduce clutter, and better match how users actually build characters. A large part of the work in this project was not just implementing features, but refining how they feel to use, from the main menu entry points to race-specific choice interfaces and the final sheet layout.

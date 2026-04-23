@@ -20,9 +20,11 @@ export default function MainMenu({ characters, onCreate, onOpen, onDelete }: Pro
             </p>
           </div>
 
-          <button onClick={onCreate} className="save-btn text-sm px-6 py-3">
-            + New Character
-          </button>
+          {characters.length > 0 && (
+            <button onClick={onCreate} className="save-btn text-sm px-6 py-3">
+              + New Character
+            </button>
+          )}
         </div>
       </section>
 

@@ -8,6 +8,8 @@ export interface WizardState {
   subrace: string;
   raceSkillChoices: string[];
   raceLanguageChoices: string[];
+  dwarfToolProficiency: string;
+  dragonbornAncestry: string;
   // Step 2 - Class
   className: string;
   level: number;
@@ -46,6 +48,8 @@ export const WIZARD_INITIAL_STATE: WizardState = {
   subrace: '',
   raceSkillChoices: [],
   raceLanguageChoices: [],
+  dwarfToolProficiency: '',
+  dragonbornAncestry: '',
   className: '',
   level: 1,
   background: '',

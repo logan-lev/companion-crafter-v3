@@ -102,7 +102,9 @@ export default function App() {
               Main Menu
             </button>
           )}
-          <button onClick={handleNew} className="save-btn">+ New Character</button>
+          {(view !== 'menu' || characters.length > 0) && (
+            <button onClick={handleNew} className="save-btn">+ New Character</button>
+          )}
         </div>
       </header>
 

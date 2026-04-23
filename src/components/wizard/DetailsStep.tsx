@@ -7,8 +7,21 @@ interface Props {
   onChange: (patch: Partial<WizardState>) => void;
 }
 
+const RACE_NAME_SUGGESTIONS: Record<string, string[]> = {
+  Dragonborn: ['Arjhan', 'Balasar', 'Rhogar', 'Akra'],
+  Dwarf: ['Bruenor', 'Dain', 'Eldeth', 'Vistra'],
+  Elf: ['Aelar', 'Faelar', 'Lia', 'Shava'],
+  Gnome: ['Alston', 'Boddynock', 'Nissa', 'Tana'],
+  'Half-Elf': ['Kael', 'Liora', 'Theren', 'Mira'],
+  'Half-Orc': ['Grom', 'Shura', 'Dench', 'Kethra'],
+  Halfling: ['Alton', 'Milo', 'Rosie', 'Seraphina'],
+  Human: ['Alden', 'Bryn', 'Clara', 'Jonas'],
+  Tiefling: ['Akmenos', 'Mordai', 'Nemeia', 'Orianna'],
+};
+
 export default function DetailsStep({ state, onChange }: Props) {
   const bg = BACKGROUND_DATA.find(b => b.name === state.background);
+  const suggestedNames = RACE_NAME_SUGGESTIONS[state.race] ?? ['Rowan', 'Ember', 'Sable', 'Tarin'];
 
   return (
     <div className="flex flex-col gap-4">
@@ -27,6 +40,20 @@ export default function DetailsStep({ state, onChange }: Props) {
               <input value={state.name}
                 onChange={e => onChange({ name: e.target.value })}
                 className="field-input" placeholder="Enter character name..." />
+              <div className="mt-2">
+                <div className="field-label mb-1">Suggested Names</div>
+                <div className="flex flex-wrap gap-2">
+                  {suggestedNames.map(name => (
+                    <button
+                      key={name}
+                      onClick={() => onChange({ name })}
+                      className="rounded border border-[#b8962e] bg-[#0d0d0d] px-3 py-1 text-xs text-[#b8962e] hover:bg-[#1a1000]"
+                    >
+                      {name}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
             <div>
               <label className="field-label">Player Name</label>
