@@ -13,6 +13,12 @@ export interface WizardState {
   // Step 2 - Class
   className: string;
   level: number;
+  barbarianPath: string;
+  barbarianTotemSpirit: string;
+  barbarianAspectSpirit: string;
+  barbarianAttunementSpirit: string;
+  classEquipmentSelections: Record<string, string>;
+  classAbilityBonuses: Partial<Record<AbilityKey, number>>;
   // Step 3 - Background
   background: string;
   backgroundSkillChoices: string[];
@@ -52,6 +58,12 @@ export const WIZARD_INITIAL_STATE: WizardState = {
   dragonbornAncestry: '',
   className: '',
   level: 1,
+  barbarianPath: '',
+  barbarianTotemSpirit: '',
+  barbarianAspectSpirit: '',
+  barbarianAttunementSpirit: '',
+  classEquipmentSelections: {},
+  classAbilityBonuses: {},
   background: '',
   backgroundSkillChoices: [],
   backgroundLanguageChoices: [],

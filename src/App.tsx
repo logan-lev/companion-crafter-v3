@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import type { Character } from './types/character';
 import { loadCharacters, saveCharacters, createBlankCharacter } from './utils/storage';
 import { normalizeCharacter } from './utils/character-sheet';
@@ -9,16 +9,11 @@ import MainMenu from './components/MainMenu';
 type AppView = 'menu' | 'wizard' | 'sheet';
 
 export default function App() {
-  const [characters, setCharacters] = useState<Character[]>([]);
+  const [characters, setCharacters] = useState<Character[]>(() => loadCharacters());
   const [activeId, setActiveId] = useState<string | null>(null);
   const [savedFlash, setSavedFlash] = useState(false);
   const [creatingId, setCreatingId] = useState<string | null>(null);
   const [view, setView] = useState<AppView>('menu');
-
-  useEffect(() => {
-    const saved = loadCharacters();
-    setCharacters(saved);
-  }, []);
 
   const activeCharacter = characters.find(c => c.id === activeId) ?? null;
 

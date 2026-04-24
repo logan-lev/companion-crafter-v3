@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { Character } from '../types/character';
 import type { WizardState } from '../types/wizard';
 import { WIZARD_INITIAL_STATE } from '../types/wizard';
@@ -55,7 +55,6 @@ const SPELLS_STEP: StepDefinition = {
 
 export default function CharacterWizard({ onFinish, onCancel }: Props) {
   const [state, setState] = useState<WizardState>(WIZARD_INITIAL_STATE);
-  const [stepIndex, setStepIndex] = useState(0);
 
   const cls = getSelectedClass(state);
   const finalScores = getFinalAbilityScores(state);
@@ -74,9 +73,8 @@ export default function CharacterWizard({ onFinish, onCancel }: Props) {
     return withSpells;
   }, [canCastSpells]);
 
-  useEffect(() => {
-    setStepIndex(current => Math.min(current, steps.length - 1));
-  }, [steps.length]);
+  const [rawStepIndex, setStepIndex] = useState(0);
+  const stepIndex = Math.min(rawStepIndex, steps.length - 1);
 
   const currentStep = steps[stepIndex];
 

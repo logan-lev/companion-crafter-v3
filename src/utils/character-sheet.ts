@@ -3,9 +3,7 @@ import { calcMod, LANGUAGES, parseLevel } from '../data/srd';
 import { CLASS_DATA, getSlotsAtLevel, maxSpellLevel, type ClassData } from '../data/srd-classes';
 import { getSpellsForClass, type SpellData } from '../data/srd-spells';
 
-const CURRENCY_KEYS = ['cp', 'sp', 'ep', 'gp', 'pp'] as const;
-
-type CurrencyKey = typeof CURRENCY_KEYS[number];
+type CurrencyKey = 'cp' | 'sp' | 'ep' | 'gp' | 'pp';
 
 type CurrencyMap = Character['currency'];
 

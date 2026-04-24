@@ -192,8 +192,8 @@ export default function ReviewStep({ state, onFinish }: Props) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-[#9a8040]">
             {state.personalityTraits && <div><span className="text-[#b8962e] font-bold">Traits: </span>{state.personalityTraits}</div>}
             {state.ideals && <div><span className="text-[#b8962e] font-bold">Ideals: </span>{state.ideals}</div>}
-            {(state as any).bonds && <div><span className="text-[#b8962e] font-bold">Bonds: </span>{(state as any).bonds}</div>}
-            {(state as any).flaws && <div><span className="text-[#b8962e] font-bold">Flaws: </span>{(state as any).flaws}</div>}
+            {state.bonds && <div><span className="text-[#b8962e] font-bold">Bonds: </span>{state.bonds}</div>}
+            {state.flaws && <div><span className="text-[#b8962e] font-bold">Flaws: </span>{state.flaws}</div>}
             {state.backstory && <div className="col-span-2"><span className="text-[#b8962e] font-bold">Backstory: </span>{state.backstory.slice(0, 200)}{state.backstory.length > 200 ? '...' : ''}</div>}
           </div>
         </div>

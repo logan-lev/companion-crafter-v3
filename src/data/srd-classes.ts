@@ -34,6 +34,19 @@ export interface ClassData {
   flavorText: string;
 }
 
+export interface ClassSubclassOption {
+  name: string;
+  description: string;
+  features: ClassFeature[];
+}
+
+export interface TotemSpiritOption {
+  name: string;
+  level3: ClassFeature;
+  level6: ClassFeature;
+  level14: ClassFeature;
+}
+
 // Spell slot tables: index = char level - 1, value = [L1,L2,L3,L4,L5,L6,L7,L8,L9]
 const FULL_CASTER_SLOTS: number[][] = [
   [2,0,0,0,0,0,0,0,0], // 1
@@ -84,6 +97,70 @@ const HALF_CASTER_SLOTS: number[][] = [
 // Warlock pact magic: [slots, slot level] indexed by char level 1-20
 export const WARLOCK_PACT_SLOTS = [1,2,2,2,2,2,2,2,2,2,3,3,3,3,3,3,4,4,4,4];
 export const WARLOCK_PACT_LEVEL = [1,1,2,2,3,3,4,4,5,5,5,5,5,5,5,5,5,5,5,5];
+export const BARBARIAN_RAGES_BY_LEVEL = [2,2,3,3,3,4,4,4,4,4,4,5,5,5,5,5,6,6,6,999];
+export const BARBARIAN_RAGE_DAMAGE_BY_LEVEL = [2,2,2,2,2,2,2,2,3,3,3,3,3,3,3,4,4,4,4,4];
+export const BARBARIAN_TOTEM_SPIRITS: TotemSpiritOption[] = [
+  {
+    name: 'Bear',
+    level3: {
+      level: 3,
+      name: 'Totem Spirit (Bear)',
+      description: 'While raging, you have resistance to all damage except psychic damage. The spirit of the bear makes you tough enough to stand up to any punishment.',
+    },
+    level6: { level: 6, name: 'Aspect of the Beast (Bear)', description: 'You gain the might of a bear. Your carrying capacity doubles, and you have advantage on Strength checks made to push, pull, lift, or break objects.' },
+    level14: { level: 14, name: 'Totemic Attunement (Bear)', description: "While raging, any creature within 5 feet of you that is hostile to you has disadvantage on attack rolls against targets other than you or another character with this feature. An enemy is immune to this effect if it can't see or hear you or if it can't be frightened." },
+  },
+  {
+    name: 'Eagle',
+    level3: {
+      level: 3,
+      name: 'Totem Spirit (Eagle)',
+      description: "While you're raging and aren't wearing heavy armor, other creatures have disadvantage on opportunity attack rolls against you, and you can use the Dash action as a bonus action on your turn. The spirit of the eagle makes you into a predator who can weave through the fray with ease.",
+    },
+    level6: { level: 6, name: 'Aspect of the Beast (Eagle)', description: "You gain the eyesight of an eagle. You can see up to 1 mile away with no difficulty, able to discern even fine details as though looking at something no more than 100 feet away from you. Additionally, dim light doesn't impose disadvantage on your Wisdom (Perception) checks." },
+    level14: { level: 14, name: 'Totemic Attunement (Eagle)', description: 'While raging, you have a flying speed equal to your current walking speed. This benefit works only in short bursts; you fall if you end your turn in the air and nothing else is holding you aloft.' },
+  },
+  {
+    name: 'Wolf',
+    level3: {
+      level: 3,
+      name: 'Totem Spirit (Wolf)',
+      description: "While you're raging, your friends have advantage on melee attack rolls against any creature within 5 feet of you that is hostile to you. The spirit of the wolf makes you a leader of hunters.",
+    },
+    level6: { level: 6, name: 'Aspect of the Beast (Wolf)', description: 'You gain the hunting sensibilities of a wolf. You can track other creatures while traveling at a fast pace, and you can move stealthily while traveling at a normal pace.' },
+    level14: { level: 14, name: 'Totemic Attunement (Wolf)', description: 'While you’re raging, you can use a bonus action on your turn to knock a Large or smaller creature prone when you hit it with a melee weapon attack.' },
+  },
+];
+
+export const BARBARIAN_PRIMAL_PATHS: ClassSubclassOption[] = [
+  {
+    name: 'Path of the Berserker',
+    description: 'Berserkers channel rage into raw frenzy, sacrificing restraint for relentless aggression and intimidation.',
+    features: [
+      { level: 3, name: 'Frenzy', description: 'While raging, you can choose to frenzy. If you do, for the duration of your rage you can make a single melee weapon attack as a bonus action on each of your turns after this one. When your rage ends, you suffer one level of exhaustion.' },
+      { level: 6, name: 'Mindless Rage', description: 'You can’t be charmed or frightened while raging. If you are charmed or frightened when you enter your rage, the effect is suspended for the duration of the rage.' },
+      { level: 10, name: 'Intimidating Presence', description: "You can use your action to frighten someone with your menacing presence. When you do so, choose one creature that you can see within 30 feet of you. If the creature can see or hear you, it must succeed on a Wisdom saving throw (DC equal to 8 + your proficiency bonus + your Charisma modifier) or be frightened of you until the end of your next turn. On subsequent turns, you can use your action to extend the duration of this effect on the frightened creature until the end of your next turn. This effect ends if the creature ends its turn out of line of sight or more than 60 feet away from you. If the creature succeeds on its saving throw, you can't use this feature on that creature again for 24 hours." },
+      { level: 14, name: 'Retaliation', description: 'When you take damage from a creature within 5 feet of you, you can use your reaction to make a melee weapon attack against that creature.' },
+    ],
+  },
+  {
+    name: 'Path of the Totem Warrior',
+    description: 'Totem Warriors bind their rage to spiritual animal guides, gaining mystical resilience and primal utility.',
+    features: [
+      {
+        level: 3,
+        name: 'Spirit Seeker',
+        description: 'Yours is a path that seeks attunement with the natural world, giving you a kinship with beasts. When you adopt this path, you gain the ability to cast the beast sense and speak with animals spells, but only as rituals.',
+      },
+      {
+        level: 3,
+        name: 'Totem Spirit',
+        description: 'When you adopt this path, you choose a totem spirit and gain its feature. You must make or acquire a physical totem object-an amulet or similar adornment that incorporates fur or feathers, claws, teeth, or bones of the totem animal. At your option, you also gain minor physical attributes that are reminiscent of your totem spirit. For example, if you have a bear totem spirit, you might be unusually hairy and thick-skinned, or if your totem is the eagle, your eyes turn bright yellow. Your totem animal might be an animal related to those listed here but more appropriate to your homeland. For example, you could choose a hawk or vulture in place of an eagle.',
+      },
+      { level: 10, name: 'Spirit Walker', description: 'You can cast Commune with Nature as a ritual. When you do so, a spiritual version of one of the animals you chose for Totem Spirit or Aspect of the Beast appears to you to convey the information you seek.' },
+    ],
+  },
+];
 
 export const CLASS_DATA: ClassData[] = [
   {
@@ -98,17 +175,17 @@ export const CLASS_DATA: ClassData[] = [
     skillOptions: ['Animal Handling', 'Athletics', 'Intimidation', 'Nature', 'Perception', 'Survival'],
     flavorText: 'A fierce warrior of primitive background who can enter a battle rage, channeling primal power to become a devastating force on the battlefield.',
     features: [
-      { level: 1, name: 'Rage', description: 'In battle, you fight with primal ferocity. On your turn, you can enter a rage as a bonus action. While raging, you gain advantage on STR checks and saving throws, +2 damage on melee attacks (increases at higher levels), and resistance to bludgeoning, piercing, and slashing damage. Rage ends if you are knocked unconscious or if your turn ends and you haven\'t attacked a hostile creature or taken damage since your last turn. Rages per long rest: 2 (L1), 3 (L3), 4 (L6), 5 (L12), 6 (L17), Unlimited (L20).' },
+      { level: 1, name: 'Rage', description: "In battle, you fight with primal ferocity. On your turn, you can enter a rage as a bonus action. While raging, you gain the following benefits if you aren't wearing heavy armor:\n• You have advantage on Strength checks and Strength saving throws.\n• When you make a melee weapon attack using Strength, you gain a bonus to the damage roll that increases as you gain levels as a barbarian, as shown in the Rage Damage column of the Barbarian table.\n• You have resistance to bludgeoning, piercing, and slashing damage.\nIf you are able to cast spells, you can't cast them or concentrate on them while raging.\nYour rage lasts for 1 minute. It ends early if you are knocked unconscious or if your turn ends and you haven't attacked a hostile creature since your last turn or taken damage since then. You can also end your rage on your turn as a bonus action.\nOnce you have raged the number of times shown for your barbarian level in the Rages column of the Barbarian table, you must finish a long rest before you can rage again." },
       { level: 1, name: 'Unarmored Defense', description: 'While you are not wearing any armor, your Armor Class equals 10 + your Dexterity modifier + your Constitution modifier. You can use a shield and still gain this benefit.' },
       { level: 2, name: 'Reckless Attack', description: 'You can throw aside all concern for defense to attack with fierce desperation. When you make your first attack on your turn, you can decide to attack recklessly, giving you advantage on melee weapon attack rolls using Strength during this turn, but attack rolls against you have advantage until your next turn.' },
-      { level: 2, name: 'Danger Sense', description: 'You gain an uncanny sense of when things nearby aren\'t as they should be, giving you an edge when you dodge away from danger. You have advantage on Dexterity saving throws against effects that you can see.' },
-      { level: 3, name: 'Primal Path', description: 'You choose a path that shapes the nature of your rage (Berserker, Totem Warrior, etc.). Your choice grants you features at 3rd, 6th, 10th, and 14th level.' },
-      { level: 4, name: 'Ability Score Improvement', description: 'You can increase one ability score by 2, or two ability scores by 1 each. Also at levels 8, 12, 16, and 19.' },
+      { level: 2, name: 'Danger Sense', description: "You gain an uncanny sense of when things nearby aren't as they should be, giving you an edge when you dodge away from danger. You have advantage on Dexterity saving throws against effects that you can see, such as traps and spells. To gain this benefit, you can't be blinded, deafened, or incapacitated." },
+      { level: 3, name: 'Primal Path', description: 'You choose a path that shapes the nature of your rage. Choose the Path of the Berserker or the Path of the Totem Warrior. Your choice grants you features at 3rd level and again at 6th, 10th, and 14th levels.' },
+      { level: 4, name: 'Ability Score Improvement', description: "You can increase one ability score by 2, or two ability scores by 1 each. You can't increase an ability score above 20 using this feature. Also at levels 8, 12, 16, and 19." },
       { level: 5, name: 'Extra Attack', description: 'You can attack twice, instead of once, whenever you take the Attack action on your turn.' },
       { level: 5, name: 'Fast Movement', description: 'Your speed increases by 10 feet while you aren\'t wearing heavy armor.' },
       { level: 7, name: 'Feral Instinct', description: 'Your instincts are so honed that you have advantage on initiative rolls. Additionally, if you are surprised at the beginning of combat and aren\'t incapacitated, you can act normally on your first turn, but only if you enter your rage before doing anything else.' },
       { level: 9, name: 'Brutal Critical', description: 'You can roll one additional weapon damage die when determining the extra damage for a critical hit with a melee attack. This increases to two additional dice at 13th level and three at 17th level.' },
-      { level: 11, name: 'Relentless Rage', description: 'Your rage can keep you fighting despite grievous wounds. If you drop to 0 hit points while you\'re raging and don\'t die outright, you can make a DC 10 Constitution saving throw. If you succeed, you drop to 1 hit point instead.' },
+      { level: 11, name: 'Relentless Rage', description: "Your rage can keep you fighting despite grievous wounds. If you drop to 0 hit points while you're raging and don't die outright, you can make a DC 10 Constitution saving throw. If you succeed, you drop to 1 hit point instead. Each time you use this feature after the first, the DC increases by 5. When you finish a short or long rest, the DC resets to 10." },
       { level: 15, name: 'Persistent Rage', description: 'Your rage is so fierce that it ends early only if you fall unconscious or if you choose to end it.' },
       { level: 18, name: 'Indomitable Might', description: 'If your total for a Strength check is less than your Strength score, you can use that score in place of the total.' },
       { level: 20, name: 'Primal Champion', description: 'You embody the power of the wilds. Your Strength and Constitution scores increase by 4, and their maximum is now 24.' },
@@ -449,10 +526,88 @@ export function getSpellcasterInfo(className: string): SpellcastingInfo | undefi
   return CLASS_DATA.find(c => c.name === className)?.spellcasting;
 }
 
-export function getFeaturesUpToLevel(className: string, level: number): ClassFeature[] {
+function parseAdditionalLevels(description: string): number[] {
+  return Array.from(description.matchAll(/levels? ([\d,\sand]+)/gi)).flatMap(match =>
+    (match[1] ?? '')
+      .replace(/and/gi, ',')
+      .split(',')
+      .map(part => parseInt(part.trim(), 10))
+      .filter(Number.isFinite)
+  );
+}
+
+function cleanRepeatedLevelText(description: string): string {
+  return description.replace(/\s*Also at levels? [^.]+\./gi, '').trim();
+}
+
+function expandFeature(feature: ClassFeature): ClassFeature[] {
+  if (feature.name === 'Ability Score Improvement') {
+    const baseDescription = cleanRepeatedLevelText(feature.description);
+    return [feature.level, ...parseAdditionalLevels(feature.description)]
+      .sort((a, b) => a - b)
+      .map(level => ({ level, name: feature.name, description: baseDescription }));
+  }
+
+  if (feature.name === 'Brutal Critical') {
+    return [
+      { level: 9, name: 'Brutal Critical (1 die)', description: 'You can roll one additional weapon damage die when determining the extra damage for a critical hit with a melee attack.' },
+      { level: 13, name: 'Brutal Critical (2 dice)', description: 'You can roll two additional weapon damage dice when determining the extra damage for a critical hit with a melee attack.' },
+      { level: 17, name: 'Brutal Critical (3 dice)', description: 'You can roll three additional weapon damage dice when determining the extra damage for a critical hit with a melee attack.' },
+    ];
+  }
+
+  return [feature];
+}
+
+export function getClassFeatureTimeline(
+  className: string,
+  options?: {
+    barbarianPath?: string;
+    barbarianTotemSpirit?: string;
+    barbarianAspectSpirit?: string;
+    barbarianAttunementSpirit?: string;
+  }
+): ClassFeature[] {
   const cls = CLASS_DATA.find(c => c.name === className);
   if (!cls) return [];
-  return cls.features.filter(f => f.level <= level);
+
+  const expanded = cls.features.flatMap(expandFeature);
+  const subclassFeatures =
+    className === 'Barbarian' && options?.barbarianPath
+      ? options.barbarianPath === 'Path of the Totem Warrior'
+        ? (() => {
+            const base = BARBARIAN_PRIMAL_PATHS.find(path => path.name === options.barbarianPath)?.features ?? [];
+            const selectedLevel3 = BARBARIAN_TOTEM_SPIRITS.find(option => option.name === options.barbarianTotemSpirit);
+            const selectedLevel6 = BARBARIAN_TOTEM_SPIRITS.find(option => option.name === options.barbarianAspectSpirit);
+            const selectedLevel14 = BARBARIAN_TOTEM_SPIRITS.find(option => option.name === options.barbarianAttunementSpirit);
+
+            return [
+              ...base,
+              ...(selectedLevel3 ? [selectedLevel3.level3] : []),
+              ...(selectedLevel6 ? [selectedLevel6.level6] : []),
+              ...(selectedLevel14 ? [selectedLevel14.level14] : []),
+            ];
+          })()
+        : BARBARIAN_PRIMAL_PATHS.find(path => path.name === options.barbarianPath)?.features ?? []
+      : [];
+
+  return [...expanded, ...subclassFeatures].sort((a, b) => {
+    if (a.level !== b.level) return a.level - b.level;
+    return a.name.localeCompare(b.name);
+  });
+}
+
+export function getFeaturesUpToLevel(
+  className: string,
+  level: number,
+  options?: {
+    barbarianPath?: string;
+    barbarianTotemSpirit?: string;
+    barbarianAspectSpirit?: string;
+    barbarianAttunementSpirit?: string;
+  }
+): ClassFeature[] {
+  return getClassFeatureTimeline(className, options).filter(f => f.level <= level);
 }
 
 export function getSlotsAtLevel(spellcasting: SpellcastingInfo, charLevel: number): number[] {

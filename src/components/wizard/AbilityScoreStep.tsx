@@ -62,6 +62,27 @@ function getFinalScores(state: WizardState): Record<AbilityKey, number> {
   return result;
 }
 
+function clampClassBonuses(
+  state: WizardState,
+  nextBaseScores: Record<AbilityKey, number>
+): Partial<Record<AbilityKey, number>> {
+  const racialBonus = getRacialBonus(state);
+  let remainingAsi = Object.values(state.classAbilityBonuses).reduce((sum, value) => sum + (value ?? 0), 0);
+  const nextBonuses: Partial<Record<AbilityKey, number>> = {};
+
+  for (const key of ABILITY_KEYS) {
+    const current = state.classAbilityBonuses[key] ?? 0;
+    const maxAllowed = Math.max(0, 20 - ((nextBaseScores[key] ?? 8) + (racialBonus[key] ?? 0)));
+    const allowed = Math.min(current, maxAllowed, remainingAsi);
+    if (allowed > 0) {
+      nextBonuses[key] = allowed;
+      remainingAsi -= allowed;
+    }
+  }
+
+  return nextBonuses;
+}
+
 function pointsSpent(scores: Record<AbilityKey, number>): number {
   return ABILITY_KEYS.reduce((sum, k) => sum + (POINT_COST[scores[k]] ?? 0), 0);
 }
@@ -120,7 +141,7 @@ export default function AbilityScoreStep({ state, onChange }: Props) {
     if (val < 8 || val > 15) return;
     const trial = { ...state.baseScores, [key]: val };
     if (pointsSpent(trial) <= POINT_BUY_BUDGET) {
-      onChange({ baseScores: trial });
+      onChange({ baseScores: trial, classAbilityBonuses: clampClassBonuses(state, trial) });
     }
   };
 
@@ -133,6 +154,7 @@ export default function AbilityScoreStep({ state, onChange }: Props) {
       assignedRolls: { str: null, dex: null, con: null, int: null, wis: null, cha: null },
       standardAssignments: { str: null, dex: null, con: null, int: null, wis: null, cha: null },
       baseScores: { ...DEFAULT_SCORES },
+      classAbilityBonuses: clampClassBonuses(state, { ...DEFAULT_SCORES }),
     });
   };
 
@@ -143,6 +165,7 @@ export default function AbilityScoreStep({ state, onChange }: Props) {
       assignedRolls: { str: null, dex: null, con: null, int: null, wis: null, cha: null },
       standardAssignments: { str: null, dex: null, con: null, int: null, wis: null, cha: null },
       baseScores: { ...DEFAULT_SCORES },
+      classAbilityBonuses: clampClassBonuses(state, { ...DEFAULT_SCORES }),
     });
   };
 
@@ -151,9 +174,11 @@ export default function AbilityScoreStep({ state, onChange }: Props) {
       Object.entries(assignedRolls).map(([ability, index]) => [ability, index === rollIndex ? null : index])
     ) as Record<AbilityKey, number | null>;
     const newAssigned = { ...clearedAssignments, [key]: rollIndex };
+    const nextBaseScores = { ...state.baseScores, [key]: rolls[rollIndex] ?? 8 };
     onChange({
       assignedRolls: newAssigned,
-      baseScores: { ...state.baseScores, [key]: rolls[rollIndex] ?? 8 },
+      baseScores: nextBaseScores,
+      classAbilityBonuses: clampClassBonuses(state, nextBaseScores),
     });
     setSelectedRollIndex(null);
   };
@@ -163,9 +188,11 @@ export default function AbilityScoreStep({ state, onChange }: Props) {
       Object.entries(standardAssignments).map(([ability, index]) => [ability, index === tokenIndex ? null : index])
     ) as Record<AbilityKey, number | null>;
     const newAssign = { ...clearedAssignments, [key]: tokenIndex };
+    const nextBaseScores = { ...state.baseScores, [key]: STANDARD_ARRAY[tokenIndex] ?? 8 };
     onChange({
       standardAssignments: newAssign,
-      baseScores: { ...state.baseScores, [key]: STANDARD_ARRAY[tokenIndex] ?? 8 },
+      baseScores: nextBaseScores,
+      classAbilityBonuses: clampClassBonuses(state, nextBaseScores),
     });
     setSelectedStandardIndex(null);
   };
@@ -179,7 +206,7 @@ export default function AbilityScoreStep({ state, onChange }: Props) {
       priority.forEach((ability, index) => {
         nextScores[ability] = template[index] ?? 8;
       });
-      onChange({ baseScores: nextScores });
+      onChange({ baseScores: nextScores, classAbilityBonuses: clampClassBonuses(state, nextScores) });
       return;
     }
 
@@ -194,6 +221,7 @@ export default function AbilityScoreStep({ state, onChange }: Props) {
         standardAssignments: nextAssignments,
         assignedRolls: { str: null, dex: null, con: null, int: null, wis: null, cha: null },
         baseScores: nextScores,
+        classAbilityBonuses: clampClassBonuses(state, nextScores),
       });
       setSelectedStandardIndex(null);
       setSelectedRollIndex(null);
@@ -215,6 +243,7 @@ export default function AbilityScoreStep({ state, onChange }: Props) {
       assignedRolls: nextAssignments,
       standardAssignments: { str: null, dex: null, con: null, int: null, wis: null, cha: null },
       baseScores: nextScores,
+      classAbilityBonuses: clampClassBonuses(state, nextScores),
     });
     setSelectedStandardIndex(null);
     setSelectedRollIndex(null);
@@ -241,6 +270,7 @@ export default function AbilityScoreStep({ state, onChange }: Props) {
               rolledScores: [],
               assignedRolls: { str: null, dex: null, con: null, int: null, wis: null, cha: null },
               standardAssignments: { str: null, dex: null, con: null, int: null, wis: null, cha: null },
+              classAbilityBonuses: clampClassBonuses(state, { str: 8, dex: 8, con: 8, int: 8, wis: 8, cha: 8 }),
             });
           }}
             className={`tab-btn ${state.abilityMethod === m ? 'active' : ''}`}>

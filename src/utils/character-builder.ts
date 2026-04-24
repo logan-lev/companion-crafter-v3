@@ -3,7 +3,7 @@ import type { WizardState } from '../types/wizard';
 import { calcMod, profBonusFromLevel } from '../data/srd';
 import { BACKGROUND_DATA } from '../data/srd-backgrounds';
 import { CLASS_DATA, getFeaturesUpToLevel, getSlotsAtLevel, type ClassFeature } from '../data/srd-classes';
-import { CLASS_STARTER_EQUIPMENT } from '../data/srd-class-equipment';
+import { CLASS_EQUIPMENT_CHOICES, CLASS_STARTER_EQUIPMENT, MARTIAL_MELEE_WEAPONS, SIMPLE_WEAPONS } from '../data/srd-class-equipment';
 import { RACE_DATA } from '../data/srd-races';
 import { SPELL_LIST } from '../data/srd-spells';
 import { createBlankCharacter } from './storage';
@@ -77,7 +77,13 @@ export function getRacialBonus(state: WizardState): Partial<Record<AbilityKey, n
 export function getFinalAbilityScores(state: WizardState): Record<AbilityKey, number> {
   const racialBonus = getRacialBonus(state);
   return ABILITY_KEYS.reduce((scores, key) => {
-    scores[key] = (state.baseScores[key] ?? 8) + (racialBonus[key] ?? 0);
+    const preChampion = Math.min(
+      20,
+      (state.baseScores[key] ?? 8) + (racialBonus[key] ?? 0) + (state.classAbilityBonuses[key] ?? 0)
+    );
+    const primalChampionBonus =
+      state.className === 'Barbarian' && state.level >= 20 && (key === 'str' || key === 'con') ? 4 : 0;
+    scores[key] = Math.min(24, preChampion + primalChampionBonus);
     return scores;
   }, {} as Record<AbilityKey, number>);
 }
@@ -128,7 +134,14 @@ export function getTraitEntries(state: WizardState): string[] {
   const race = getSelectedRace(state);
   const subrace = getSelectedSubrace(state);
   const background = getSelectedBackground(state);
-  const classFeatures = state.className ? getFeaturesUpToLevel(state.className, state.level) : [];
+  const classFeatures = state.className
+    ? getFeaturesUpToLevel(state.className, state.level, {
+        barbarianPath: state.barbarianPath,
+        barbarianTotemSpirit: state.barbarianTotemSpirit,
+        barbarianAspectSpirit: state.barbarianAspectSpirit,
+        barbarianAttunementSpirit: state.barbarianAttunementSpirit,
+      })
+    : [];
 
   const entries = [
     ...(race?.traits.map(trait => `${trait.name}: ${trait.description}`) ?? []),
@@ -149,13 +162,36 @@ export function getTraitEntries(state: WizardState): string[] {
     entries.push(`Draconic Ancestry: You chose ${state.dragonbornAncestry}.`);
   }
 
+  if (state.barbarianPath) {
+    entries.push(`Primal Path: You chose ${state.barbarianPath}.`);
+  }
+
+  if (state.barbarianTotemSpirit) {
+    entries.push(`Totem Spirit: You chose ${state.barbarianTotemSpirit}.`);
+  }
+
+  if (state.barbarianAspectSpirit) {
+    entries.push(`Aspect of the Beast: You chose ${state.barbarianAspectSpirit}.`);
+  }
+
+  if (state.barbarianAttunementSpirit) {
+    entries.push(`Totemic Attunement: You chose ${state.barbarianAttunementSpirit}.`);
+  }
+
   return entries;
 }
 
 export function getFutureClassFeatures(state: WizardState): ClassFeature[] {
   const cls = getSelectedClass(state);
   if (!cls) return [];
-  return cls.features.filter(feature => feature.level > state.level).slice(0, 6);
+  return getFeaturesUpToLevel(cls.name, 20, {
+    barbarianPath: state.barbarianPath,
+    barbarianTotemSpirit: state.barbarianTotemSpirit,
+    barbarianAspectSpirit: state.barbarianAspectSpirit,
+    barbarianAttunementSpirit: state.barbarianAttunementSpirit,
+  })
+    .filter(feature => feature.level > state.level)
+    .slice(0, 6);
 }
 
 export function getFeatMilestones(state: WizardState): number[] {
@@ -273,6 +309,22 @@ function spellToCharacterSpell(name: string, prepared: boolean): Spell | null {
   };
 }
 
+function getResolvedClassEquipment(state: WizardState, className: string): string {
+  const defaults = CLASS_STARTER_EQUIPMENT[className] ?? '';
+  if (className !== 'Barbarian') return defaults;
+
+  const choices = CLASS_EQUIPMENT_CHOICES.Barbarian;
+  const primary = state.classEquipmentSelections[choices[0].key] ?? choices[0].options[0];
+  const secondary = state.classEquipmentSelections[choices[1].key] ?? choices[1].options[0];
+  const resolvedPrimary = primary === 'Any martial melee weapon'
+    ? state.classEquipmentSelections['barbarian-weapon-primary-specific'] ?? MARTIAL_MELEE_WEAPONS[0]
+    : primary;
+  const resolvedSecondary = secondary === 'Any simple weapon'
+    ? state.classEquipmentSelections['barbarian-weapon-secondary-specific'] ?? SIMPLE_WEAPONS[0]
+    : secondary;
+  return [resolvedPrimary, resolvedSecondary, "Explorer's Pack", 'Four Javelins'].join(', ');
+}
+
 export function createCharacterFromWizard(state: WizardState): Character {
   const character = createBlankCharacter();
   const cls = getSelectedClass(state);
@@ -290,7 +342,7 @@ export function createCharacterFromWizard(state: WizardState): Character {
     ? createInventoryFromText(background.equipment, 'Background starting equipment')
     : { items: [], currency: { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 } };
   const classEquipment = cls
-    ? createInventoryFromText(CLASS_STARTER_EQUIPMENT[cls.name] ?? '', 'Class starting equipment')
+    ? createInventoryFromText(getResolvedClassEquipment(state, cls.name), 'Class starting equipment')
     : { items: [], currency: { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 } };
 
   return {
