@@ -17,12 +17,21 @@ export interface WizardState {
   barbarianTotemSpirit: string;
   barbarianAspectSpirit: string;
   barbarianAttunementSpirit: string;
+  bardCollege: string;
+  clericDomain: string;
+  paladinOath: string;
+  bardInstrumentChoices: string[];
+  bardExpertiseChoices: string[];
+  bardLoreSkillChoices: string[];
+  bardMagicalSecretChoices: string[];
+  bardAdditionalMagicalSecretChoices: string[];
   classEquipmentSelections: Record<string, string>;
   classAbilityBonuses: Partial<Record<AbilityKey, number>>;
   // Step 3 - Background
   background: string;
   backgroundSkillChoices: string[];
   backgroundLanguageChoices: string[];
+  backgroundSelections: Record<string, string>;
   // Step 4 - Ability Scores
   abilityMethod: AbilityMethod;
   baseScores: Record<AbilityKey, number>;
@@ -62,11 +71,20 @@ export const WIZARD_INITIAL_STATE: WizardState = {
   barbarianTotemSpirit: '',
   barbarianAspectSpirit: '',
   barbarianAttunementSpirit: '',
+  bardCollege: '',
+  clericDomain: '',
+  paladinOath: '',
+  bardInstrumentChoices: [],
+  bardExpertiseChoices: [],
+  bardLoreSkillChoices: [],
+  bardMagicalSecretChoices: [],
+  bardAdditionalMagicalSecretChoices: [],
   classEquipmentSelections: {},
   classAbilityBonuses: {},
   background: '',
   backgroundSkillChoices: [],
   backgroundLanguageChoices: [],
+  backgroundSelections: {},
   abilityMethod: 'standard',
   baseScores: { str: 8, dex: 8, con: 8, int: 8, wis: 8, cha: 8 },
   rolledScores: [],

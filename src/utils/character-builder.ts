@@ -2,8 +2,21 @@ import type { Character, AbilityKey, Spell, SpellSlots } from '../types/characte
 import type { WizardState } from '../types/wizard';
 import { calcMod, profBonusFromLevel } from '../data/srd';
 import { BACKGROUND_DATA } from '../data/srd-backgrounds';
-import { CLASS_DATA, getFeaturesUpToLevel, getSlotsAtLevel, type ClassFeature } from '../data/srd-classes';
-import { CLASS_EQUIPMENT_CHOICES, CLASS_STARTER_EQUIPMENT, MARTIAL_MELEE_WEAPONS, SIMPLE_WEAPONS } from '../data/srd-class-equipment';
+import {
+  BARD_COLLEGES,
+  CLERIC_DOMAINS,
+  CLASS_DATA,
+  getFeaturesUpToLevel,
+  getSlotsAtLevel,
+  getSubclassAutoPreparedSpells,
+  type ClassFeature,
+} from '../data/srd-classes';
+import {
+  CLASS_EQUIPMENT_CHOICES,
+  CLASS_FIXED_EQUIPMENT,
+  CLASS_STARTER_EQUIPMENT,
+  EQUIPMENT_DYNAMIC_OPTION_POOLS,
+} from '../data/srd-class-equipment';
 import { RACE_DATA } from '../data/srd-races';
 import { SPELL_LIST } from '../data/srd-spells';
 import { createBlankCharacter } from './storage';
@@ -50,6 +63,44 @@ export function getSelectedClass(state: WizardState) {
 
 export function getSelectedBackground(state: WizardState) {
   return BACKGROUND_DATA.find(background => background.name === state.background);
+}
+
+export function getResolvedBackgroundToolProficiencies(state: WizardState): string[] {
+  const background = getSelectedBackground(state);
+  if (!background) return [];
+
+  return (background.toolProfs ?? []).flatMap(tool => {
+    if (/one type of gaming set/i.test(tool) || /one type of musical instrument/i.test(tool) || /artisan's tools \(one type\)/i.test(tool)) {
+      return state.backgroundSelections['background-tool-choice']
+        ? [state.backgroundSelections['background-tool-choice']]
+        : [];
+    }
+
+    return [tool];
+  });
+}
+
+export function getResolvedBackgroundEquipment(state: WizardState): string {
+  const background = getSelectedBackground(state);
+  if (!background) return '';
+
+  let equipment = background.equipment;
+  const toolChoice = state.backgroundSelections['background-tool-choice'];
+  const equipmentChoice = state.backgroundSelections['background-equipment-choice'];
+
+  if (toolChoice) {
+    equipment = equipment
+      .replace(/Musical instrument/gi, toolChoice)
+      .replace(/Artisan's tools/gi, toolChoice);
+  }
+
+  if (equipmentChoice) {
+    equipment = equipment
+      .replace(/tools of the con of your choice/gi, equipmentChoice)
+      .replace(/set of bone dice or deck of cards/gi, equipmentChoice);
+  }
+
+  return equipment;
 }
 
 export function getRacialBonus(state: WizardState): Partial<Record<AbilityKey, number>> {
@@ -99,23 +150,34 @@ export function getAllSkillProficiencies(state: WizardState): string[] {
     ...((race?.proficiencies ?? []).filter(item => SKILL_NAMES.has(item))),
     ...((subrace?.proficiencies ?? []).filter(item => SKILL_NAMES.has(item))),
     ...(state.raceSkillChoices ?? []),
+    ...(state.bardLoreSkillChoices ?? []),
   ]);
 }
 
 export function getAllOtherProficiencies(state: WizardState): string[] {
   const race = getSelectedRace(state);
   const subrace = getSelectedSubrace(state);
-  const background = getSelectedBackground(state);
   const cls = getSelectedClass(state);
+  const clericDomain = CLERIC_DOMAINS.find(option => option.name === state.clericDomain);
 
   return unique([
     ...((race?.proficiencies ?? []).filter(item => !SKILL_NAMES.has(item))),
     ...((subrace?.proficiencies ?? []).filter(item => !SKILL_NAMES.has(item))),
     ...(state.dwarfToolProficiency ? [state.dwarfToolProficiency] : []),
-    ...(background?.toolProfs ?? []),
+    ...getResolvedBackgroundToolProficiencies(state),
     ...(cls?.armorProf ?? []),
     ...(cls?.weaponProf ?? []),
-    ...(cls?.toolProf ?? []),
+    ...((cls?.toolProf ?? []).filter(item => item !== 'Three musical instruments of your choice')),
+    ...(state.bardInstrumentChoices ?? []),
+    ...(state.bardCollege === 'College of Valor' ? ['Medium Armor', 'Shields', 'Martial Weapons'] : []),
+    ...(state.className === 'Cleric' && clericDomain?.name === 'Knowledge Domain'
+      ? ['Two bonus languages', 'Arcana expertise', 'History expertise']
+      : []),
+    ...(state.className === 'Cleric' && clericDomain?.name === 'Life Domain' ? ['Heavy Armor'] : []),
+    ...(state.className === 'Cleric' && clericDomain?.name === 'Nature Domain' ? ['Heavy Armor'] : []),
+    ...(state.className === 'Cleric' && (clericDomain?.name === 'Tempest Domain' || clericDomain?.name === 'War Domain')
+      ? ['Heavy Armor', 'Martial Weapons']
+      : []),
   ]);
 }
 
@@ -140,6 +202,9 @@ export function getTraitEntries(state: WizardState): string[] {
         barbarianTotemSpirit: state.barbarianTotemSpirit,
         barbarianAspectSpirit: state.barbarianAspectSpirit,
         barbarianAttunementSpirit: state.barbarianAttunementSpirit,
+        bardCollege: state.bardCollege,
+        clericDomain: state.clericDomain,
+        paladinOath: state.paladinOath,
       })
     : [];
 
@@ -178,6 +243,19 @@ export function getTraitEntries(state: WizardState): string[] {
     entries.push(`Totemic Attunement: You chose ${state.barbarianAttunementSpirit}.`);
   }
 
+  if (state.bardCollege) {
+    const college = BARD_COLLEGES.find(option => option.name === state.bardCollege);
+    if (college) entries.push(`Bard College: You chose ${college.name}.`);
+  }
+
+  if (state.clericDomain) {
+    entries.push(`Divine Domain: You chose ${state.clericDomain}.`);
+  }
+
+  if (state.paladinOath) {
+    entries.push(`Sacred Oath: You chose ${state.paladinOath}.`);
+  }
+
   return entries;
 }
 
@@ -189,6 +267,9 @@ export function getFutureClassFeatures(state: WizardState): ClassFeature[] {
     barbarianTotemSpirit: state.barbarianTotemSpirit,
     barbarianAspectSpirit: state.barbarianAspectSpirit,
     barbarianAttunementSpirit: state.barbarianAttunementSpirit,
+    bardCollege: state.bardCollege,
+    clericDomain: state.clericDomain,
+    paladinOath: state.paladinOath,
   })
     .filter(feature => feature.level > state.level)
     .slice(0, 6);
@@ -287,6 +368,16 @@ function getExtraSpellNames(state: WizardState): string[] {
   if (state.race === 'Tiefling') names.push('Thaumaturgy');
   if (state.race === 'Gnome' && state.subrace === 'Forest Gnome') names.push('Minor Illusion');
   if (state.race === 'Elf' && state.subrace === 'Dark Elf (Drow)') names.push('Dancing Lights');
+  if (state.className === 'Cleric' || state.className === 'Paladin') {
+    names.push(
+      ...getSubclassAutoPreparedSpells(state.className, state.level, {
+        clericDomain: state.clericDomain,
+        paladinOath: state.paladinOath,
+      })
+    );
+  }
+  names.push(...(state.bardMagicalSecretChoices ?? []));
+  names.push(...(state.bardAdditionalMagicalSecretChoices ?? []));
 
   return unique(names);
 }
@@ -309,20 +400,45 @@ function spellToCharacterSpell(name: string, prepared: boolean): Spell | null {
   };
 }
 
-function getResolvedClassEquipment(state: WizardState, className: string): string {
-  const defaults = CLASS_STARTER_EQUIPMENT[className] ?? '';
-  if (className !== 'Barbarian') return defaults;
+function resolveEquipmentOption(
+  state: WizardState,
+  choiceKey: string,
+  option: string
+): string[] {
+  const dynamicCounts = new Map<string, number>();
 
-  const choices = CLASS_EQUIPMENT_CHOICES.Barbarian;
-  const primary = state.classEquipmentSelections[choices[0].key] ?? choices[0].options[0];
-  const secondary = state.classEquipmentSelections[choices[1].key] ?? choices[1].options[0];
-  const resolvedPrimary = primary === 'Any martial melee weapon'
-    ? state.classEquipmentSelections['barbarian-weapon-primary-specific'] ?? MARTIAL_MELEE_WEAPONS[0]
-    : primary;
-  const resolvedSecondary = secondary === 'Any simple weapon'
-    ? state.classEquipmentSelections['barbarian-weapon-secondary-specific'] ?? SIMPLE_WEAPONS[0]
-    : secondary;
-  return [resolvedPrimary, resolvedSecondary, "Explorer's Pack", 'Four Javelins'].join(', ');
+  return option
+    .split(',')
+    .map(token => token.trim())
+    .filter(Boolean)
+    .map(token => {
+      const pool = EQUIPMENT_DYNAMIC_OPTION_POOLS[token];
+      if (!pool) return token;
+
+      const index = dynamicCounts.get(token) ?? 0;
+      dynamicCounts.set(token, index + 1);
+      return state.classEquipmentSelections[`${choiceKey}-specific-${index}`] ?? '';
+    })
+    .filter(Boolean);
+}
+
+function getResolvedClassEquipment(state: WizardState, className: string): string {
+  const classChoices = CLASS_EQUIPMENT_CHOICES[className] ?? [];
+  const fixedItems = CLASS_FIXED_EQUIPMENT[className] ?? [];
+
+  if (!classChoices.length && !fixedItems.length) {
+    return CLASS_STARTER_EQUIPMENT[className] ?? '';
+  }
+
+  const resolvedItems = classChoices.flatMap(choice => {
+    const selectedOption = state.classEquipmentSelections[choice.key];
+    if (!selectedOption) {
+      return [];
+    }
+    return resolveEquipmentOption(state, choice.key, selectedOption);
+  });
+
+  return [...resolvedItems, ...fixedItems].join(', ');
 }
 
 export function createCharacterFromWizard(state: WizardState): Character {
@@ -335,11 +451,17 @@ export function createCharacterFromWizard(state: WizardState): Character {
   const traitEntries = getTraitEntries(state);
   const otherProficiencies = getAllOtherProficiencies(state);
   const spellNames = unique([...getExtraSpellNames(state), ...state.selectedCantrips, ...state.selectedSpells]);
+  const alwaysPreparedSpellNames = new Set(getExtraSpellNames(state));
   const spells = spellNames
-    .map(name => spellToCharacterSpell(name, state.selectedSpells.includes(name) || state.selectedCantrips.includes(name)))
+    .map(name =>
+      spellToCharacterSpell(
+        name,
+        alwaysPreparedSpellNames.has(name) || state.selectedSpells.includes(name) || state.selectedCantrips.includes(name)
+      )
+    )
     .filter((spell): spell is Spell => spell !== null);
   const backgroundEquipment = background
-    ? createInventoryFromText(background.equipment, 'Background starting equipment')
+    ? createInventoryFromText(getResolvedBackgroundEquipment(state), 'Background starting equipment')
     : { items: [], currency: { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 } };
   const classEquipment = cls
     ? createInventoryFromText(getResolvedClassEquipment(state, cls.name), 'Class starting equipment')
@@ -361,7 +483,7 @@ export function createCharacterFromWizard(state: WizardState): Character {
       return profs;
     }, {} as Record<AbilityKey, boolean>),
     skillProfs: skillProfs.reduce((profs, skill) => {
-      profs[skill] = true;
+      profs[skill] = state.bardExpertiseChoices.includes(skill) ? 'expertise' : true;
       return profs;
     }, {} as Record<string, boolean | 'expertise'>),
     armorClass: getArmorClass(state),

@@ -57,7 +57,7 @@ export const RACE_DATA: RaceData[] = [
       { name: 'Tool Proficiency', description: 'You gain proficiency with the artisan\'s tools of your choice: smith\'s tools, brewer\'s supplies, or mason\'s tools.' },
       { name: 'Stonecunning', description: 'Whenever you make an Intelligence (History) check related to the origin of stonework, you are considered proficient in the History skill and add double your proficiency bonus to the check.' },
     ],
-    proficiencies: ['Battleaxe', 'Handaxe', 'Light Hammer', 'Warhammer'],
+    proficiencies: ['Battleaxe', 'Handaxe', 'Throwing Hammer', 'Warhammer'],
     languages: ['Common', 'Dwarvish'],
     subraces: [
       {

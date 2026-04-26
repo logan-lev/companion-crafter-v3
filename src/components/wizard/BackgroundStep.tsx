@@ -2,6 +2,7 @@ import type { WizardState } from '../../types/wizard';
 import { BACKGROUND_DATA } from '../../data/srd-backgrounds';
 import { LANGUAGES } from '../../data/srd';
 import { RACE_DATA } from '../../data/srd-races';
+import { getResolvedBackgroundEquipment, getResolvedBackgroundToolProficiencies } from '../../utils/character-builder';
 
 interface Props {
   state: WizardState;
@@ -18,6 +19,8 @@ export default function BackgroundStep({ state, onChange }: Props) {
     ...(state.raceLanguageChoices ?? []),
   ]);
   const availableBackgroundLanguages = LANGUAGES.filter(language => !usedLanguages.has(language) || state.backgroundLanguageChoices.includes(language));
+  const resolvedToolProficiencies = preview ? getResolvedBackgroundToolProficiencies(state) : [];
+  const resolvedEquipment = preview ? getResolvedBackgroundEquipment(state) : '';
 
   return (
     <div className="flex flex-col gap-4">
@@ -33,7 +36,7 @@ export default function BackgroundStep({ state, onChange }: Props) {
             {BACKGROUND_DATA.map(bg => (
               <button
                 key={bg.name}
-                onClick={() => onChange({ background: bg.name, backgroundLanguageChoices: [] })}
+                onClick={() => onChange({ background: bg.name, backgroundLanguageChoices: [], backgroundSelections: {} })}
                 className={`rounded border px-3 py-3 text-left transition-all ${
                   state.background === bg.name
                     ? 'border-[#f0d080] bg-[#1a1200] text-[#f0d080]'
@@ -76,7 +79,7 @@ export default function BackgroundStep({ state, onChange }: Props) {
                   <div>
                     <div className="field-label mb-1">Tool Proficiencies</div>
                     <div className="flex gap-1 flex-wrap">
-                      {preview.toolProfs.map(t => (
+                      {(resolvedToolProficiencies.length ? resolvedToolProficiencies : preview.toolProfs).map(t => (
                         <span key={t} className="text-[0.65rem] bg-[#0d0d1a] border border-purple-800 px-2 py-0.5 rounded text-purple-300">{t}</span>
                       ))}
                     </div>
@@ -94,7 +97,7 @@ export default function BackgroundStep({ state, onChange }: Props) {
                 {/* Equipment */}
                 <div className="col-span-2">
                   <div className="field-label mb-1">Starting Equipment</div>
-                  <div className="text-sm leading-6 text-[#9a8040]">{preview.equipment}</div>
+                  <div className="text-sm leading-6 text-[#9a8040]">{resolvedEquipment || preview.equipment}</div>
                 </div>
               </div>
 
@@ -138,6 +141,64 @@ export default function BackgroundStep({ state, onChange }: Props) {
                           }`}
                         >
                           {language}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {state.background === preview.name && preview.toolChoiceOptions && (
+                <div>
+                  <div className="section-title">{preview.toolChoiceLabel ?? 'Choose Tool Proficiency'}</div>
+                  <div className="flex flex-wrap gap-2">
+                    {preview.toolChoiceOptions.map(option => {
+                      const selected = state.backgroundSelections['background-tool-choice'] === option;
+                      return (
+                        <button
+                          key={option}
+                          onClick={() => onChange({
+                            backgroundSelections: {
+                              ...state.backgroundSelections,
+                              'background-tool-choice': option,
+                            },
+                          })}
+                          className={`rounded border px-3 py-1 text-xs transition-all ${
+                            selected
+                              ? 'border-[#f0d080] bg-[#2a1800] text-[#f0d080]'
+                              : 'border-[#b8962e] bg-[#0d0d0d] text-[#b8962e] hover:bg-[#1a1000]'
+                          }`}
+                        >
+                          {option}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {state.background === preview.name && preview.equipmentChoiceOptions && (
+                <div>
+                  <div className="section-title">{preview.equipmentChoiceLabel ?? 'Choose Equipment Option'}</div>
+                  <div className="flex flex-wrap gap-2">
+                    {preview.equipmentChoiceOptions.map(option => {
+                      const selected = state.backgroundSelections['background-equipment-choice'] === option;
+                      return (
+                        <button
+                          key={option}
+                          onClick={() => onChange({
+                            backgroundSelections: {
+                              ...state.backgroundSelections,
+                              'background-equipment-choice': option,
+                            },
+                          })}
+                          className={`rounded border px-3 py-1 text-xs transition-all ${
+                            selected
+                              ? 'border-[#f0d080] bg-[#2a1800] text-[#f0d080]'
+                              : 'border-[#b8962e] bg-[#0d0d0d] text-[#b8962e] hover:bg-[#1a1000]'
+                          }`}
+                        >
+                          {option}
                         </button>
                       );
                     })}

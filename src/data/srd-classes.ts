@@ -38,6 +38,7 @@ export interface ClassSubclassOption {
   name: string;
   description: string;
   features: ClassFeature[];
+  bonusSpells?: { level: number; spells: string[] }[];
 }
 
 export interface TotemSpiritOption {
@@ -162,6 +163,252 @@ export const BARBARIAN_PRIMAL_PATHS: ClassSubclassOption[] = [
   },
 ];
 
+export const BARD_COLLEGES: ClassSubclassOption[] = [
+  {
+    name: 'College of Lore',
+    description: 'Lore bards gather secrets from every tradition and turn wit, knowledge, and sharp words into their greatest weapons.',
+    features: [
+      {
+        level: 3,
+        name: 'Bonus Proficiencies',
+        description: 'When you join the College of Lore, you gain proficiency with three skills of your choice.',
+      },
+      {
+        level: 3,
+        name: 'Cutting Words',
+        description: "You learn how to use your wit to distract, confuse, and otherwise sap the confidence and competence of others. When a creature that you can see within 60 feet of you makes an attack roll, an ability check, or a damage roll, you can use your reaction to expend one use of your Bardic Inspiration, rolling a Bardic Inspiration die and subtracting the number rolled from the creature's roll. You can choose to use this feature after the creature makes its roll, but before the DM determines whether the attack roll or ability check succeeds or fails, or before the creature deals its damage. The creature is immune if it can't hear you or if it's immune to being charmed.",
+      },
+      {
+        level: 6,
+        name: 'Additional Magical Secrets',
+        description: "You learn two spells of your choice from any class. A spell you choose must be of a level you can cast or a cantrip. The chosen spells count as bard spells for you but don't count against the number of bard spells you know.",
+      },
+      {
+        level: 14,
+        name: 'Peerless Skill',
+        description: 'When you make an ability check, you can expend one use of Bardic Inspiration. Roll a Bardic Inspiration die and add the number rolled to your ability check. You can choose to do so after you roll the die for the ability check, but before the DM says whether you succeed or fail.',
+      },
+    ],
+  },
+  {
+    name: 'College of Valor',
+    description: 'Valor bards celebrate the deeds of heroes and train to stand among them, weaving inspiration into martial prowess.',
+    features: [
+      {
+        level: 3,
+        name: 'Bonus Proficiencies',
+        description: 'When you join the College of Valor, you gain proficiency with medium armor, shields, and martial weapons.',
+      },
+      {
+        level: 3,
+        name: 'Combat Inspiration',
+        description: 'You learn to inspire others in battle. A creature that has a Bardic Inspiration die from you can roll that die and add the number rolled to a weapon damage roll it just made. Alternatively, when an attack roll is made against the creature, it can use its reaction to roll the Bardic Inspiration die and add the number rolled to its AC against that attack, after seeing the roll but before knowing whether it hits or misses.',
+      },
+      {
+        level: 6,
+        name: 'Extra Attack',
+        description: 'You can attack twice, instead of once, whenever you take the Attack action on your turn.',
+      },
+      {
+        level: 14,
+        name: 'Battle Magic',
+        description: 'You have mastered the art of weaving spellcasting and weapon use into a single harmonious act. When you use your action to cast a bard spell, you can make one weapon attack as a bonus action.',
+      },
+    ],
+  },
+];
+
+export const CLERIC_DOMAINS: ClassSubclassOption[] = [
+  {
+    name: 'Knowledge Domain',
+    description: 'Knowledge clerics prize learning, memory, truth, and divine insight above all else.',
+    bonusSpells: [
+      { level: 1, spells: ['Command', 'Identify'] },
+      { level: 3, spells: ['Augury', 'Suggestion'] },
+      { level: 5, spells: ['Nondetection', 'Speak with Dead'] },
+      { level: 7, spells: ['Arcane Eye', 'Confusion'] },
+      { level: 9, spells: ['Legend Lore', 'Scrying'] },
+    ],
+    features: [
+      { level: 1, name: 'Blessings of Knowledge', description: 'You learn two languages of your choice. You also become proficient in two of the following skills: Arcana, History, Nature, or Religion. Your proficiency bonus is doubled for any ability check you make that uses either of those skills.' },
+      { level: 2, name: 'Channel Divinity: Knowledge of the Ages', description: 'You can use your Channel Divinity to tap into a divine well of knowledge. As an action, choose one skill or tool. For 10 minutes, you have proficiency with the chosen skill or tool.' },
+      { level: 6, name: 'Channel Divinity: Read Thoughts', description: 'You can use your Channel Divinity to read a creature’s thoughts. You can then cast suggestion on the creature without expending a spell slot.' },
+      { level: 8, name: 'Potent Spellcasting', description: 'You add your Wisdom modifier to the damage you deal with any cleric cantrip.' },
+      { level: 17, name: 'Visions of the Past', description: 'You can call up visions of the past that relate to an object you hold or your immediate surroundings.' },
+    ],
+  },
+  {
+    name: 'Life Domain',
+    description: 'Life clerics champion vitality, healing, mercy, and the sacred preservation of living creatures.',
+    bonusSpells: [
+      { level: 1, spells: ['Bless', 'Cure Wounds'] },
+      { level: 3, spells: ['Lesser Restoration', 'Spiritual Weapon'] },
+      { level: 5, spells: ['Beacon of Hope', 'Revivify'] },
+      { level: 7, spells: ['Death Ward', 'Guardian of Faith'] },
+      { level: 9, spells: ['Mass Cure Wounds', 'Raise Dead'] },
+    ],
+    features: [
+      { level: 1, name: 'Bonus Proficiency', description: 'You gain proficiency with heavy armor.' },
+      { level: 1, name: 'Disciple of Life', description: 'Whenever you use a spell of 1st level or higher to restore hit points, the creature regains additional hit points equal to 2 + the spell’s level.' },
+      { level: 2, name: 'Channel Divinity: Preserve Life', description: 'As an action, you can use your Channel Divinity to restore hit points to badly injured creatures within 30 feet.' },
+      { level: 6, name: 'Blessed Healer', description: 'When you cast a spell of 1st level or higher that restores hit points to a creature other than you, you regain hit points equal to 2 + the spell’s level.' },
+      { level: 8, name: 'Divine Strike', description: 'Once on each of your turns when you hit with a weapon attack, you can cause the attack to deal an extra 1d8 radiant damage. At 14th level, this increases to 2d8.' },
+      { level: 17, name: 'Supreme Healing', description: 'When you would normally roll one or more dice to restore hit points with a spell, you instead use the highest number possible for each die.' },
+    ],
+  },
+  {
+    name: 'Light Domain',
+    description: 'Light clerics carry the radiance of truth, revelation, fire, and the sun into darkness.',
+    bonusSpells: [
+      { level: 1, spells: ['Burning Hands', 'Faerie Fire'] },
+      { level: 3, spells: ['Flaming Sphere', 'Scorching Ray'] },
+      { level: 5, spells: ['Daylight', 'Fireball'] },
+      { level: 7, spells: ['Guardian of Faith', 'Wall of Fire'] },
+      { level: 9, spells: ['Flame Strike', 'Scrying'] },
+    ],
+    features: [
+      { level: 1, name: 'Bonus Cantrip', description: 'You learn the light cantrip if you don’t already know it.' },
+      { level: 1, name: 'Warding Flare', description: 'When a creature you can see attacks you, you can use your reaction to impose disadvantage on the attack roll by flashing divine light into the attacker’s eyes.' },
+      { level: 2, name: 'Channel Divinity: Radiance of the Dawn', description: 'You can use your Channel Divinity to dispel darkness and deal radiant damage to hostile creatures within 30 feet.' },
+      { level: 6, name: 'Improved Flare', description: 'You can use your Warding Flare feature when a creature that you can see within 30 feet of you attacks a creature other than you.' },
+      { level: 8, name: 'Potent Spellcasting', description: 'You add your Wisdom modifier to the damage you deal with any cleric cantrip.' },
+      { level: 17, name: 'Corona of Light', description: 'As an action, you emit an aura of sunlight. Enemies in the bright light have disadvantage on saving throws against spells that deal fire or radiant damage.' },
+    ],
+  },
+  {
+    name: 'Nature Domain',
+    description: 'Nature clerics revere the wild world and channel divine magic through beasts, plants, and primal forces.',
+    bonusSpells: [
+      { level: 1, spells: ['Animal Friendship', 'Speak with Animals'] },
+      { level: 3, spells: ['Barkskin', 'Spike Growth'] },
+      { level: 5, spells: ['Plant Growth', 'Wind Wall'] },
+      { level: 7, spells: ['Dominate Beast', 'Grasping Vine'] },
+      { level: 9, spells: ['Insect Plague', 'Tree Stride'] },
+    ],
+    features: [
+      { level: 1, name: 'Acolyte of Nature', description: 'You learn one druid cantrip of your choice. You also gain proficiency in one of the following skills: Animal Handling, Nature, or Survival.' },
+      { level: 1, name: 'Bonus Proficiency', description: 'You gain proficiency with heavy armor.' },
+      { level: 2, name: 'Channel Divinity: Charm Animals and Plants', description: 'You can use your Channel Divinity to charm beasts and plants within 30 feet.' },
+      { level: 6, name: 'Dampen Elements', description: 'When you or a creature within 30 feet takes acid, cold, fire, lightning, or thunder damage, you can use your reaction to grant resistance against that instance of damage.' },
+      { level: 8, name: 'Divine Strike', description: 'Once on each of your turns when you hit with a weapon attack, you can cause the attack to deal an extra 1d8 cold, fire, or lightning damage. At 14th level, this increases to 2d8.' },
+      { level: 17, name: 'Master of Nature', description: 'You gain the ability to command beasts and plants when you use your Channel Divinity: Charm Animals and Plants.' },
+    ],
+  },
+  {
+    name: 'Tempest Domain',
+    description: 'Tempest clerics wield storm, thunder, lightning, and righteous wrath in the service of the divine.',
+    bonusSpells: [
+      { level: 1, spells: ['Fog Cloud', 'Thunderwave'] },
+      { level: 3, spells: ['Gust of Wind', 'Shatter'] },
+      { level: 5, spells: ['Call Lightning', 'Sleet Storm'] },
+      { level: 7, spells: ['Control Water', 'Ice Storm'] },
+      { level: 9, spells: ['Destructive Wave', 'Insect Plague'] },
+    ],
+    features: [
+      { level: 1, name: 'Bonus Proficiencies', description: 'You gain proficiency with martial weapons and heavy armor.' },
+      { level: 1, name: 'Wrath of the Storm', description: 'When a creature within 5 feet hits you with an attack, you can use your reaction to deal lightning or thunder damage to it unless it succeeds on a Dexterity saving throw.' },
+      { level: 2, name: 'Channel Divinity: Destructive Wrath', description: 'When you roll lightning or thunder damage, you can use your Channel Divinity to deal maximum damage instead of rolling.' },
+      { level: 6, name: 'Thunderbolt Strike', description: 'When you deal lightning damage to a Large or smaller creature, you can also push it up to 10 feet away from you.' },
+      { level: 8, name: 'Divine Strike', description: 'Once on each of your turns when you hit with a weapon attack, you can cause the attack to deal an extra 1d8 thunder damage. At 14th level, this increases to 2d8.' },
+      { level: 17, name: 'Stormborn', description: 'You have a flying speed equal to your current walking speed whenever you are not underground or indoors.' },
+    ],
+  },
+  {
+    name: 'Trickery Domain',
+    description: 'Trickery clerics delight in deception, illusion, stealth, and overturning the proud through divine mischief.',
+    bonusSpells: [
+      { level: 1, spells: ['Charm Person', 'Disguise Self'] },
+      { level: 3, spells: ['Mirror Image', 'Pass without Trace'] },
+      { level: 5, spells: ['Blink', 'Dispel Magic'] },
+      { level: 7, spells: ['Dimension Door', 'Polymorph'] },
+      { level: 9, spells: ['Dominate Person', 'Modify Memory'] },
+    ],
+    features: [
+      { level: 1, name: 'Blessing of the Trickster', description: 'You can use your action to touch a willing creature other than yourself and give it advantage on Dexterity (Stealth) checks for 1 hour.' },
+      { level: 2, name: 'Channel Divinity: Invoke Duplicity', description: 'You can create an illusory duplicate of yourself that lasts for 1 minute, letting you cast spells as though you were in the illusion’s space.' },
+      { level: 6, name: 'Channel Divinity: Cloak of Shadows', description: 'You can use your Channel Divinity to become invisible until the end of your next turn.' },
+      { level: 8, name: 'Divine Strike', description: 'Once on each of your turns when you hit with a weapon attack, you can cause the attack to deal an extra 1d8 poison damage. At 14th level, this increases to 2d8.' },
+      { level: 17, name: 'Improved Duplicity', description: 'You can create up to four duplicates of yourself, instead of one, when you use Invoke Duplicity.' },
+    ],
+  },
+  {
+    name: 'War Domain',
+    description: 'War clerics train for battle and lead the faithful with divine fury, discipline, and martial strength.',
+    bonusSpells: [
+      { level: 1, spells: ['Divine Favor', 'Shield of Faith'] },
+      { level: 3, spells: ['Magic Weapon', 'Spiritual Weapon'] },
+      { level: 5, spells: ["Crusader's Mantle", 'Spirit Guardians'] },
+      { level: 7, spells: ['Freedom of Movement', 'Stoneskin'] },
+      { level: 9, spells: ['Flame Strike', 'Hold Monster'] },
+    ],
+    features: [
+      { level: 1, name: 'Bonus Proficiencies', description: 'You gain proficiency with martial weapons and heavy armor.' },
+      { level: 1, name: 'War Priest', description: 'When you use the Attack action, you can make one weapon attack as a bonus action a number of times equal to your Wisdom modifier per long rest.' },
+      { level: 2, name: 'Channel Divinity: Guided Strike', description: 'When you make an attack roll, you can use your Channel Divinity to gain a +10 bonus to the roll after seeing the roll but before the DM says whether it hits or misses.' },
+      { level: 6, name: 'Channel Divinity: War God’s Blessing', description: 'When a creature within 30 feet makes an attack roll, you can use your reaction to grant that creature a +10 bonus to the roll.' },
+      { level: 8, name: 'Divine Strike', description: 'Once on each of your turns when you hit with a weapon attack, you can cause the attack to deal an extra 1d8 weapon damage. At 14th level, this increases to 2d8.' },
+      { level: 17, name: 'Avatar of Battle', description: 'You gain resistance to bludgeoning, piercing, and slashing damage from nonmagical weapons.' },
+    ],
+  },
+];
+
+export const PALADIN_OATHS: ClassSubclassOption[] = [
+  {
+    name: 'Oath of Devotion',
+    description: 'Devotion paladins embody honesty, courage, compassion, honor, and duty as shining champions of justice.',
+    bonusSpells: [
+      { level: 3, spells: ['Protection from Evil and Good', 'Sanctuary'] },
+      { level: 5, spells: ['Lesser Restoration', 'Zone of Truth'] },
+      { level: 9, spells: ['Beacon of Hope', 'Dispel Magic'] },
+      { level: 13, spells: ['Freedom of Movement', 'Guardian of Faith'] },
+      { level: 17, spells: ['Commune', 'Flame Strike'] },
+    ],
+    features: [
+      { level: 3, name: 'Channel Divinity: Sacred Weapon', description: 'As an action, you can imbue one weapon that you are holding with positive energy, adding your Charisma modifier to attack rolls made with it for 1 minute.' },
+      { level: 3, name: 'Channel Divinity: Turn the Unholy', description: 'As an action, each fiend or undead within 30 feet that can see or hear you must make a Wisdom saving throw or be turned for 1 minute.' },
+      { level: 7, name: 'Aura of Devotion', description: 'You and friendly creatures within 10 feet of you can’t be charmed while you are conscious. At 18th level, the range increases to 30 feet.' },
+      { level: 15, name: 'Purity of Spirit', description: 'You are always under the effects of a protection from evil and good spell.' },
+      { level: 20, name: 'Holy Nimbus', description: 'As an action, you emanate bright sunlight in a 30-foot radius for 1 minute and deal radiant damage to enemies that start their turns there.' },
+    ],
+  },
+  {
+    name: 'Oath of the Ancients',
+    description: 'Ancients paladins preserve hope, beauty, and life, standing as radiant defenders against darkness and despair.',
+    bonusSpells: [
+      { level: 3, spells: ['Ensnaring Strike', 'Speak with Animals'] },
+      { level: 5, spells: ['Moonbeam', 'Misty Step'] },
+      { level: 9, spells: ['Plant Growth', 'Protection from Energy'] },
+      { level: 13, spells: ['Ice Storm', 'Stoneskin'] },
+      { level: 17, spells: ['Commune with Nature', 'Tree Stride'] },
+    ],
+    features: [
+      { level: 3, name: 'Channel Divinity: Nature’s Wrath', description: 'As an action, you can cause spectral vines to spring up and reach for a creature within 10 feet. It must succeed on a Strength or Dexterity saving throw or be restrained.' },
+      { level: 3, name: 'Channel Divinity: Turn the Faithless', description: 'As an action, fey and fiends within 30 feet that can see or hear you must make a Wisdom saving throw or be turned for 1 minute.' },
+      { level: 7, name: 'Aura of Warding', description: 'You and friendly creatures within 10 feet of you have resistance to damage from spells. At 18th level, the range increases to 30 feet.' },
+      { level: 15, name: 'Undying Sentinel', description: 'When you are reduced to 0 hit points and not killed outright, you can drop to 1 hit point instead once per long rest. You also suffer none of the drawbacks of old age.' },
+      { level: 20, name: 'Elder Champion', description: 'As an action, you can transform for 1 minute, regaining 10 hit points at the start of each of your turns and gaining other nature-infused benefits.' },
+    ],
+  },
+  {
+    name: 'Oath of Vengeance',
+    description: 'Vengeance paladins hunt down the wicked with relentless focus, ruthless resolve, and divine pursuit.',
+    bonusSpells: [
+      { level: 3, spells: ['Bane', "Hunter's Mark"] },
+      { level: 5, spells: ['Hold Person', 'Misty Step'] },
+      { level: 9, spells: ['Haste', 'Protection from Energy'] },
+      { level: 13, spells: ['Banishment', 'Dimension Door'] },
+      { level: 17, spells: ['Hold Monster', 'Scrying'] },
+    ],
+    features: [
+      { level: 3, name: 'Channel Divinity: Abjure Enemy', description: 'As an action, choose one creature within 60 feet. It must make a Wisdom saving throw or be frightened and have its speed reduced to 0 for 1 minute.' },
+      { level: 3, name: 'Channel Divinity: Vow of Enmity', description: 'As a bonus action, you can utter a vow of enmity against a creature within 10 feet, gaining advantage on attack rolls against it for 1 minute.' },
+      { level: 7, name: 'Relentless Avenger', description: 'When you hit a creature with an opportunity attack, you can move up to half your speed immediately after the attack without provoking opportunity attacks.' },
+      { level: 15, name: 'Soul of Vengeance', description: 'When a creature under your Vow of Enmity makes an attack, you can use your reaction to make a melee weapon attack against it.' },
+      { level: 20, name: 'Avenging Angel', description: 'As an action, you can sprout wings and emanate an aura of menace for 1 hour, gaining a flying speed of 60 feet and frightening enemies.' },
+    ],
+  },
+];
+
 export const CLASS_DATA: ClassData[] = [
   {
     name: 'Barbarian',
@@ -213,15 +460,15 @@ export const CLASS_DATA: ClassData[] = [
     },
     features: [
       { level: 1, name: 'Spellcasting', description: 'You have learned to untangle and reshape the fabric of reality in harmony with your wishes and music. You know 2 cantrips and 4 spells from the bard spell list.' },
-      { level: 1, name: 'Bardic Inspiration', description: 'You can inspire others through stirring words or music. As a bonus action, you can give one creature other than yourself a Bardic Inspiration die (d6). Once within the next 10 minutes, the creature can roll the die and add the number rolled to one ability check, attack roll, or saving throw. Uses = CHA modifier, recharge on long rest. The die becomes d8 at 5th level, d10 at 10th, d12 at 15th.' },
+      { level: 1, name: 'Bardic Inspiration', description: "You can inspire others through stirring words or music.\nTo do so, you use a bonus action on your turn to choose one creature other than yourself within 60 feet of you who can hear you. That creature gains one Bardic Inspiration die, a d6.\nOnce within the next 10 minutes, the creature can roll the die and add the number rolled to one ability check, attack roll, or saving throw it makes. The creature can wait until after it rolls the d20 before deciding to use the Bardic Inspiration die, but must decide before the DM says whether the roll succeeds or fails. Once the Bardic Inspiration die is rolled, it is lost. A creature can have only one Bardic Inspiration die at a time.\nYou can use this feature a number of times equal to your Charisma modifier (a minimum of once). You regain any expended uses when you finish a long rest.\nYour Bardic Inspiration die changes when you reach certain levels in this class." },
       { level: 2, name: 'Jack of All Trades', description: 'You can add half your proficiency bonus, rounded down, to any ability check you make that doesn\'t already include your proficiency bonus.' },
-      { level: 2, name: 'Song of Rest', description: 'You can use soothing music or oration to help revitalize your wounded allies during a short rest. Each friendly creature who spends hit dice regains an extra 1d6 HP (increases at higher levels).' },
-      { level: 3, name: 'Bard College', description: 'You delve into the advanced techniques of a bard college of your choice (Lore, Valor, etc.). Your choice grants you features at 3rd, 6th, and 14th level.' },
+      { level: 2, name: 'Song of Rest', description: 'You can use soothing music or oration to help revitalize your wounded allies during a short rest. If you or any friendly creatures who can hear your performance regain hit points at the end of the short rest, each of those creatures regains an extra 1d6 hit points.' },
+      { level: 3, name: 'Bard College', description: 'You delve into the advanced techniques of a bard college of your choice: the College of Lore or the College of Valor. Your choice grants you features at 3rd level and again at 6th and 14th level.' },
       { level: 3, name: 'Expertise', description: 'Choose two of your skill proficiencies. Your proficiency bonus is doubled for any ability check you make using either of those skills. At 10th level, choose two more.' },
-      { level: 4, name: 'Ability Score Improvement', description: 'You can increase one ability score by 2, or two ability scores by 1 each. Also at levels 8, 12, 16, and 19.' },
+      { level: 4, name: 'Ability Score Improvement', description: "You can increase one ability score by 2, or two ability scores by 1 each. You can't increase an ability score above 20 using this feature. Also at levels 8, 12, 16, and 19." },
       { level: 5, name: 'Font of Inspiration', description: 'You now regain all your Bardic Inspiration uses when you finish a short or long rest.' },
-      { level: 6, name: 'Countercharm', description: 'You gain the ability to use musical notes or words of power to disrupt mind-influencing effects. As an action, you can start a performance. Each friendly creature within 30 feet has advantage on saving throws against being frightened or charmed.' },
-      { level: 10, name: 'Magical Secrets', description: 'You have plundered magical knowledge from a wide spectrum of disciplines. Choose two spells from any class. These count as bard spells for you. You gain two more at 14th and 18th level.' },
+      { level: 6, name: 'Countercharm', description: 'You gain the ability to use musical notes or words of power to disrupt mind-influencing effects. As an action, you can start a performance that lasts until the end of your next turn. During that time, you and any friendly creatures within 30 feet of you have advantage on saving throws against being frightened or charmed. A creature must be able to hear you to gain this benefit. The performance ends early if you are incapacitated or silenced or if you voluntarily end it (no action required).' },
+      { level: 10, name: 'Magical Secrets', description: 'You have plundered magical knowledge from a wide spectrum of disciplines. Choose two spells from any class, including this one. A spell you choose must be of a level you can cast or a cantrip. The chosen spells count as bard spells for you. Also at levels 14 and 18.' },
       { level: 20, name: 'Superior Inspiration', description: 'When you roll initiative and have no uses of Bardic Inspiration left, you regain one use.' },
     ],
   },
@@ -277,7 +524,7 @@ export const CLASS_DATA: ClassData[] = [
       { level: 1, name: 'Druidic', description: 'You know Druidic, the secret language of druids. You can speak the language and use it to leave hidden messages.' },
       { level: 1, name: 'Spellcasting', description: 'Drawing on divine essence of nature, you can cast druid spells. You prepare WIS modifier + druid level spells from the druid spell list after each long rest.' },
       { level: 2, name: 'Wild Shape', description: 'You can use your action to magically assume the shape of a beast you have seen before. CR limit: 1/4 at L2 (no swim/fly speed), 1/2 at L4 (no fly speed), 1 at L8. You can use this feature twice per short or long rest.' },
-      { level: 2, name: 'Druid Circle', description: 'You choose to identify with a circle of druids (Circle of the Land, Circle of the Moon, etc.). Your choice grants you features at 2nd, 6th, 10th, and 14th level.' },
+      { level: 2, name: 'Druid Circle', description: 'You choose to identify with a circle of druids (Circle of the Land or Circle of the Moon). Your choice grants you features at 2nd, 6th, 10th, and 14th level.' },
       { level: 4, name: 'Ability Score Improvement', description: 'You can increase one ability score by 2, or two ability scores by 1 each. Also at levels 8, 12, 16, and 19.' },
       { level: 18, name: 'Timeless Body', description: 'The primal magic that you wield causes you to age more slowly. For every 10 years that pass, your body ages only 1 year.' },
       { level: 18, name: 'Beast Spells', description: 'You can cast many of your druid spells in any shape you assume using Wild Shape. You can perform the somatic and verbal components of a druid spell while in a beast shape.' },
@@ -299,7 +546,7 @@ export const CLASS_DATA: ClassData[] = [
       { level: 1, name: 'Fighting Style', description: 'You adopt a particular style of fighting as your specialty. Choose one: Archery (+2 to ranged attack rolls), Defense (+1 AC while wearing armor), Dueling (+2 damage with one-handed weapon when no other weapon in hand), Great Weapon Fighting, Protection, Two-Weapon Fighting.' },
       { level: 1, name: 'Second Wind', description: 'You have a limited well of stamina that you can draw on to protect yourself from harm. On your turn, you can use a bonus action to regain hit points equal to 1d10 + your fighter level. Once you use this feature, you must finish a short or long rest before you can use it again.' },
       { level: 2, name: 'Action Surge', description: 'You can push yourself beyond your normal limits for a moment. On your turn, you can take one additional action. Once you use this feature, you must finish a short or long rest before you can use it again (twice at level 17).' },
-      { level: 3, name: 'Martial Archetype', description: 'You choose an archetype that you strive to emulate in your combat styles and techniques (Champion, Battle Master, Eldritch Knight, etc.). The archetype you choose grants you features at 3rd, 7th, 10th, 15th, and 18th level.' },
+      { level: 3, name: 'Martial Archetype', description: 'You choose an archetype that you strive to emulate in your combat styles and techniques (Champion, Battle Master, or Eldritch Knight). The archetype you choose grants you features at 3rd, 7th, 10th, 15th, and 18th level.' },
       { level: 4, name: 'Ability Score Improvement', description: 'You can increase one ability score by 2, or two ability scores by 1 each. Also at levels 6, 8, 12, 14, 16, and 19.' },
       { level: 5, name: 'Extra Attack', description: 'You can attack twice, instead of once, whenever you take the Attack action on your turn. The number of attacks increases to three at 11th level and to four at 20th level.' },
       { level: 9, name: 'Indomitable', description: 'You can reroll a saving throw that you fail. If you do so, you must use the new roll, and you can\'t use this feature again until you finish a long rest (two uses at L13, three at L17).' },
@@ -321,7 +568,7 @@ export const CLASS_DATA: ClassData[] = [
       { level: 1, name: 'Martial Arts', description: 'Your practice of martial arts gives you mastery of combat styles that use unarmed strikes and monk weapons. You can use DEX instead of STR, use d4 unarmed damage (increases: d6 at 5, d8 at 11, d10 at 17), and make an unarmed strike as a bonus action when you attack with a monk weapon.' },
       { level: 2, name: 'Ki', description: 'Your training allows you to harness the mystic energy of ki. You have ki points equal to your monk level. You regain spent ki on a short or long rest. Flurry of Blows: spend 1 ki after Attack action to make 2 unarmed strikes as bonus action. Patient Defense: spend 1 ki to Dodge as bonus action. Step of the Wind: spend 1 ki to Dash or Disengage as bonus action.' },
       { level: 2, name: 'Unarmored Movement', description: 'Your speed increases by 10 feet while you aren\'t wearing armor or wielding a shield. This increases by 5 feet at 6th, 10th, 14th, and 18th level.' },
-      { level: 3, name: 'Monastic Tradition', description: 'You commit yourself to a monastic tradition (Way of the Open Hand, Way of Shadow, Way of the Four Elements, etc.). Your tradition grants you features at 3rd, 6th, 11th, and 17th level.' },
+      { level: 3, name: 'Monastic Tradition', description: 'You commit yourself to a monastic tradition (Way of the Open Hand, Way of Shadow, or Way of the Four Elements). Your tradition grants you features at 3rd, 6th, 11th, and 17th level.' },
       { level: 3, name: 'Deflect Missiles', description: 'You can use your reaction to deflect or catch the missile when you are hit by a ranged weapon attack. The damage is reduced by 1d10 + your DEX modifier + your monk level. If you reduce it to 0, you can spend 1 ki to throw the missile back.' },
       { level: 4, name: 'Ability Score Improvement', description: 'You can increase one ability score by 2, or two ability scores by 1 each. Also at levels 8, 12, 16, and 19.' },
       { level: 4, name: 'Slow Fall', description: 'You can use your reaction when you fall to reduce any falling damage you take by an amount equal to five times your monk level.' },
@@ -361,7 +608,7 @@ export const CLASS_DATA: ClassData[] = [
       { level: 2, name: 'Spellcasting', description: 'You have learned to draw on divine magic through meditation and prayer to cast paladin spells. You prepare CHA modifier + half paladin level spells.' },
       { level: 2, name: 'Divine Smite', description: 'When you hit a creature with a melee weapon attack, you can expend one spell slot to deal extra radiant damage: 2d8 for a 1st-level slot + 1d8 per slot level above 1st. +1d8 vs undead or fiends. Max 5d8.' },
       { level: 3, name: 'Divine Health', description: 'The divine magic flowing through you makes you immune to disease.' },
-      { level: 3, name: 'Sacred Oath', description: 'You swear the oath that binds you as a paladin forever (Oath of Devotion, Oath of the Ancients, Oath of Vengeance, Oathbreaker). Your oath grants you features at 3rd, 7th, 15th, and 20th level, and a set of oath spells.' },
+      { level: 3, name: 'Sacred Oath', description: 'You swear the oath that binds you as a paladin forever (Oath of Devotion, Oath of the Ancients, or Oath of Vengeance). Your oath grants you features at 3rd, 7th, 15th, and 20th level, and a set of oath spells.' },
       { level: 4, name: 'Ability Score Improvement', description: 'You can increase one ability score by 2, or two ability scores by 1 each. Also at levels 8, 12, 16, and 19.' },
       { level: 5, name: 'Extra Attack', description: 'You can attack twice, instead of once, whenever you take the Attack action on your turn.' },
       { level: 6, name: 'Aura of Protection', description: 'Whenever you or a friendly creature within 10 feet of you must make a saving throw, the creature gains a bonus equal to your Charisma modifier (minimum +1). At 18th level, the range increases to 30 feet.' },
@@ -395,7 +642,7 @@ export const CLASS_DATA: ClassData[] = [
       { level: 1, name: 'Natural Explorer', description: 'You are particularly familiar with one type of natural environment and are adept at traveling and surviving in such regions. Choose a Favored Terrain (arctic, coast, desert, forest, grassland, mountain, swamp, or Underdark). When you make an Intelligence or Wisdom check related to your Favored Terrain you add double your proficiency bonus.' },
       { level: 2, name: 'Fighting Style', description: 'You adopt a style of fighting. Choose from Archery, Defense, Dueling, or Two-Weapon Fighting.' },
       { level: 2, name: 'Spellcasting', description: 'You have learned to use the magical essence of nature to cast spells. You know 2 ranger spells at 2nd level and learn more as you level up.' },
-      { level: 3, name: 'Ranger Archetype', description: 'You choose an archetype that you strive to emulate (Hunter, Beast Master, Gloom Stalker, etc.). Your archetype grants features at 3rd, 7th, 11th, and 15th level.' },
+      { level: 3, name: 'Ranger Archetype', description: 'You choose an archetype that you strive to emulate (Hunter or Beast Master). Your archetype grants features at 3rd, 7th, 11th, and 15th level.' },
       { level: 3, name: 'Primeval Awareness', description: 'You can use your action and expend one ranger spell slot to focus your awareness on the region around you. For 1 minute per level of the slot, you can sense whether the following types of creatures are present within 1 mile: aberrations, celestials, dragons, elementals, fey, fiends, and undead.' },
       { level: 4, name: 'Ability Score Improvement', description: 'You can increase one ability score by 2, or two ability scores by 1 each. Also at levels 8, 12, 16, and 19.' },
       { level: 5, name: 'Extra Attack', description: 'You can attack twice, instead of once, whenever you take the Attack action on your turn.' },
@@ -421,7 +668,7 @@ export const CLASS_DATA: ClassData[] = [
       { level: 1, name: 'Sneak Attack', description: 'You know how to strike subtly and exploit a foe\'s distraction. Once per turn, you can deal extra damage to one creature you hit if you have advantage on the attack roll or if another enemy of the target is within 5 feet of it. Damage: 1d6 at L1, increasing by 1d6 every other level up to 10d6 at L19.' },
       { level: 1, name: "Thieves' Cant", description: 'During your rogue training you learned thieves\' cant, a secret mix of dialect, jargon, and code that allows you to hide messages in seemingly normal conversation.' },
       { level: 2, name: 'Cunning Action', description: 'Your quick thinking and agility allow you to move and act quickly. You can take a bonus action on each of your turns to Dash, Disengage, or Hide.' },
-      { level: 3, name: 'Roguish Archetype', description: 'You choose an archetype that you emulate in the exercise of your rogue abilities (Thief, Assassin, Arcane Trickster, etc.). Your archetype grants you features at 3rd, 9th, 13th, and 17th level.' },
+      { level: 3, name: 'Roguish Archetype', description: 'You choose an archetype that you emulate in the exercise of your rogue abilities (Thief, Assassin, or Arcane Trickster). Your archetype grants you features at 3rd, 9th, 13th, and 17th level.' },
       { level: 4, name: 'Ability Score Improvement', description: 'You can increase one ability score by 2, or two ability scores by 1 each. Also at levels 8, 10, 12, 16, and 19.' },
       { level: 5, name: 'Uncanny Dodge', description: 'When an attacker that you can see hits you with an attack, you can use your reaction to halve the attack\'s damage against you.' },
       { level: 7, name: 'Evasion', description: 'When you are subjected to an effect that allows you to make a Dexterity saving throw to take only half damage, you instead take no damage if you succeed on the saving throw, and only half damage if you fail.' },
@@ -454,7 +701,7 @@ export const CLASS_DATA: ClassData[] = [
     },
     features: [
       { level: 1, name: 'Spellcasting', description: 'An event in your past, or in the life of a parent or ancestor, left an indelible mark on you, infusing you with arcane magic. You know 4 cantrips and 2 spells. Charisma is your spellcasting ability.' },
-      { level: 1, name: 'Sorcerous Origin', description: 'Choose a sorcerous origin which describes the source of your innate magical power: Draconic Bloodline, Wild Magic, Storm Sorcery, etc. Your choice grants you features at 1st, 6th, 14th, and 18th level.' },
+      { level: 1, name: 'Sorcerous Origin', description: 'Choose a sorcerous origin which describes the source of your innate magical power: Draconic Bloodline or Wild Magic. Your choice grants you features at 1st, 6th, 14th, and 18th level.' },
       { level: 2, name: 'Font of Magic', description: 'You tap into a deep wellspring of magic within yourself. You have sorcery points equal to your sorcerer level. You can convert sorcery points to spell slots and vice versa. Regain on long rest.' },
       { level: 2, name: 'Flexible Casting', description: 'You can use your sorcery points to gain additional spell slots, or sacrifice spell slots to gain additional sorcery points. Bonus: 2pts→L1, 3→L2, 5→L3, 6→L4, 7→L5. Convert slot: L1→1pt, L2→2, L3→3, L4→4, L5→5.' },
       { level: 3, name: 'Metamagic', description: 'You gain the ability to twist your spells to suit your needs. Choose 2 options from: Careful, Distant, Empowered, Extended, Heightened, Quickened, Subtle, Twinned Spell. You gain one more at 10th and 17th level.' },
@@ -479,12 +726,12 @@ export const CLASS_DATA: ClassData[] = [
       prepares: false,
       spellListKey: 'warlock',
       cantripsKnown: [2,2,2,3,3,3,3,3,3,4,4,4,4,4,4,4,4,4,4,4],
-      spellsKnown: [2,3,4,5,6,7,8,9,10,10,11,11,12,12,14,15,15,15,15,15],
+      spellsKnown: [2,3,4,5,6,7,8,9,10,10,11,11,12,12,13,13,14,14,15,15],
       slots: Array(20).fill([0,0,0,0,0,0,0,0,0]),
     },
     features: [
-      { level: 1, name: 'Otherworldly Patron', description: 'You have struck a bargain with an otherworldly being of your choice: The Archfey, The Fiend, The Great Old One, etc. Your choice grants you features at 1st, 6th, 10th, and 14th level.' },
-      { level: 1, name: 'Pact Magic', description: 'Your arcane research and the magic bestowed on you by your patron have given you facility with spells. You have spell slots that are regained on a short or long rest. All warlock spell slots are the same level (Pact Slot Level), which increases as you level up. Slots: 1 (L1-2), 2 (L3-4), 2 (L5-6), 3 (L11-16), 4 (L17-20). Slot level: 1st (L1-2), 2nd (L3-4), 3rd (L5-6), 4th (L7-8), 5th (L9+).' },
+      { level: 1, name: 'Otherworldly Patron', description: 'You have struck a bargain with an otherworldly being of your choice: the Archfey, the Fiend, or the Great Old One. Your choice grants you features at 1st, 6th, 10th, and 14th level.' },
+      { level: 1, name: 'Pact Magic', description: 'Your arcane research and the magic bestowed on you by your patron have given you facility with spells. You have warlock spell slots that are regained on a short or long rest. All warlock spell slots are the same level (Pact Slot Level), which increases as you level up. You have one pact slot at 1st level, two at 2nd-10th level, three at 11th-16th level, and four at 17th-20th level. Your pact slot level is 1st at 1st-2nd level, 2nd at 3rd-4th level, 3rd at 5th-6th level, 4th at 7th-8th level, and 5th at 9th level and higher.' },
       { level: 2, name: 'Eldritch Invocations', description: 'In your study of occult lore, you have unearthed eldritch invocations, fragments of forbidden knowledge that imbue you with an abiding magical ability. You gain 2 invocations at level 2. You gain more as you level up (total of 8 by L15).' },
       { level: 3, name: 'Pact Boon', description: 'Your otherworldly patron bestows a gift upon you for your loyal service. Choose one: Pact of the Chain (familiar), Pact of the Blade (magical weapon), Pact of the Tome (Book of Shadows with 3 cantrips).' },
       { level: 4, name: 'Ability Score Improvement', description: 'You can increase one ability score by 2, or two ability scores by 1 each. Also at levels 8, 12, 16, and 19.' },
@@ -556,6 +803,59 @@ function expandFeature(feature: ClassFeature): ClassFeature[] {
     ];
   }
 
+  if (feature.name === 'Bardic Inspiration') {
+    return [
+      {
+        level: 1,
+        name: 'Bardic Inspiration (d6)',
+        description:
+          "You can inspire others through stirring words or music.\nTo do so, you use a bonus action on your turn to choose one creature other than yourself within 60 feet of you who can hear you. That creature gains one Bardic Inspiration die, a d6.\nOnce within the next 10 minutes, the creature can roll the die and add the number rolled to one ability check, attack roll, or saving throw it makes. The creature can wait until after it rolls the d20 before deciding to use the Bardic Inspiration die, but must decide before the DM says whether the roll succeeds or fails. Once the Bardic Inspiration die is rolled, it is lost. A creature can have only one Bardic Inspiration die at a time.\nYou can use this feature a number of times equal to your Charisma modifier (a minimum of once). You regain any expended uses when you finish a long rest.",
+      },
+      {
+        level: 5,
+        name: 'Bardic Inspiration (d8)',
+        description:
+          "Your Bardic Inspiration die becomes a d8. You can inspire others through stirring words or music as a bonus action, granting one creature within 60 feet who can hear you a Bardic Inspiration die. The die can be added to one ability check, attack roll, or saving throw within 10 minutes.",
+      },
+      {
+        level: 10,
+        name: 'Bardic Inspiration (d10)',
+        description:
+          "Your Bardic Inspiration die becomes a d10. You can inspire others through stirring words or music as a bonus action, granting one creature within 60 feet who can hear you a Bardic Inspiration die. The die can be added to one ability check, attack roll, or saving throw within 10 minutes.",
+      },
+      {
+        level: 15,
+        name: 'Bardic Inspiration (d12)',
+        description:
+          "Your Bardic Inspiration die becomes a d12. You can inspire others through stirring words or music as a bonus action, granting one creature within 60 feet who can hear you a Bardic Inspiration die. The die can be added to one ability check, attack roll, or saving throw within 10 minutes.",
+      },
+    ];
+  }
+
+  if (feature.name === 'Song of Rest') {
+    return [
+      { level: 2, name: 'Song of Rest (d6)', description: 'You can use soothing music or oration to help revitalize your wounded allies during a short rest. If you or any friendly creatures who can hear your performance regain hit points at the end of the short rest, each of those creatures regains an extra 1d6 hit points.' },
+      { level: 9, name: 'Song of Rest (d8)', description: 'Your Song of Rest improves to 1d8. If you or any friendly creatures who can hear your performance regain hit points at the end of a short rest, each of those creatures regains an extra 1d8 hit points.' },
+      { level: 13, name: 'Song of Rest (d10)', description: 'Your Song of Rest improves to 1d10. If you or any friendly creatures who can hear your performance regain hit points at the end of a short rest, each of those creatures regains an extra 1d10 hit points.' },
+      { level: 17, name: 'Song of Rest (d12)', description: 'Your Song of Rest improves to 1d12. If you or any friendly creatures who can hear your performance regain hit points at the end of a short rest, each of those creatures regains an extra 1d12 hit points.' },
+    ];
+  }
+
+  if (feature.name === 'Expertise' && feature.description.includes('At 10th level')) {
+    return [
+      { level: 3, name: 'Expertise', description: 'Choose two of your skill proficiencies. Your proficiency bonus is doubled for any ability check you make using either of those skills.' },
+      { level: 10, name: 'Expertise', description: 'Choose two more of your skill proficiencies. Your proficiency bonus is doubled for any ability check you make using the chosen skills.' },
+    ];
+  }
+
+  if (feature.name === 'Magical Secrets') {
+    return [10, 14, 18].map(level => ({
+      level,
+      name: 'Magical Secrets',
+      description: 'You have plundered magical knowledge from a wide spectrum of disciplines. Choose two spells from any class, including this one. A spell you choose must be of a level you can cast or a cantrip. The chosen spells count as bard spells for you.',
+    }));
+  }
+
   return [feature];
 }
 
@@ -566,6 +866,9 @@ export function getClassFeatureTimeline(
     barbarianTotemSpirit?: string;
     barbarianAspectSpirit?: string;
     barbarianAttunementSpirit?: string;
+    bardCollege?: string;
+    clericDomain?: string;
+    paladinOath?: string;
   }
 ): ClassFeature[] {
   const cls = CLASS_DATA.find(c => c.name === className);
@@ -589,6 +892,12 @@ export function getClassFeatureTimeline(
             ];
           })()
         : BARBARIAN_PRIMAL_PATHS.find(path => path.name === options.barbarianPath)?.features ?? []
+      : className === 'Bard' && options?.bardCollege
+      ? BARD_COLLEGES.find(college => college.name === options.bardCollege)?.features ?? []
+      : className === 'Cleric' && options?.clericDomain
+      ? CLERIC_DOMAINS.find(domain => domain.name === options.clericDomain)?.features ?? []
+      : className === 'Paladin' && options?.paladinOath
+      ? PALADIN_OATHS.find(oath => oath.name === options.paladinOath)?.features ?? []
       : [];
 
   return [...expanded, ...subclassFeatures].sort((a, b) => {
@@ -605,9 +914,34 @@ export function getFeaturesUpToLevel(
     barbarianTotemSpirit?: string;
     barbarianAspectSpirit?: string;
     barbarianAttunementSpirit?: string;
+    bardCollege?: string;
+    clericDomain?: string;
+    paladinOath?: string;
   }
 ): ClassFeature[] {
   return getClassFeatureTimeline(className, options).filter(f => f.level <= level);
+}
+
+export function getSubclassAutoPreparedSpells(
+  className: string,
+  level: number,
+  options?: {
+    clericDomain?: string;
+    paladinOath?: string;
+  }
+): string[] {
+  const source =
+    className === 'Cleric' && options?.clericDomain
+      ? CLERIC_DOMAINS.find(domain => domain.name === options.clericDomain)
+      : className === 'Paladin' && options?.paladinOath
+      ? PALADIN_OATHS.find(oath => oath.name === options.paladinOath)
+      : undefined;
+
+  if (!source?.bonusSpells) return [];
+
+  return source.bonusSpells
+    .filter(entry => entry.level <= level)
+    .flatMap(entry => entry.spells);
 }
 
 export function getSlotsAtLevel(spellcasting: SpellcastingInfo, charLevel: number): number[] {

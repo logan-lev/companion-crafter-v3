@@ -4,6 +4,10 @@ export interface BackgroundData {
   toolProfs: string[];
   languages: number;
   equipment: string;
+  toolChoiceLabel?: string;
+  toolChoiceOptions?: string[];
+  equipmentChoiceLabel?: string;
+  equipmentChoiceOptions?: string[];
   feature: { name: string; description: string };
   flavorText: string;
   suggestedTraits?: string[];
@@ -11,6 +15,34 @@ export interface BackgroundData {
   suggestedBonds?: string[];
   suggestedFlaws?: string[];
 }
+
+export const BACKGROUND_GAMING_SET_OPTIONS = ['Dice Set', 'Dragonchess Set', 'Playing Card Set', 'Three-Dragon Ante Set'];
+export const BACKGROUND_ARTISAN_TOOL_OPTIONS = [
+  "Alchemist's Supplies",
+  "Brewer's Supplies",
+  "Calligrapher's Supplies",
+  "Carpenter's Tools",
+  "Cartographer's Tools",
+  "Cobbler's Tools",
+  "Cook's Utensils",
+  "Glassblower's Tools",
+  "Jeweler's Tools",
+  "Leatherworker's Tools",
+  "Mason's Tools",
+  "Painter's Supplies",
+  "Potter's Tools",
+  "Smith's Tools",
+  "Tinker's Tools",
+  "Weaver's Tools",
+  "Woodcarver's Tools",
+];
+export const BACKGROUND_MUSICAL_INSTRUMENT_OPTIONS = ['Bagpipes', 'Drum', 'Dulcimer', 'Flute', 'Horn', 'Lute', 'Lyre', 'Pan Flute', 'Shawm', 'Viol'];
+export const CHARLATAN_CON_TOOL_OPTIONS = [
+  'Ten stoppered bottles filled with colored liquid',
+  'Set of weighted dice',
+  'Deck of marked cards',
+  'Signet ring of an imaginary duke',
+];
 
 export const BACKGROUND_DATA: BackgroundData[] = [
   {
@@ -32,6 +64,8 @@ export const BACKGROUND_DATA: BackgroundData[] = [
     toolProfs: ['Disguise Kit', 'Forgery Kit'],
     languages: 0,
     equipment: 'Fine clothes, disguise kit, tools of the con of your choice, 15 gp',
+    equipmentChoiceLabel: 'Choose your tools of the con',
+    equipmentChoiceOptions: CHARLATAN_CON_TOOL_OPTIONS,
     feature: { name: 'False Identity', description: 'You have created a second identity that includes documentation, established acquaintances, and disguises that allow you to assume that persona. Additionally, you can forge documents including official papers and personal letters, as long as you have seen an example of the kind of document or the handwriting you are trying to copy.' },
     flavorText: 'You have always had a talent for making people believe what you want them to believe. You know what people want and use that knowledge to get what you want.',
     suggestedTraits: ['I fall in and out of love easily, and am always pursuing someone.', 'I have a joke for every occasion, especially occasions where humor is inappropriate.', 'Flattery is my preferred trick for getting what I want.', 'I\'m a born gambler who can\'t resist taking a risk for a potential payoff.'],
@@ -44,7 +78,9 @@ export const BACKGROUND_DATA: BackgroundData[] = [
     skillProfs: ['Deception', 'Stealth'],
     toolProfs: ["Thieves' Tools", 'One type of gaming set'],
     languages: 0,
-    equipment: "Crowbar, dark common clothes with hood, thieves' tools, 15 gp",
+    equipment: "Crowbar, dark common clothes with hood, 15 gp",
+    toolChoiceLabel: 'Choose your gaming set proficiency',
+    toolChoiceOptions: BACKGROUND_GAMING_SET_OPTIONS,
     feature: { name: 'Criminal Contact', description: 'You have a reliable and trustworthy contact who acts as your liaison to a network of other criminals. You know how to get messages to and from your contact, even over great distances; specifically, you know the local messengers, corrupt caravan masters, and seedy sailors who can deliver messages for you.' },
     flavorText: 'You are an experienced criminal with a history of breaking the law. You have spent a lot of time among other criminals and still have contacts within the criminal underworld.',
     suggestedTraits: ['I always have a plan for what to do when things go wrong.', 'I am always calm, no matter what the situation. I never raise my voice or let my emotions control me.', 'The first thing I do in a new place is note the locations of everything valuable — or where such things could be hidden.'],
@@ -58,6 +94,8 @@ export const BACKGROUND_DATA: BackgroundData[] = [
     toolProfs: ['Disguise Kit', 'One type of musical instrument'],
     languages: 0,
     equipment: 'Musical instrument, the favor of an admirer, costume, 15 gp',
+    toolChoiceLabel: 'Choose your musical instrument',
+    toolChoiceOptions: BACKGROUND_MUSICAL_INSTRUMENT_OPTIONS,
     feature: { name: 'By Popular Demand', description: 'You can always find a place to perform, usually in an inn or tavern but possibly with a circus, at a theater, or even in a noble\'s court. At such a place, you receive free lodging and food of a modest or comfortable standard, as long as you perform each night. In addition, your performance makes you something of a local figure. When strangers recognize you in a town where you have performed, they typically take a liking to you.' },
     flavorText: 'You thrive in front of an audience. You know how to entrance them, entertain them, and even inspire them. Your poetics can stir the hearts of those who hear you.',
     suggestedTraits: ['I know a story relevant to almost every situation.', 'Whenever I come to a new place, I collect local rumors and spread gossip.', 'I\'m a hopeless romantic, always searching for that "special someone."', 'Nobody stays angry at me or around me for long, since I can defuse any amount of tension.'],
@@ -71,6 +109,8 @@ export const BACKGROUND_DATA: BackgroundData[] = [
     toolProfs: ["Artisan's Tools (one type)", 'Vehicles (Land)'],
     languages: 0,
     equipment: "Artisan's tools, shovel, iron pot, common clothes, 10 gp",
+    toolChoiceLabel: "Choose your artisan's tools",
+    toolChoiceOptions: BACKGROUND_ARTISAN_TOOL_OPTIONS,
     feature: { name: 'Rustic Hospitality', description: 'Since you come from the ranks of the common folk, you fit in among them with ease. You can find a place to hide, rest, or recuperate among other commoners, unless you have shown yourself to be a danger to them. They will shield you from the law or anyone else searching for you, though they will not risk their lives for you.' },
     flavorText: 'You come from a humble social rank, but you are destined for so much more. Already the people of your home village regard you as their champion, and your destiny calls you to stand against the tyrants and monsters that threaten the common folk everywhere.',
     suggestedTraits: ['I judge people by their actions, not their words.', 'If someone is in trouble, I\'m always ready to lend help.', 'When I set my mind to something, I follow through no matter what gets in my way.'],
@@ -84,6 +124,8 @@ export const BACKGROUND_DATA: BackgroundData[] = [
     toolProfs: ["Artisan's Tools (one type)"],
     languages: 1,
     equipment: "Artisan's tools, letter of introduction from guild, traveler's clothes, 15 gp",
+    toolChoiceLabel: "Choose your artisan's tools",
+    toolChoiceOptions: BACKGROUND_ARTISAN_TOOL_OPTIONS,
     feature: { name: 'Guild Membership', description: 'As an established member of a guild, you can rely on certain benefits that membership provides. Your fellow guild members will provide you with lodging and food if necessary, and pay for your funeral if needed. In some cities and towns, a guildhall offers a central place to meet other members of your profession, which can be a good place to meet potential patrons, allies, or hirelings.' },
     flavorText: 'You are a member of an artisan\'s guild, skilled in a particular field and closely associated with other artisans. You are a well-established part of the mercantile world, freed by talent and wealth from the constraints of a feudal social order.',
     suggestedTraits: ['I believe that anything worth doing is worth doing right. I can\'t help it — I\'m a perfectionist.', 'I\'m rude to people who lack my commitment to hard work and fair play.', 'I like to talk at length about my profession.'],
@@ -110,6 +152,8 @@ export const BACKGROUND_DATA: BackgroundData[] = [
     toolProfs: ['One type of gaming set'],
     languages: 1,
     equipment: 'Fine clothes, signet ring, scroll of pedigree, purse with 25 gp',
+    toolChoiceLabel: 'Choose your gaming set proficiency',
+    toolChoiceOptions: BACKGROUND_GAMING_SET_OPTIONS,
     feature: { name: 'Position of Privilege', description: 'Thanks to your noble birth, people are inclined to think the best of you. You are welcome in high society, and people assume you have the right to be wherever you are. The common folk make every effort to accommodate you and avoid your displeasure, and other people of high birth treat you as a member of the same social sphere. You can secure an audience with a local noble if you need to.' },
     flavorText: 'You understand wealth, power, and privilege. You carry a noble title, and your family owns land, collects taxes, and wields significant political influence.',
     suggestedTraits: ['My eloquent flattery makes everyone I talk to feel like the most wonderful and important person in the world.', 'The common folk love me for my kindness and generosity.', 'No one could doubt by looking at my regal bearing that I am a cut above the unwashed masses.'],
@@ -123,6 +167,8 @@ export const BACKGROUND_DATA: BackgroundData[] = [
     toolProfs: ['One type of musical instrument'],
     languages: 1,
     equipment: 'Staff, hunting trap, trophy from an animal you killed, traveler\'s clothes, 10 gp',
+    toolChoiceLabel: 'Choose your musical instrument proficiency',
+    toolChoiceOptions: BACKGROUND_MUSICAL_INSTRUMENT_OPTIONS,
     feature: { name: 'Wanderer', description: 'You have an excellent memory for maps and geography, and you can always recall the general layout of terrain, settlements, and other features around you. In addition, you can find food and fresh water for yourself and up to five other people each day, provided that the land offers berries, small game, water, and so forth.' },
     flavorText: 'You grew up in the wilds, far from civilization and the comforts of town and technology. You\'ve witnessed the migration of herds larger than forests, survived weather that would kill ordinary men, and enjoyed the solitude of being the only thinking creature for miles.',
     suggestedTraits: ['I\'m driven by a wanderlust that led me away from home.', 'I watch over my friends as if they were a litter of newborn pups.', 'I once ran twenty-five miles without stopping to warn my clan of an approaching orc horde. I\'d do it again.'],
@@ -161,7 +207,11 @@ export const BACKGROUND_DATA: BackgroundData[] = [
     skillProfs: ['Athletics', 'Intimidation'],
     toolProfs: ['One type of gaming set', 'Vehicles (Land)'],
     languages: 0,
-    equipment: 'Insignia of rank, trophy from fallen enemy, deck of cards, common clothes, 10 gp',
+    equipment: 'Insignia of rank, trophy from fallen enemy, set of bone dice or deck of cards, common clothes, 10 gp',
+    toolChoiceLabel: 'Choose your gaming set proficiency',
+    toolChoiceOptions: BACKGROUND_GAMING_SET_OPTIONS,
+    equipmentChoiceLabel: 'Choose your gaming set item',
+    equipmentChoiceOptions: ['Set of Bone Dice', 'Deck of Cards'],
     feature: { name: 'Military Rank', description: 'You have a military rank from your career as a soldier. Soldiers loyal to your former military organization still recognize your authority and influence, and they defer to you if they are of a lower rank. You can invoke your rank to exert influence over other soldiers and requisition simple equipment or horses for temporary use. You can also usually gain access to friendly military encampments and fortresses where your rank is recognized.' },
     flavorText: 'War has been your life for as long as you care to remember. You trained as a youth, studied the use of weapons and armor, learned basic survival techniques, including how to stay alive on the battlefield.',
     suggestedTraits: ['I\'m always polite and respectful.', 'I\'m haunted by memories of war. I wake up in the middle of the night screaming.', 'I can stare down a hell hound without flinching.', 'I enjoy being strong and like breaking things.'],
