@@ -28,13 +28,13 @@ export default function SavingThrows({ character, onChange }: Props) {
           const total = base + (prof ? character.proficiencyBonus : 0);
           const sign = total >= 0 ? '+' : '';
           return (
-            <div key={key} className="flex min-w-0 items-center gap-2 rounded border border-[#2a1f00] px-3 py-2">
+            <div key={key} className="flex min-w-0 items-center gap-2 rounded border border-[var(--color-border-subtle)] px-3 py-2">
               <span
                 className={`circle-check ${prof ? 'checked' : ''}`}
                 onClick={() => toggle(key)}
               />
-              <span className="text-sm text-[#f0d080] w-10 shrink-0 text-right">{sign}{total}</span>
-              <span className="min-w-0 flex-1 text-sm text-[#c8a84b] whitespace-nowrap">{ABILITY_NAMES[key]}</span>
+              <span className="text-sm text-[var(--color-text-strong)] w-10 shrink-0 text-right">{sign}{total}</span>
+              <span className="min-w-0 flex-1 text-sm text-[var(--color-text)] whitespace-nowrap">{ABILITY_NAMES[key]}</span>
             </div>
           );
         })}

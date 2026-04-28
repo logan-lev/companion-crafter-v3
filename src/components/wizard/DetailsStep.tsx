@@ -26,8 +26,8 @@ export default function DetailsStep({ state, onChange }: Props) {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h2 className="text-[#f0d080] text-lg font-bold tracking-wide mb-1">Character Details</h2>
-        <p className="text-[#7a6020] text-xs">Give your character a name, define their personality, and write their backstory.</p>
+        <h2 className="text-[var(--color-text-strong)] text-lg font-bold tracking-wide mb-1">Character Details</h2>
+        <p className="text-[var(--color-text-dim)] text-xs">Give your character a name, define their personality, and write their backstory.</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -47,7 +47,7 @@ export default function DetailsStep({ state, onChange }: Props) {
                     <button
                       key={name}
                       onClick={() => onChange({ name })}
-                      className="rounded border border-[#b8962e] bg-[#0d0d0d] px-3 py-1 text-xs text-[#b8962e] hover:bg-[#1a1000]"
+                      className="rounded border border-[var(--color-accent)] bg-[var(--color-surface-3)] px-3 py-1 text-xs text-[var(--color-accent)] hover:bg-[var(--color-hover)]"
                     >
                       {name}
                     </button>
@@ -86,7 +86,7 @@ export default function DetailsStep({ state, onChange }: Props) {
                 <div className="mt-1 flex flex-col gap-0.5">
                   {bg.suggestedTraits.slice(0, 2).map((t, i) => (
                     <button key={i} onClick={() => onChange({ personalityTraits: t })}
-                      className="text-left text-[0.6rem] text-[#7a6020] hover:text-[#b8962e] italic">
+                      className="text-left text-[0.6rem] text-[var(--color-text-dim)] hover:text-[var(--color-accent)] italic">
                       Suggestion: "{t.length > 60 ? t.slice(0, 60) + '...' : t}"
                     </button>
                   ))}
@@ -100,7 +100,7 @@ export default function DetailsStep({ state, onChange }: Props) {
                 className="field-input w-full" rows={2} placeholder="What principles does your character believe in?" />
               {bg?.suggestedIdeals && (
                 <button onClick={() => onChange({ ideals: bg.suggestedIdeals![0] })}
-                  className="text-left text-[0.6rem] text-[#7a6020] hover:text-[#b8962e] italic mt-0.5">
+                  className="text-left text-[0.6rem] text-[var(--color-text-dim)] hover:text-[var(--color-accent)] italic mt-0.5">
                   Suggestion: "{bg.suggestedIdeals[0].slice(0, 60)}..."
                 </button>
               )}
@@ -118,7 +118,7 @@ export default function DetailsStep({ state, onChange }: Props) {
                 className="field-input w-full" rows={2} placeholder="What connects your character to the world?" />
               {bg?.suggestedBonds && (
                 <button onClick={() => onChange({ bonds: bg.suggestedBonds![0] } as Partial<WizardState>)}
-                  className="text-left text-[0.6rem] text-[#7a6020] hover:text-[#b8962e] italic mt-0.5">
+                  className="text-left text-[0.6rem] text-[var(--color-text-dim)] hover:text-[var(--color-accent)] italic mt-0.5">
                   Suggestion: "{bg.suggestedBonds[0].slice(0, 60)}..."
                 </button>
               )}
@@ -130,7 +130,7 @@ export default function DetailsStep({ state, onChange }: Props) {
                 className="field-input w-full" rows={2} placeholder="What weaknesses does your character have?" />
               {bg?.suggestedFlaws && (
                 <button onClick={() => onChange({ flaws: bg.suggestedFlaws![0] } as Partial<WizardState>)}
-                  className="text-left text-[0.6rem] text-[#7a6020] hover:text-[#b8962e] italic mt-0.5">
+                  className="text-left text-[0.6rem] text-[var(--color-text-dim)] hover:text-[var(--color-accent)] italic mt-0.5">
                   Suggestion: "{bg.suggestedFlaws[0].slice(0, 60)}..."
                 </button>
               )}

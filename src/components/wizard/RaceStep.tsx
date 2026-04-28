@@ -75,7 +75,7 @@ function getAdvantageSummary(traits: RaceTrait[]): string[] {
 
 function renderTraitDescription(name: string, description: string) {
   if (name !== 'Tinker') {
-    return <div className="mt-0.5 text-sm leading-6 text-[#9a8040] whitespace-pre-line">{description}</div>;
+    return <div className="mt-0.5 text-sm leading-6 text-[var(--color-text-soft)] whitespace-pre-line">{description}</div>;
   }
 
   const parts = description.split('\n').map(part => part.trim()).filter(Boolean);
@@ -84,23 +84,23 @@ function renderTraitDescription(name: string, description: string) {
   const deviceOptions = parts.slice(2);
 
   return (
-    <div className="mt-1 flex flex-col gap-2 text-sm leading-6 text-[#9a8040]">
+    <div className="mt-1 flex flex-col gap-2 text-sm leading-6 text-[var(--color-text-soft)]">
       <div>{intro}</div>
       {setup && (
-        <div className="rounded border border-[#5a4a1b] bg-[#131000] px-3 py-2 text-[#c8a84b]">
+        <div className="rounded border border-[var(--color-border-muted)] bg-[var(--color-surface-accent)] px-3 py-2 text-[var(--color-text)]">
           {setup}
         </div>
       )}
       {deviceOptions.length > 0 && (
-        <div className="rounded border border-[#5a4a1b] bg-[#0f0f0f] p-3">
-          <div className="mb-2 text-[0.72rem] uppercase tracking-wide text-[#b8962e]">Clockwork Device Options</div>
+        <div className="rounded border border-[var(--color-border-muted)] bg-[var(--color-surface-3)] p-3">
+          <div className="mb-2 text-[0.72rem] uppercase tracking-wide text-[var(--color-accent)]">Clockwork Device Options</div>
           <div className="flex flex-col gap-2">
             {deviceOptions.map(option => {
               const [label, ...rest] = option.split('. ');
               return (
-                <div key={option} className="rounded border border-[#3d3212] bg-[#121212] px-3 py-2">
-                  <div className="text-xs font-bold text-[#f0d080]">{label}</div>
-                  <div className="mt-1 text-[0.82rem] leading-6 text-[#9a8040]">{rest.join('. ')}</div>
+                <div key={option} className="rounded border border-[var(--color-border-faint)] bg-[var(--color-surface-4)] px-3 py-2">
+                  <div className="text-xs font-bold text-[var(--color-text-strong)]">{label}</div>
+                  <div className="mt-1 text-[0.82rem] leading-6 text-[var(--color-text-soft)]">{rest.join('. ')}</div>
                 </div>
               );
             })}
@@ -185,8 +185,8 @@ export default function RaceStep({ state, onChange }: Props) {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h2 className="text-[#f0d080] text-lg font-bold tracking-wide mb-1">Choose Your Race</h2>
-        <p className="text-[#7a6020] text-xs">Your race determines your physical traits, innate abilities, and where you come from.</p>
+        <h2 className="text-[var(--color-text-strong)] text-lg font-bold tracking-wide mb-1">Choose Your Race</h2>
+        <p className="text-[var(--color-text-dim)] text-xs">Your race determines your physical traits, innate abilities, and where you come from.</p>
       </div>
 
       <div className="flex flex-col gap-5">
@@ -199,12 +199,12 @@ export default function RaceStep({ state, onChange }: Props) {
                 onClick={() => selectRace(race)}
                 className={`rounded border px-3 py-3 text-left transition-all ${
                   state.race === race.name
-                    ? 'border-[#f0d080] bg-[#1a1200] text-[#f0d080]'
-                    : 'border-[#b8962e] bg-[#0d0d0d] text-[#b8962e] hover:bg-[#111100] hover:border-[#d4a93a]'
+                    ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)] text-[var(--color-text-strong)]'
+                    : 'border-[var(--color-accent)] bg-[var(--color-surface-3)] text-[var(--color-accent)] hover:bg-[var(--color-hover)] hover:border-[#d4a93a]'
                 }`}
               >
                 <div className="text-sm font-bold">{race.name}</div>
-                <div className="mt-1 text-[0.7rem] text-[#8f7635]">{getRaceCardBonusText(race.name, race.abilityBonus)}</div>
+                <div className="mt-1 text-[0.7rem] text-[var(--color-text-muted)]">{getRaceCardBonusText(race.name, race.abilityBonus)}</div>
               </button>
             ))}
           </div>
@@ -215,8 +215,8 @@ export default function RaceStep({ state, onChange }: Props) {
             <div className="section-box flex flex-col gap-3">
               <div className="flex items-start justify-between">
                 <div>
-                  <h3 className="text-[#f0d080] text-xl font-bold">{previewRace.name}</h3>
-                  <p className="mt-1 text-sm italic leading-6 text-[#7a6020]">{previewRace.flavorText}</p>
+                  <h3 className="text-[var(--color-text-strong)] text-xl font-bold">{previewRace.name}</h3>
+                  <p className="mt-1 text-sm italic leading-6 text-[var(--color-text-dim)]">{previewRace.flavorText}</p>
                 </div>
                 {state.race === previewRace.name && (
                   <span className="text-green-400 text-xs border border-green-700 px-2 py-1 rounded ml-2 flex-shrink-0">Selected ✓</span>
@@ -246,7 +246,7 @@ export default function RaceStep({ state, onChange }: Props) {
               {/* Languages */}
               <div>
                 <div className="field-label mb-1">Languages</div>
-                <div className="text-sm leading-6 text-[#c8a84b]">
+                <div className="text-sm leading-6 text-[var(--color-text)]">
                   {displayedLanguages.length ? displayedLanguages.join(', ') : 'None'}
                 </div>
               </div>
@@ -254,7 +254,7 @@ export default function RaceStep({ state, onChange }: Props) {
               {state.race === 'Half-Elf' && halfElfFlexTrait && (
                 <div>
                   <div className="section-title">Choose Two +1 Ability Bonuses</div>
-                  <div className="mb-2 text-sm leading-6 text-[#9a8040]">{halfElfFlexTrait.description}</div>
+                  <div className="mb-2 text-sm leading-6 text-[var(--color-text-soft)]">{halfElfFlexTrait.description}</div>
                   <div className="grid grid-cols-3 gap-2">
                     {ABILITY_KEYS.filter(k => k !== 'cha').map(k => {
                       const cur = state.halfElfBonuses[k] ?? 0;
@@ -270,8 +270,8 @@ export default function RaceStep({ state, onChange }: Props) {
                           }}
                           className={`p-2 border rounded text-xs font-bold ${
                             cur === 1
-                              ? 'border-[#f0d080] bg-[#1a1200] text-[#f0d080]'
-                              : 'border-[#b8962e] text-[#b8962e] hover:bg-[#1a1000]'
+                              ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)] text-[var(--color-text-strong)]'
+                              : 'border-[var(--color-accent)] text-[var(--color-accent)] hover:bg-[var(--color-hover)]'
                           }`}
                         >
                           +1 {ABILITY_NAMES[k].slice(0, 3)}
@@ -285,7 +285,7 @@ export default function RaceStep({ state, onChange }: Props) {
               {state.race === previewRace.name && raceBonusLanguageCount > 0 && (
                 <div>
                   <div className="section-title">Bonus Languages</div>
-                  <div className="mb-2 text-sm leading-6 text-[#c8a84b]">
+                  <div className="mb-2 text-sm leading-6 text-[var(--color-text)]">
                     Pick {raceBonusLanguageCount} total. Chosen {state.raceLanguageChoices.length}/{raceBonusLanguageCount}.
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -309,10 +309,10 @@ export default function RaceStep({ state, onChange }: Props) {
                           disabled={disabled}
                           className={`rounded border px-3 py-1 text-xs transition-all ${
                             selected
-                              ? 'border-[#f0d080] bg-[#2a1800] text-[#f0d080]'
+                              ? 'border-[var(--color-text-strong)] bg-[var(--color-selected-strong)] text-[var(--color-text-strong)]'
                               : disabled
-                              ? 'cursor-not-allowed border-[#2a1f00] bg-[#101010] text-[#4d4d4d]'
-                              : 'border-[#b8962e] bg-[#0d0d0d] text-[#b8962e] hover:bg-[#1a1000]'
+                              ? 'cursor-not-allowed border-[var(--color-border-subtle)] bg-[var(--color-surface-2)] text-[var(--color-text-dim)]'
+                              : 'border-[var(--color-accent)] bg-[var(--color-surface-3)] text-[var(--color-accent)] hover:bg-[var(--color-hover)]'
                           }`}
                         >
                           {language}
@@ -335,19 +335,19 @@ export default function RaceStep({ state, onChange }: Props) {
                           onClick={() => onChange({ dragonbornAncestry: option.name })}
                           className={`rounded border p-3 text-left transition-all ${
                             selected
-                              ? 'border-[#f0d080] bg-[#1a1200]'
-                              : 'border-[#b8962e] bg-[#0d0d0d] hover:bg-[#111100]'
+                              ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)]'
+                              : 'border-[var(--color-accent)] bg-[var(--color-surface-3)] hover:bg-[var(--color-hover)]'
                           }`}
                         >
-                          <div className="text-sm font-bold text-[#f0d080]">{option.name} Dragon</div>
-                          <div className="mt-1 text-[0.7rem] uppercase tracking-wide text-[#b8962e]">{option.damageType} Resistance</div>
-                          <div className="mt-2 text-[0.72rem] leading-6 text-[#9a8040]">Breath Weapon: {option.breath}</div>
+                          <div className="text-sm font-bold text-[var(--color-text-strong)]">{option.name} Dragon</div>
+                          <div className="mt-1 text-[0.7rem] uppercase tracking-wide text-[var(--color-accent)]">{option.damageType} Resistance</div>
+                          <div className="mt-2 text-[0.72rem] leading-6 text-[var(--color-text-soft)]">Breath Weapon: {option.breath}</div>
                         </button>
                       );
                     })}
                   </div>
                   {selectedDragonbornAncestry && (
-                    <div className="mt-3 text-sm leading-6 text-[#c8a84b]">
+                    <div className="mt-3 text-sm leading-6 text-[var(--color-text)]">
                       Chosen ancestry: {selectedDragonbornAncestry.name}. Your breath weapon and damage resistance both use {selectedDragonbornAncestry.damageType}.
                     </div>
                   )}
@@ -359,11 +359,11 @@ export default function RaceStep({ state, onChange }: Props) {
                 <div className="field-label mb-1">Racial Traits</div>
                 <div className="flex flex-col gap-2">
                   {displayedRaceTraits.map(t => (
-                    <div key={t.name} className="border-l-2 border-[#b8962e] pl-2">
-                      <div className="text-[#f0d080] text-xs font-bold">{t.name}</div>
+                    <div key={t.name} className="border-l-2 border-[var(--color-accent)] pl-2">
+                      <div className="text-[var(--color-text-strong)] text-xs font-bold">{t.name}</div>
                       {renderTraitDescription(t.name, t.description)}
                       {getTraitSpellDetails(t.description).map(detail => (
-                        <div key={detail} className="mt-1 text-[0.72rem] leading-6 text-[#c8a84b]">
+                        <div key={detail} className="mt-1 text-[0.72rem] leading-6 text-[var(--color-text)]">
                           {detail}
                         </div>
                       ))}
@@ -376,7 +376,7 @@ export default function RaceStep({ state, onChange }: Props) {
               {displayedProficiencies.length > 0 && (
                 <div>
                   <div className="field-label mb-1">Proficiencies</div>
-                  <div className="text-sm leading-6 text-[#c8a84b]">
+                  <div className="text-sm leading-6 text-[var(--color-text)]">
                     {displayedProficiencies.join(', ')}
                   </div>
                 </div>
@@ -385,14 +385,14 @@ export default function RaceStep({ state, onChange }: Props) {
               {displayedResistances.length > 0 && (
                 <div>
                   <div className="field-label mb-1">Resistances</div>
-                  <div className="text-sm leading-6 text-[#c8a84b]">{displayedResistances.join(', ')}</div>
+                  <div className="text-sm leading-6 text-[var(--color-text)]">{displayedResistances.join(', ')}</div>
                 </div>
               )}
 
               {displayedAdvantages.length > 0 && (
                 <div>
                   <div className="field-label mb-1">Advantage Rolls</div>
-                  <div className="text-sm leading-6 text-[#c8a84b]">{displayedAdvantages.join(' ')}</div>
+                  <div className="text-sm leading-6 text-[var(--color-text)]">{displayedAdvantages.join(' ')}</div>
                 </div>
               )}
 
@@ -408,12 +408,12 @@ export default function RaceStep({ state, onChange }: Props) {
                           onClick={() => onChange({ dwarfToolProficiency: tool.name })}
                           className={`rounded border p-3 text-left transition-all ${
                             selected
-                              ? 'border-[#f0d080] bg-[#1a1200]'
-                              : 'border-[#b8962e] bg-[#0d0d0d] hover:bg-[#111100]'
+                              ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)]'
+                              : 'border-[var(--color-accent)] bg-[var(--color-surface-3)] hover:bg-[var(--color-hover)]'
                           }`}
                         >
-                          <div className="text-sm font-bold text-[#f0d080]">{tool.name}</div>
-                          <div className="mt-2 text-[0.72rem] leading-6 text-[#9a8040]">{tool.description}</div>
+                          <div className="text-sm font-bold text-[var(--color-text-strong)]">{tool.name}</div>
+                          <div className="mt-2 text-[0.72rem] leading-6 text-[var(--color-text-soft)]">{tool.description}</div>
                         </button>
                       );
                     })}
@@ -436,22 +436,22 @@ export default function RaceStep({ state, onChange }: Props) {
                         })}
                         className={`text-left p-2 border rounded text-xs transition-all ${
                           state.subrace === sub.name
-                            ? 'border-[#f0d080] bg-[#1a1200]'
-                            : 'border-[#b8962e] bg-[#0d0d0d] hover:bg-[#111100]'
+                            ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)]'
+                            : 'border-[var(--color-accent)] bg-[var(--color-surface-3)] hover:bg-[var(--color-hover)]'
                         }`}
                       >
-                        <div className="font-bold text-[#f0d080]">{sub.name}</div>
-                        {sub.flavorText && <div className="mt-1 text-[0.65rem] italic leading-5 text-[#8f7635]">{sub.flavorText}</div>}
-                        <div className="text-[#b8962e] text-[0.6rem]">{bonusString(sub.abilityBonus)}</div>
+                        <div className="font-bold text-[var(--color-text-strong)]">{sub.name}</div>
+                        {sub.flavorText && <div className="mt-1 text-[0.65rem] italic leading-5 text-[var(--color-text-muted)]">{sub.flavorText}</div>}
+                        <div className="text-[var(--color-accent)] text-[0.6rem]">{bonusString(sub.abilityBonus)}</div>
                         <div className="mt-2 flex flex-wrap gap-1">
                           {sub.traits.map(t => (
-                            <div key={t.name} className="rounded border border-[#5a4a1b] px-2 py-0.5 text-[0.62rem] text-[#b8962e]">
+                            <div key={t.name} className="rounded border border-[var(--color-border-muted)] px-2 py-0.5 text-[0.62rem] text-[var(--color-accent)]">
                               {t.name}
                             </div>
                           ))}
                         </div>
                         {sub.proficiencies && sub.proficiencies.length > 0 && (
-                          <div className="mt-2 text-[0.62rem] leading-5 text-[#8f7635]">
+                          <div className="mt-2 text-[0.62rem] leading-5 text-[var(--color-text-muted)]">
                             Proficiencies: {sub.proficiencies.join(', ')}
                           </div>
                         )}
@@ -462,19 +462,19 @@ export default function RaceStep({ state, onChange }: Props) {
               )}
 
               {selectedSubrace && (
-                <div className="section-box border-[#5a4a1b] bg-[#0f0f0f]">
+                <div className="section-box border-[var(--color-border-muted)] bg-[var(--color-surface-3)]">
                   <div className="section-title">Selected Subrace</div>
-                  <div className="text-lg font-bold text-[#f0d080]">{selectedSubrace.name}</div>
+                  <div className="text-lg font-bold text-[var(--color-text-strong)]">{selectedSubrace.name}</div>
                   {selectedSubrace.flavorText && (
-                    <p className="mt-2 text-sm italic leading-6 text-[#8f7635]">{selectedSubrace.flavorText}</p>
+                    <p className="mt-2 text-sm italic leading-6 text-[var(--color-text-muted)]">{selectedSubrace.flavorText}</p>
                   )}
                   <div className="mt-3 flex flex-col gap-2">
                     {selectedSubrace.traits.map(trait => (
-                      <div key={trait.name} className="border-l-2 border-[#b8962e] pl-2">
-                        <div className="text-xs font-bold text-[#f0d080]">{trait.name}</div>
+                      <div key={trait.name} className="border-l-2 border-[var(--color-accent)] pl-2">
+                        <div className="text-xs font-bold text-[var(--color-text-strong)]">{trait.name}</div>
                         {renderTraitDescription(trait.name, trait.description)}
                         {getTraitSpellDetails(trait.description).map(detail => (
-                          <div key={detail} className="mt-1 text-[0.72rem] leading-6 text-[#c8a84b]">
+                          <div key={detail} className="mt-1 text-[0.72rem] leading-6 text-[var(--color-text)]">
                             {detail}
                           </div>
                         ))}
@@ -504,10 +504,10 @@ export default function RaceStep({ state, onChange }: Props) {
                           disabled={!canAdd}
                           className={`text-[0.6rem] px-2 py-0.5 border rounded transition-all ${
                             selected
-                              ? 'border-[#f0d080] bg-[#2a1800] text-[#f0d080]'
+                              ? 'border-[var(--color-text-strong)] bg-[var(--color-selected-strong)] text-[var(--color-text-strong)]'
                               : canAdd
-                              ? 'border-[#b8962e] text-[#b8962e] hover:bg-[#1a1000]'
-                              : 'border-[#2a1f00] text-[#3a2a00] cursor-not-allowed'
+                              ? 'border-[var(--color-accent)] text-[var(--color-accent)] hover:bg-[var(--color-hover)]'
+                              : 'border-[var(--color-border-subtle)] text-[var(--color-text-dim)] cursor-not-allowed'
                           }`}
                         >
                           {skill.name}
@@ -530,13 +530,13 @@ export default function RaceStep({ state, onChange }: Props) {
                           onClick={() => onChange({ highElfCantrip: spell.name })}
                           className={`rounded border p-3 text-left transition-all ${
                             selected
-                              ? 'border-[#f0d080] bg-[#1a1200]'
-                              : 'border-[#b8962e] bg-[#0d0d0d] hover:bg-[#111100]'
+                              ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)]'
+                              : 'border-[var(--color-accent)] bg-[var(--color-surface-3)] hover:bg-[var(--color-hover)]'
                           }`}
                         >
-                          <div className="text-sm font-bold text-[#f0d080]">{spell.name}</div>
-                          <div className="mt-1 text-[0.7rem] uppercase tracking-wide text-[#b8962e]">{spell.school} Cantrip</div>
-                          <div className="mt-2 text-[0.72rem] leading-6 text-[#9a8040]">{spell.description}</div>
+                          <div className="text-sm font-bold text-[var(--color-text-strong)]">{spell.name}</div>
+                          <div className="mt-1 text-[0.7rem] uppercase tracking-wide text-[var(--color-accent)]">{spell.school} Cantrip</div>
+                          <div className="mt-2 text-[0.72rem] leading-6 text-[var(--color-text-soft)]">{spell.description}</div>
                         </button>
                       );
                     })}
@@ -545,7 +545,7 @@ export default function RaceStep({ state, onChange }: Props) {
               )}
             </div>
           ) : (
-            <div className="section-box flex items-center justify-center h-48 text-[#3a2a00] text-sm italic">
+            <div className="section-box flex items-center justify-center h-48 text-[var(--color-text-dim)] text-sm italic">
               Select a race to see details
             </div>
           )}

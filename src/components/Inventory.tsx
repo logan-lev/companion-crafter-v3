@@ -98,20 +98,20 @@ function InventoryList({
             className="text-red-500 text-xs col-span-1 text-center">✕</button>
         </div>
       ))}
-      <div className="mt-4 rounded border border-[#2a1f00] bg-[#0b0b0b] p-3">
+      <div className="mt-4 rounded border border-[var(--color-border-subtle)] bg-[var(--color-surface-2)] p-3">
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => {
               onModeChange(addMode === 'catalog' ? null : 'catalog');
               setShowSuggestions(true);
             }}
-            className={`text-xs border px-3 py-1 transition-all ${addMode === 'catalog' ? 'border-[#f0d080] bg-[#2a1800] text-[#f0d080]' : 'border-[#b8962e] text-[#b8962e] hover:bg-[#1a1500]'}`}
+            className={`text-xs border px-3 py-1 transition-all ${addMode === 'catalog' ? 'border-[var(--color-text-strong)] bg-[var(--color-selected-strong)] text-[var(--color-text-strong)]' : 'border-[var(--color-accent)] text-[var(--color-accent)] hover:bg-[var(--color-hover)]'}`}
           >
             + Add Item
           </button>
           <button
             onClick={() => onModeChange(addMode === 'custom' ? null : 'custom')}
-            className={`text-xs border px-3 py-1 transition-all ${addMode === 'custom' ? 'border-[#f0d080] bg-[#2a1800] text-[#f0d080]' : 'border-[#b8962e] text-[#b8962e] hover:bg-[#1a1500]'}`}
+            className={`text-xs border px-3 py-1 transition-all ${addMode === 'custom' ? 'border-[var(--color-text-strong)] bg-[var(--color-selected-strong)] text-[var(--color-text-strong)]' : 'border-[var(--color-accent)] text-[var(--color-accent)] hover:bg-[var(--color-hover)]'}`}
           >
             + Add Custom
           </button>
@@ -130,7 +130,7 @@ function InventoryList({
                 placeholder={`Search ${title.toLowerCase()}`}
               />
               {showSuggestions && suggestions.length > 0 && (
-                <div className="absolute left-0 right-0 top-full z-20 mt-2 overflow-hidden rounded border border-[#b8962e] bg-[#0f0c04] shadow-[0_18px_40px_rgba(0,0,0,0.45)]">
+                <div className="absolute left-0 right-0 top-full z-20 mt-2 overflow-hidden rounded border border-[var(--color-accent)] bg-[var(--color-surface-pop)] shadow-[0_18px_40px_rgba(0,0,0,0.45)]">
                   {suggestions.map(item => (
                     <button
                       key={item.name}
@@ -138,10 +138,10 @@ function InventoryList({
                         onQueryChange(item.name);
                         setShowSuggestions(false);
                       }}
-                      className="flex w-full items-center justify-between border-b border-[#2a1f00] px-3 py-2 text-left last:border-b-0 hover:bg-[#181100]"
+                      className="flex w-full items-center justify-between border-b border-[var(--color-border-subtle)] px-3 py-2 text-left last:border-b-0 hover:bg-[var(--color-hover)]"
                     >
-                      <span className="text-sm text-[#f0d080]">{item.name}</span>
-                      <span className="text-[0.65rem] uppercase tracking-wide text-[#8f7635]">{item.itemType}</span>
+                      <span className="text-sm text-[var(--color-text-strong)]">{item.name}</span>
+                      <span className="text-[0.65rem] uppercase tracking-wide text-[var(--color-text-muted)]">{item.itemType}</span>
                     </button>
                   ))}
                 </div>
@@ -149,7 +149,7 @@ function InventoryList({
             </div>
 
             <button onClick={onAddCatalog}
-              className="self-start text-xs text-[#b8962e] border border-[#b8962e] px-3 py-1 hover:bg-[#1a1500]">
+              className="self-start text-xs text-[var(--color-accent)] border border-[var(--color-accent)] px-3 py-1 hover:bg-[var(--color-hover)]">
               Add Selected Item
             </button>
           </div>
@@ -196,14 +196,14 @@ function InventoryList({
               placeholder="Notes"
             />
             <button onClick={onAddCustom}
-              className="self-start text-xs text-[#b8962e] border border-[#b8962e] px-3 py-2 hover:bg-[#1a1500]">
+              className="self-start text-xs text-[var(--color-accent)] border border-[var(--color-accent)] px-3 py-2 hover:bg-[var(--color-hover)]">
               Add Custom Item
             </button>
           </div>
         )}
       </div>
       <div className="mt-2 flex justify-end">
-        <span className="text-xs text-[#b8962e]">Total Weight: {totalWeight.toFixed(1)} lb</span>
+        <span className="text-xs text-[var(--color-accent)]">Total Weight: {totalWeight.toFixed(1)} lb</span>
       </div>
     </div>
   );
@@ -305,7 +305,7 @@ export default function Inventory({ character, onChange }: Props) {
                 min={0}
                 value={character.currency[cur]}
                 onChange={(e) => up('currency', { ...character.currency, [cur]: parseInt(e.target.value) || 0 })}
-                className="text-lg font-bold text-center w-full bg-transparent border-none outline-none text-[#f0d080]"
+                className="text-lg font-bold text-center w-full bg-transparent border-none outline-none text-[var(--color-text-strong)]"
               />
               <div className="field-label">{cur.toUpperCase()}</div>
             </div>

@@ -93,7 +93,7 @@ export default function CharacterWizard({ onFinish, onCancel }: Props) {
         <div className="mb-4 flex items-center justify-between gap-4">
           <div>
             <div className="field-label">Creation Flow</div>
-            <div className="mt-1 text-lg font-bold text-[#f0d080]">
+            <div className="mt-1 text-lg font-bold text-[var(--color-text-strong)]">
               Step {stepIndex + 1} of {steps.length}: {currentStep.label}
             </div>
           </div>
@@ -113,21 +113,21 @@ export default function CharacterWizard({ onFinish, onCancel }: Props) {
                 onClick={() => setStepIndex(index)}
                 className={`rounded border px-4 py-4 text-left transition-all ${
                   isActive
-                    ? 'border-[#f0d080] bg-[#1a1200]'
+                    ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)]'
                     : isComplete
-                    ? 'border-[#5a4a1b] bg-[#12100a]'
-                    : 'border-[#2a1f00] bg-[#0d0d0d] hover:border-[#b8962e]'
+                    ? 'border-[var(--color-border-muted)] bg-[var(--color-surface-accent)]'
+                    : 'border-[var(--color-border-subtle)] bg-[var(--color-surface-3)] hover:border-[var(--color-accent)]'
                 }`}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className={`text-[0.78rem] font-bold uppercase tracking-[0.18em] ${isActive ? 'text-[#f0d080]' : 'text-[#b8962e]'}`}>
+                  <span className={`text-[0.78rem] font-bold uppercase tracking-[0.18em] ${isActive ? 'text-[var(--color-text-strong)]' : 'text-[var(--color-accent)]'}`}>
                     {index + 1}. {step.label}
                   </span>
-                  <span className={`text-[0.68rem] ${isComplete ? 'text-green-400' : 'text-[#7a6020]'}`}>
+                  <span className={`text-[0.68rem] ${isComplete ? 'text-green-400' : 'text-[var(--color-text-dim)]'}`}>
                     {isComplete ? 'Done' : `Page ${index + 1}`}
                   </span>
                 </div>
-                <p className="mt-2 text-[0.78rem] leading-6 text-[#8f7635]">{step.description}</p>
+                <p className="mt-2 text-[0.78rem] leading-6 text-[var(--color-text-muted)]">{step.description}</p>
               </button>
             );
           })}
@@ -140,8 +140,8 @@ export default function CharacterWizard({ onFinish, onCancel }: Props) {
             <div className="flex flex-col gap-4 2xl:flex-row 2xl:items-end 2xl:justify-between">
               <div>
                 <div className="field-label">Character Builder</div>
-                <h2 className="text-4xl font-bold text-[#f0d080]">{state.name || 'New Adventurer'}</h2>
-                <p className="mt-2 text-lg text-[#8f7635]">
+                <h2 className="text-4xl font-bold text-[var(--color-text-strong)]">{state.name || 'New Adventurer'}</h2>
+                <p className="mt-2 text-lg text-[var(--color-text-muted)]">
                   Page {stepIndex + 1} of {steps.length}: {currentStep.label}
                 </p>
               </div>
@@ -174,7 +174,7 @@ export default function CharacterWizard({ onFinish, onCancel }: Props) {
           </div>
 
           {currentStep.id !== 'review' && (
-            <div className="flex items-center justify-between gap-3 border-t border-[#2a1f00] pt-2">
+            <div className="flex items-center justify-between gap-3 border-t border-[var(--color-border-subtle)] pt-2">
               <button
                 onClick={goBack}
                 disabled={stepIndex === 0}
@@ -215,9 +215,9 @@ export default function CharacterWizard({ onFinish, onCancel }: Props) {
           <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
             {ABILITY_KEYS.map(key => (
               <div key={key} className="stat-box py-2">
-                <div className="text-[0.6rem] font-bold uppercase text-[#b8962e]">{ABILITY_NAMES[key].slice(0, 3)}</div>
-                <div className="text-lg font-bold text-[#f0d080]">{finalScores[key]}</div>
-                <div className="text-[0.65rem] text-[#8f7635]">{modStr(finalScores[key])}</div>
+                <div className="text-[0.6rem] font-bold uppercase text-[var(--color-accent)]">{ABILITY_NAMES[key].slice(0, 3)}</div>
+                <div className="text-lg font-bold text-[var(--color-text-strong)]">{finalScores[key]}</div>
+                <div className="text-[0.65rem] text-[var(--color-text-muted)]">{modStr(finalScores[key])}</div>
               </div>
             ))}
           </div>
@@ -229,15 +229,15 @@ export default function CharacterWizard({ onFinish, onCancel }: Props) {
           <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
             <div>
               <div className="field-label mb-1">Skills</div>
-              <div className="text-sm leading-6 text-[#c8a84b]">{skillProfs.length ? skillProfs.join(', ') : 'No skill proficiencies selected yet.'}</div>
+              <div className="text-sm leading-6 text-[var(--color-text)]">{skillProfs.length ? skillProfs.join(', ') : 'No skill proficiencies selected yet.'}</div>
             </div>
             <div>
               <div className="field-label mb-1">Other Proficiencies</div>
-              <div className="text-sm leading-6 text-[#c8a84b]">{otherProfs.length ? otherProfs.join(', ') : 'No extra proficiencies yet.'}</div>
+              <div className="text-sm leading-6 text-[var(--color-text)]">{otherProfs.length ? otherProfs.join(', ') : 'No extra proficiencies yet.'}</div>
             </div>
             <div>
               <div className="field-label mb-1">Languages</div>
-              <div className="text-sm leading-6 text-[#c8a84b]">{languages.length ? languages.join(', ') : 'No languages selected yet.'}</div>
+              <div className="text-sm leading-6 text-[var(--color-text)]">{languages.length ? languages.join(', ') : 'No languages selected yet.'}</div>
             </div>
           </div>
           </div>
@@ -247,11 +247,11 @@ export default function CharacterWizard({ onFinish, onCancel }: Props) {
               <div className="section-title">Current Benefits</div>
               <div className="max-h-72 space-y-2 overflow-y-auto">
                 {traits.length ? traits.slice(0, 10).map(entry => (
-                  <div key={entry} className="border-l-2 border-[#b8962e] pl-2 text-sm leading-6 text-[#9a8040]">
+                  <div key={entry} className="border-l-2 border-[var(--color-accent)] pl-2 text-sm leading-6 text-[var(--color-text-soft)]">
                     {entry}
                   </div>
                 )) : (
-                  <div className="text-sm italic text-[#5e4917]">Race, class, and background benefits will appear here as you build.</div>
+                  <div className="text-sm italic text-[var(--color-text-dim)]">Race, class, and background benefits will appear here as you build.</div>
                 )}
               </div>
             </div>
@@ -259,7 +259,7 @@ export default function CharacterWizard({ onFinish, onCancel }: Props) {
             {cls && (
               <div className="section-box">
                 <div className="section-title">Level Progression</div>
-                <div className="mb-3 text-sm text-[#c8a84b]">
+                <div className="mb-3 text-sm text-[var(--color-text)]">
                   {cls.name} level {state.level}
                 </div>
 
@@ -272,8 +272,8 @@ export default function CharacterWizard({ onFinish, onCancel }: Props) {
                           key={level}
                           className={`rounded border px-2 py-0.5 text-[0.7rem] ${
                             level <= state.level
-                              ? 'border-[#f0d080] bg-[#1a1200] text-[#f0d080]'
-                              : 'border-[#5a4a1b] text-[#b8962e]'
+                              ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)] text-[var(--color-text-strong)]'
+                              : 'border-[var(--color-border-muted)] text-[var(--color-accent)]'
                           }`}
                         >
                           Lv {level}
@@ -285,12 +285,12 @@ export default function CharacterWizard({ onFinish, onCancel }: Props) {
 
                 <div className="space-y-3">
                   {futureFeatures.length ? futureFeatures.map(feature => (
-                    <div key={`${feature.level}-${feature.name}`} className="border-l-2 border-[#5a4a1b] pl-3">
-                      <div className="text-xs font-bold text-[#f0d080]">Lv {feature.level} · {feature.name}</div>
-                      <div className="text-sm leading-6 text-[#8f7635]">{feature.description}</div>
+                    <div key={`${feature.level}-${feature.name}`} className="border-l-2 border-[var(--color-border-muted)] pl-3">
+                      <div className="text-xs font-bold text-[var(--color-text-strong)]">Lv {feature.level} · {feature.name}</div>
+                      <div className="text-sm leading-6 text-[var(--color-text-muted)]">{feature.description}</div>
                     </div>
                   )) : (
-                    <div className="text-sm italic text-[#5e4917]">No later-level features to preview yet.</div>
+                    <div className="text-sm italic text-[var(--color-text-dim)]">No later-level features to preview yet.</div>
                   )}
                 </div>
               </div>
@@ -299,20 +299,20 @@ export default function CharacterWizard({ onFinish, onCancel }: Props) {
             {cls?.spellcasting && (
               <div className="section-box">
                 <div className="section-title">Spellcasting Snapshot</div>
-                <div className="space-y-2 text-sm leading-6 text-[#c8a84b]">
+                <div className="space-y-2 text-sm leading-6 text-[var(--color-text)]">
                   <div>
-                    Casting ability: <span className="text-[#f0d080] uppercase">{cls.spellcasting.ability}</span>
+                    Casting ability: <span className="text-[var(--color-text-strong)] uppercase">{cls.spellcasting.ability}</span>
                   </div>
                   <div>
-                    Cantrips: <span className="text-[#f0d080]">{getCantripsKnown(cls.spellcasting, state.level)}</span>
+                    Cantrips: <span className="text-[var(--color-text-strong)]">{getCantripsKnown(cls.spellcasting, state.level)}</span>
                   </div>
                   {cls.spellcasting.spellsKnown && (
                     <div>
-                      Spells known: <span className="text-[#f0d080]">{getSpellsKnown(cls.spellcasting, state.level)}</span>
+                      Spells known: <span className="text-[var(--color-text-strong)]">{getSpellsKnown(cls.spellcasting, state.level)}</span>
                     </div>
                   )}
                   <div>
-                    Slots: <span className="text-[#f0d080]">
+                    Slots: <span className="text-[var(--color-text-strong)]">
                       {getSlotsAtLevel(cls.spellcasting, state.level)
                         .map((count, index) => count > 0 ? `${count}xL${index + 1}` : null)
                         .filter(Boolean)
@@ -320,7 +320,7 @@ export default function CharacterWizard({ onFinish, onCancel }: Props) {
                     </span>
                   </div>
                   <div>
-                    Chosen spells: <span className="text-[#f0d080]">{state.selectedCantrips.length + state.selectedSpells.length}</span>
+                    Chosen spells: <span className="text-[var(--color-text-strong)]">{state.selectedCantrips.length + state.selectedSpells.length}</span>
                   </div>
                 </div>
               </div>

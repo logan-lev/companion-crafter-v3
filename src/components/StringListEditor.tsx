@@ -36,12 +36,12 @@ export default function StringListEditor({
       {title && <div className="section-title">{title}</div>}
       <div className="field-label mb-2">{label}</div>
       {items.length === 0 ? (
-        <div className="mb-3 text-sm italic text-[#7a6020]">{emptyLabel}</div>
+        <div className="mb-3 text-sm italic text-[var(--color-text-dim)]">{emptyLabel}</div>
       ) : (
         <div className="flex flex-col gap-2">
           {items.map((item, index) => (
             <div key={index} className="flex items-center gap-2">
-              <span className="w-7 shrink-0 text-sm font-bold text-[#b8962e]">{index + 1}.</span>
+              <span className="w-7 shrink-0 text-sm font-bold text-[var(--color-accent)]">{index + 1}.</span>
               <input
                 value={item}
                 onChange={(e) => updateItem(index, e.target.value)}
@@ -55,7 +55,7 @@ export default function StringListEditor({
       )}
       <button
         onClick={addItem}
-        className="mt-3 text-xs text-[#b8962e] border border-[#b8962e] px-2 py-1 hover:bg-[#1a1500]"
+        className="mt-3 text-xs text-[var(--color-accent)] border border-[var(--color-accent)] px-2 py-1 hover:bg-[var(--color-hover)]"
       >
         {addLabel}
       </button>

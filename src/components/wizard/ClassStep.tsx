@@ -24,10 +24,10 @@ import {
   EQUIPMENT_DYNAMIC_OPTION_POOLS,
   MUSICAL_INSTRUMENTS,
 } from '../../data/srd-class-equipment';
-import { ABILITY_NAMES, profBonusFromLevel } from '../../data/srd';
+import { ABILITY_NAMES, LANGUAGES, profBonusFromLevel } from '../../data/srd';
 import { SPELL_LIST } from '../../data/srd-spells';
 import type { AbilityKey } from '../../types/character';
-import { getAllSkillProficiencies, getFinalAbilityScores, getRacialBonus } from '../../utils/character-builder';
+import { getAllSkillProficiencies, getFinalAbilityScores, getLanguages, getRacialBonus } from '../../utils/character-builder';
 
 interface Props {
   state: WizardState;
@@ -65,6 +65,12 @@ const SPELLCASTING_TYPE_DETAILS: Record<'full' | 'half' | 'third' | 'pact', stri
   third: 'Third caster: limited spell progression, reaching up to 4th-level spells.',
   pact: 'Pact magic: very few slots that recharge on a short rest and scale to a fixed slot level.',
 };
+
+const CLERIC_KNOWLEDGE_SKILL_OPTIONS = ['Arcana', 'History', 'Nature', 'Religion'];
+const CLERIC_NATURE_SKILL_OPTIONS = ['Animal Handling', 'Nature', 'Survival'];
+const CLERIC_NATURE_CANTRIP_OPTIONS = SPELL_LIST
+  .filter(spell => spell.level === 0 && spell.classes.includes('Druid'))
+  .sort((a, b) => a.name.localeCompare(b.name));
 
 const CLASS_FEATURE_SPELLS: Record<string, SpellDetail[]> = {
   'Spirit Seeker': [
@@ -210,7 +216,7 @@ function getCombinedFeatureEffects(
   className: string,
   features: ClassFeature[]
 ): { resistances: EffectSummary[]; advantages: EffectSummary[] } {
-  if (className !== 'Barbarian') {
+  if (className !== 'Barbarian' && className !== 'Cleric') {
     return { resistances: [], advantages: [] };
   }
 
@@ -274,6 +280,38 @@ function getCombinedFeatureEffects(
         condition: 'While raging',
       });
     }
+
+    if (feature.name === 'Dampen Elements') {
+      resistances.push({
+        label: 'Acid, cold, fire, lightning, and thunder damage',
+        condition: 'When you use your reaction on a creature within 30 feet',
+      });
+    }
+
+    if (feature.name === 'Wrath of the Storm') {
+      advantages.push({
+        label: 'Reactive lightning or thunder rebuke against nearby attackers',
+      });
+    }
+
+    if (feature.name === 'Blessing of the Trickster') {
+      advantages.push({
+        label: 'Dexterity (Stealth) checks',
+        condition: 'For the creature you bless',
+      });
+    }
+
+    if (feature.name === 'Channel Divinity: Invoke Duplicity') {
+      advantages.push({
+        label: 'Attack rolls against a creature when both you and the illusion are within 5 feet of it',
+      });
+    }
+
+    if (feature.name === 'Avatar of Battle') {
+      resistances.push({
+        label: 'Bludgeoning, piercing, and slashing damage from nonmagical weapons',
+      });
+    }
   });
 
   return { resistances, advantages };
@@ -304,6 +342,10 @@ function groupSpellsByLevel(spells: typeof SPELL_LIST): Array<{ level: number; s
     }));
 }
 
+function normalizeFeatureParagraphs(description: string): string[] {
+  return description.split('\n').map(part => part.trim()).filter(Boolean);
+}
+
 function getFeatureSpellDetails(feature: ClassFeature): SpellDetail[] {
   return CLASS_FEATURE_SPELLS[feature.name] ?? [];
 }
@@ -311,6 +353,12 @@ function getFeatureSpellDetails(feature: ClassFeature): SpellDetail[] {
 function isBardCollegeFeature(feature: ClassFeature): boolean {
   return BARD_COLLEGES.some(college =>
     college.features.some(collegeFeature => collegeFeature.level === feature.level && collegeFeature.name === feature.name)
+  );
+}
+
+function isClericDomainFeature(feature: ClassFeature): boolean {
+  return CLERIC_DOMAINS.some(domain =>
+    domain.features.some(domainFeature => domainFeature.level === feature.level && domainFeature.name === feature.name)
   );
 }
 
@@ -335,6 +383,10 @@ export default function ClassStep({ state, onChange }: Props) {
       bardCollege: '',
       clericDomain: '',
       paladinOath: '',
+      clericKnowledgeSkillChoices: [],
+      clericKnowledgeLanguageChoices: [],
+      clericNatureSkillChoice: '',
+      clericNatureCantrip: '',
       bardInstrumentChoices: [],
       bardExpertiseChoices: [],
       bardLoreSkillChoices: [],
@@ -410,7 +462,13 @@ export default function ClassStep({ state, onChange }: Props) {
             paladinOath: '',
           }
         : nextLevel < 1
-        ? { clericDomain: '' }
+        ? {
+            clericDomain: '',
+            clericKnowledgeSkillChoices: [],
+            clericKnowledgeLanguageChoices: [],
+            clericNatureSkillChoice: '',
+            clericNatureCantrip: '',
+          }
         : nextLevel < 6
         ? { barbarianAspectSpirit: '' }
         : nextLevel < 14
@@ -473,6 +531,24 @@ export default function ClassStep({ state, onChange }: Props) {
       onChange({ bardLoreSkillChoices: current.filter(item => item !== skill) });
     } else if (current.length < 3) {
       onChange({ bardLoreSkillChoices: [...current, skill] });
+    }
+  };
+
+  const toggleClericKnowledgeSkill = (skill: string) => {
+    const current = state.clericKnowledgeSkillChoices;
+    if (current.includes(skill)) {
+      onChange({ clericKnowledgeSkillChoices: current.filter(item => item !== skill) });
+    } else if (current.length < 2) {
+      onChange({ clericKnowledgeSkillChoices: [...current, skill] });
+    }
+  };
+
+  const toggleClericKnowledgeLanguage = (language: string) => {
+    const current = state.clericKnowledgeLanguageChoices;
+    if (current.includes(language)) {
+      onChange({ clericKnowledgeLanguageChoices: current.filter(item => item !== language) });
+    } else if (current.length < 2) {
+      onChange({ clericKnowledgeLanguageChoices: [...current, language] });
     }
   };
 
@@ -561,7 +637,9 @@ export default function ClassStep({ state, onChange }: Props) {
         paladinOath: state.paladinOath,
       })
     : [];
-  const baseFeatures = features.filter(feature => !isBarbarianPathFeature(feature) && !isBardCollegeFeature(feature));
+  const baseFeatures = features.filter(
+    feature => !isBarbarianPathFeature(feature) && !isBardCollegeFeature(feature) && !isClericDomainFeature(feature)
+  );
   const unlockedFeatures = features.filter(feature => feature.level <= level);
   const selectedPrimalPath = BARBARIAN_PRIMAL_PATHS.find(path => path.name === state.barbarianPath);
   const selectedBardCollege = BARD_COLLEGES.find(college => college.name === state.bardCollege);
@@ -610,6 +688,27 @@ export default function ClassStep({ state, onChange }: Props) {
     : [];
 
   const allCurrentSkillProficiencies = getAllSkillProficiencies(state);
+  const knownLanguages = new Set(getLanguages(state));
+  const clericHasHeavyArmor =
+    previewClass?.name === 'Cleric' &&
+    Boolean(
+      selectedClericDomain &&
+        ['Life Domain', 'Nature Domain', 'Tempest Domain', 'War Domain'].includes(selectedClericDomain.name)
+    );
+  const clericHasMartialWeapons =
+    previewClass?.name === 'Cleric' &&
+    Boolean(selectedClericDomain && ['Tempest Domain', 'War Domain'].includes(selectedClericDomain.name));
+  const armorWeaponProficiencies = previewClass
+    ? [
+        ...previewClass.armorProf,
+        ...previewClass.weaponProf,
+        ...(previewClass.name === 'Cleric' && clericHasHeavyArmor ? ['Heavy Armor'] : []),
+        ...(previewClass.name === 'Cleric' && clericHasMartialWeapons ? ['Martial Weapons'] : []),
+      ]
+    : [];
+  const availableClericNatureCantrips = CLERIC_NATURE_CANTRIP_OPTIONS.filter(
+    spell => spell.name !== 'Light' || state.clericDomain !== 'Light Domain'
+  );
   const bardExpertiseAllowed = state.className === 'Bard'
     ? unlockedFeatures.filter(feature => feature.name === 'Expertise').length * 2
     : 0;
@@ -644,6 +743,18 @@ export default function ClassStep({ state, onChange }: Props) {
   const subclassAutoPreparedSpellDetails = subclassAutoPreparedSpells
     .map(name => SPELL_LIST.find(spell => spell.name === name))
     .filter((spell): spell is (typeof SPELL_LIST)[number] => Boolean(spell));
+  const clericDomainGrantedCantripDetails =
+    previewClass?.name === 'Cleric' &&
+    selectedClericDomain?.name === 'Light Domain' &&
+    !state.selectedCantrips.includes('Light')
+      ? SPELL_LIST.filter(spell => spell.name === 'Light')
+      : [];
+  const clericNatureChosenCantripDetails =
+    previewClass?.name === 'Cleric' &&
+    selectedClericDomain?.name === 'Nature Domain' &&
+    state.clericNatureCantrip
+      ? SPELL_LIST.filter(spell => spell.name === state.clericNatureCantrip)
+      : [];
   const classCantripOptions = classSpellOptions.filter(spell => spell.level === 0);
   const classLevelSpellOptions = classSpellOptions.filter(spell => spell.level > 0 && spell.level <= Math.max(1, maxSpellLevel));
   const bardMagicalSecretOptions = previewClass?.name === 'Bard'
@@ -665,6 +776,13 @@ export default function ClassStep({ state, onChange }: Props) {
   );
   const bardSecretSelectedNames = [...state.bardMagicalSecretChoices, ...state.bardAdditionalMagicalSecretChoices];
 
+  const isEquipmentOptionAvailable = (choiceKey: string, option: string) => {
+    if (previewClass?.name !== 'Cleric') return true;
+    if (choiceKey === 'cleric-weapon' && option === 'Warhammer') return clericHasMartialWeapons;
+    if (choiceKey === 'cleric-armor' && option === 'Chain Mail') return clericHasHeavyArmor;
+    return true;
+  };
+
   const renderSpellCards = (feature: ClassFeature) => {
     const spells = getFeatureSpellDetails(feature);
     if (!spells.length) return null;
@@ -672,14 +790,14 @@ export default function ClassStep({ state, onChange }: Props) {
     return (
       <div className="mt-3 grid gap-2 lg:grid-cols-2">
         {spells.map(spell => (
-          <div key={`${feature.name}-${spell.name}`} className="rounded border border-[#6b5a24] bg-[#120d02] p-3">
+          <div key={`${feature.name}-${spell.name}`} className="rounded border border-[var(--color-border-strong)] bg-[var(--color-surface-pop)] p-3">
             <div className="flex items-center justify-between gap-2">
-              <div className="text-sm font-bold text-[#f0d080]">{spell.name}</div>
-              <div className="text-[0.68rem] uppercase tracking-wide text-[#b8962e]">
+              <div className="text-sm font-bold text-[var(--color-text-strong)]">{spell.name}</div>
+              <div className="text-[0.68rem] uppercase tracking-wide text-[var(--color-accent)]">
                 {spell.levelLabel}{spell.ritual ? ' · ritual' : ''}
               </div>
             </div>
-            <p className="mt-2 text-sm leading-6 text-[#a38846]">{spell.description}</p>
+            <p className="mt-2 text-sm leading-6 text-[var(--color-text-soft)]">{spell.description}</p>
           </div>
         ))}
       </div>
@@ -689,11 +807,11 @@ export default function ClassStep({ state, onChange }: Props) {
   const renderFeatureDescription = (feature: ClassFeature, unlocked: boolean) => {
     if (feature.name === 'Rage') {
       return (
-        <div className={`mt-2 rounded border border-[#6b5a24] bg-[#120d02] p-4 ${unlocked ? '' : 'opacity-70'}`}>
-          <div className="border-b border-[#6b5a24] pb-2 text-lg font-bold uppercase tracking-[0.22em] text-[#f0d080]">
+        <div className={`mt-2 rounded border border-[var(--color-border-strong)] bg-[var(--color-surface-pop)] p-4 ${unlocked ? '' : 'opacity-70'}`}>
+          <div className="border-b border-[var(--color-border-strong)] pb-2 text-lg font-bold uppercase tracking-[0.22em] text-[var(--color-text-strong)]">
             Rage
           </div>
-          <div className="mt-3 space-y-3 text-[0.98rem] leading-8 text-[#b6974c]">
+          <div className="mt-3 space-y-3 text-[0.98rem] leading-8 text-[var(--color-text-soft)]">
             <p>In battle, you fight with primal ferocity. On your turn, you can enter a rage as a bonus action.</p>
             <div>
               <p className="mb-2">While raging, you gain the following benefits if you aren't wearing heavy armor:</p>
@@ -713,21 +831,21 @@ export default function ClassStep({ state, onChange }: Props) {
 
     if (feature.name === 'Totem Spirit') {
       return (
-        <div className={`mt-2 rounded border border-[#6b5a24] bg-[#120d02] p-4 ${unlocked ? '' : 'opacity-70'}`}>
+        <div className={`mt-2 rounded border border-[var(--color-border-strong)] bg-[var(--color-surface-pop)] p-4 ${unlocked ? '' : 'opacity-70'}`}>
           <div className="mb-3 flex items-center gap-2">
-            <span className="rounded-full border border-[#b8962e] px-3 py-1 text-[0.65rem] font-bold uppercase tracking-[0.2em] text-[#f0d080]">
+            <span className="rounded-full border border-[var(--color-accent)] px-3 py-1 text-[0.65rem] font-bold uppercase tracking-[0.2em] text-[var(--color-text-strong)]">
               Spirit Choice
             </span>
-            <span className="text-sm italic text-[#8f7635]">Pick a totem animal below to unlock the matching feature.</span>
+            <span className="text-sm italic text-[var(--color-text-muted)]">Pick a totem animal below to unlock the matching feature.</span>
           </div>
-          <p className="text-[0.98rem] leading-7 text-[#b6974c]">{feature.description}</p>
+          <p className="text-[0.98rem] leading-7 text-[var(--color-text-soft)]">{feature.description}</p>
           {selectedTotemSpirit ? (
-            <div className="mt-3 rounded border border-[#5a4a1b] bg-[#161005] p-3">
-              <div className="text-sm font-bold text-[#f0d080]">{selectedTotemSpirit.name}</div>
-              <p className="mt-2 text-sm leading-6 text-[#a38846]">{selectedTotemSpirit.description}</p>
+            <div className="mt-3 rounded border border-[var(--color-border-muted)] bg-[var(--color-surface-accent)] p-3">
+              <div className="text-sm font-bold text-[var(--color-text-strong)]">{selectedTotemSpirit.name}</div>
+              <p className="mt-2 text-sm leading-6 text-[var(--color-text-soft)]">{selectedTotemSpirit.description}</p>
             </div>
           ) : (
-            <div className="mt-3 rounded border border-dashed border-[#5a4a1b] bg-[#161005] p-3 text-sm text-[#8f7635]">
+            <div className="mt-3 rounded border border-dashed border-[var(--color-border-muted)] bg-[var(--color-surface-accent)] p-3 text-sm text-[var(--color-text-muted)]">
               Choose a spirit to see the level 3 totem benefit here.
             </div>
           )}
@@ -735,9 +853,47 @@ export default function ClassStep({ state, onChange }: Props) {
       );
     }
 
+    if (feature.name === 'Visions of the Past') {
+      const paragraphs = normalizeFeatureParagraphs(feature.description);
+      const intro = paragraphs[0] ?? '';
+      const recharge = paragraphs[1] ?? '';
+      const objectParagraph = paragraphs[2] ?? '';
+      const areaParagraph = paragraphs[3] ?? '';
+      const objectMatch = objectParagraph.match(/^Object Reading\.\s*(.*?)(?:\s*If the object was owned by another creature.*)$/);
+      const objectFollowupMatch = objectParagraph.match(/(If the object was owned by another creature.*)$/);
+      const areaMatch = areaParagraph.match(/^Area Reading\.\s*(.*?)(?:\s*Significant events typically involve.*)$/);
+      const areaFollowupMatch = areaParagraph.match(/(Significant events typically involve.*)$/);
+      const objectSection = objectMatch?.[1] ?? objectParagraph.replace(/^Object Reading\.\s*/, '');
+      const objectDetails = objectFollowupMatch?.[1] ?? '';
+      const areaSection = areaMatch?.[1] ?? areaParagraph.replace(/^Area Reading\.\s*/, '');
+      const areaDetails = areaFollowupMatch?.[1] ?? '';
+
+      return (
+        <div className={`mt-2 rounded border border-[var(--color-border-strong)] bg-[var(--color-surface-pop)] p-4 ${unlocked ? '' : 'opacity-70'}`}>
+          <div className="border-b border-[var(--color-border-strong)] pb-2 text-lg font-bold uppercase tracking-[0.22em] text-[var(--color-text-strong)]">
+            Visions of the Past
+          </div>
+          <div className="mt-3 space-y-4 text-[0.98rem] leading-8 text-[var(--color-text-soft)]">
+            <p>{intro}</p>
+            <p>{recharge}</p>
+            <div>
+              <div className="text-lg font-bold italic text-[var(--color-text-strong)]">Object Reading.</div>
+              <p className="mt-1">{objectSection}</p>
+              {objectDetails && <p className="mt-2">{objectDetails}</p>}
+            </div>
+            <div>
+              <div className="text-lg font-bold italic text-[var(--color-text-strong)]">Area Reading.</div>
+              <p className="mt-1">{areaSection}</p>
+              {areaDetails && <p className="mt-2">{areaDetails}</p>}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <>
-        <p className={`mt-1 text-[0.98rem] leading-7 ${unlocked ? 'text-[#9a8040]' : 'text-[#6f5b2b]'}`}>{feature.description}</p>
+        <p className={`mt-1 text-[0.98rem] leading-7 ${unlocked ? 'text-[var(--color-text-soft)]' : 'text-[var(--color-text-faint)]'}`}>{feature.description}</p>
         {renderSpellCards(feature)}
       </>
     );
@@ -759,7 +915,7 @@ export default function ClassStep({ state, onChange }: Props) {
 
     return (
       <div className="ml-auto flex flex-wrap items-center gap-1">
-        <span className="text-[0.68rem] uppercase tracking-wide text-[#7a6020]">Spirit</span>
+        <span className="text-[0.68rem] uppercase tracking-wide text-[var(--color-text-dim)]">Spirit</span>
         {BARBARIAN_TOTEM_SPIRITS.map(spirit => {
           const selected = selectedValue === spirit.name;
           return (
@@ -768,8 +924,8 @@ export default function ClassStep({ state, onChange }: Props) {
               onClick={() => onSelect(spirit.name)}
               className={`rounded border px-2 py-1 text-[0.68rem] transition-all ${
                 selected
-                  ? 'border-[#f0d080] bg-[#1a1200] text-[#f0d080]'
-                  : 'border-[#5a4a1b] text-[#b8962e] hover:bg-[#1a1000]'
+                  ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)] text-[var(--color-text-strong)]'
+                  : 'border-[var(--color-border-muted)] text-[var(--color-accent)] hover:bg-[var(--color-hover)]'
               }`}
             >
               {spirit.name}
@@ -795,7 +951,7 @@ export default function ClassStep({ state, onChange }: Props) {
 
     return (
       <div>
-        <div className="mb-2 text-[0.72rem] uppercase tracking-[0.18em] text-[#b8962e]">
+        <div className="mb-2 text-[0.72rem] uppercase tracking-[0.18em] text-[var(--color-accent)]">
           Selected {current}/{max}
         </div>
         {grouped.length ? (
@@ -809,15 +965,15 @@ export default function ClassStep({ state, onChange }: Props) {
                   const selectedInGroup = selectedSpellsInGroup.length;
                   return (
                     <>
-                      <div className="mb-2 flex items-center justify-between gap-2 rounded border border-[#4b2c69] bg-[#170a25] px-3 py-2">
+                      <div className="mb-2 flex items-center justify-between gap-2 rounded border border-[var(--color-spell-border-strong)] bg-[var(--color-spell-surface)] px-3 py-2">
                         <button
                           onClick={() => toggleSpellGroupCollapsed(groupKey)}
                           className="text-left"
                         >
-                          <div className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-[#d6b8ff]">
+                          <div className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-[var(--color-spell-strong)]">
                             {group.level === 0 ? 'Cantrips' : `Level ${group.level} Spells`}
                           </div>
-                          <div className="mt-1 text-[0.66rem] uppercase tracking-wide text-[#8f73ae]">
+                          <div className="mt-1 text-[0.66rem] uppercase tracking-wide text-[var(--color-spell-muted)]">
                             {selectedInGroup} selected · {collapsed ? 'Collapsed' : 'Expanded'}
                           </div>
                         </button>
@@ -827,14 +983,14 @@ export default function ClassStep({ state, onChange }: Props) {
                               onClick={() => {
                                 onClearGroup?.(group.spells.map(spell => spell.name));
                               }}
-                              className="rounded border border-[#6b4a92] px-2 py-1 text-[0.68rem] text-purple-200 transition-all hover:bg-[#24113b]"
+                              className="rounded border border-[var(--color-spell-border)] px-2 py-1 text-[0.68rem] text-[var(--color-spell-strong)] transition-all hover:bg-[var(--color-spell-chip-bg)]"
                             >
                               Clear
                             </button>
                           )}
                           <button
                             onClick={() => toggleSpellGroupCollapsed(groupKey)}
-                            className="rounded border border-[#6b4a92] px-2 py-1 text-[0.68rem] text-purple-200 transition-all hover:bg-[#24113b]"
+                            className="rounded border border-[var(--color-spell-border)] px-2 py-1 text-[0.68rem] text-[var(--color-spell-strong)] transition-all hover:bg-[var(--color-spell-chip-bg)]"
                           >
                             {collapsed ? 'Open' : 'Close'}
                           </button>
@@ -850,12 +1006,12 @@ export default function ClassStep({ state, onChange }: Props) {
                                 onClick={() => onToggle(spell.name)}
                                 className={`rounded border px-3 py-2 text-left text-xs transition-all ${
                                   isSelected
-                                    ? 'border-[#f0d080] bg-[#1a1200] text-[#f0d080]'
-                                    : 'border-[#5a4a1b] text-[#b8962e] hover:bg-[#1a1000]'
+                                    ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)] text-[var(--color-text-strong)]'
+                                    : 'border-[var(--color-border-muted)] text-[var(--color-accent)] hover:bg-[var(--color-hover)]'
                                 }`}
                               >
                                 <div className="font-bold">{spell.name}</div>
-                                <div className="mt-1 text-[0.62rem] uppercase tracking-wide text-[#7a6020]">
+                                <div className="mt-1 text-[0.62rem] uppercase tracking-wide text-[var(--color-text-dim)]">
                                   {spell.school}{selectedMeta?.[spell.name] ? ` · ${selectedMeta[spell.name]}` : ''}
                                 </div>
                               </button>
@@ -866,19 +1022,19 @@ export default function ClassStep({ state, onChange }: Props) {
                       {selectedInGroup > 0 && (
                         <div className="mt-3 grid gap-2 lg:grid-cols-2">
                           {selectedSpellsInGroup.map(spell => (
-                            <div key={`group-detail-${groupPrefix}-${spell.name}`} className="rounded border border-[#6b5a24] bg-[#120d02] p-3">
+                            <div key={`group-detail-${groupPrefix}-${spell.name}`} className="rounded border border-[var(--color-border-strong)] bg-[var(--color-surface-pop)] p-3">
                               <div className="flex items-center justify-between gap-2">
-                                <div className="text-sm font-bold text-[#f0d080]">{spell.name}</div>
-                                <div className="text-[0.68rem] uppercase tracking-wide text-[#b8962e]">
+                                <div className="text-sm font-bold text-[var(--color-text-strong)]">{spell.name}</div>
+                                <div className="text-[0.68rem] uppercase tracking-wide text-[var(--color-accent)]">
                                   {spell.level === 0 ? 'Cantrip' : `Level ${spell.level}`}
                                 </div>
                               </div>
-                              <div className="mt-1 text-[0.68rem] uppercase tracking-wide text-[#7a6020]">
+                              <div className="mt-1 text-[0.68rem] uppercase tracking-wide text-[var(--color-text-dim)]">
                                 {spell.school} · {spell.castingTime} · {spell.range}
                                 {selectedMeta?.[spell.name] ? ` · ${selectedMeta[spell.name]}` : ''}
                               </div>
-                              <p className="mt-2 text-sm leading-6 text-[#a38846]">{spell.description}</p>
-                              {spell.upcast && <p className="mt-2 text-xs leading-5 text-purple-300">{spell.upcast}</p>}
+                              <p className="mt-2 text-sm leading-6 text-[var(--color-text-soft)]">{spell.description}</p>
+                              {spell.upcast && <p className="mt-2 text-xs leading-5 text-[var(--color-spell-strong)]">{spell.upcast}</p>}
                             </div>
                           ))}
                         </div>
@@ -890,48 +1046,81 @@ export default function ClassStep({ state, onChange }: Props) {
             ))}
           </div>
         ) : (
-          <div className="text-sm italic text-[#6f5b2b]">{emptyText}</div>
+          <div className="text-sm italic text-[var(--color-text-faint)]">{emptyText}</div>
         )}
       </div>
     );
   };
 
-  const renderSelectedSpellDetails = (selectedNames: string[], selectedMeta?: Record<string, string>) => {
-    const selectedDetails = selectedNames
-      .map(name => SPELL_LIST.find(spell => spell.name === name))
-      .filter((spell): spell is (typeof SPELL_LIST)[number] => Boolean(spell));
+  const renderCollapsibleSpellDetails = (
+    groupPrefix: string,
+    spells: typeof SPELL_LIST,
+    title: string,
+    intro?: string
+  ) => {
+    const grouped = groupSpellsByLevel(spells);
 
-    if (!selectedDetails.length) return null;
-
-    const grouped = groupSpellsByLevel(selectedDetails);
+    if (!grouped.length) return null;
 
     return (
-      <div className="mt-3 space-y-4">
-        {grouped.map(group => (
-          <div key={`detail-group-${group.level}`}>
-            <div className="mb-2 text-[0.68rem] font-bold uppercase tracking-[0.18em] text-[#7a6020]">
-              {group.level === 0 ? 'Cantrips' : `Level ${group.level} Spells`}
-            </div>
-            <div className="grid gap-2 lg:grid-cols-2">
-              {group.spells.map(spell => (
-                <div key={`detail-${spell.name}`} className="rounded border border-[#6b5a24] bg-[#120d02] p-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="text-sm font-bold text-[#f0d080]">{spell.name}</div>
-                    <div className="text-[0.68rem] uppercase tracking-wide text-[#b8962e]">
-                      {spell.level === 0 ? 'Cantrip' : `Level ${spell.level}`}
-                    </div>
-                  </div>
-                  <div className="mt-1 text-[0.68rem] uppercase tracking-wide text-[#7a6020]">
-                    {spell.school} · {spell.castingTime} · {spell.range}
-                    {selectedMeta?.[spell.name] ? ` · ${selectedMeta[spell.name]}` : ''}
-                  </div>
-                  <p className="mt-2 text-sm leading-6 text-[#a38846]">{spell.description}</p>
-                  {spell.upcast && <p className="mt-2 text-xs leading-5 text-purple-300">{spell.upcast}</p>}
-                </div>
-              ))}
-            </div>
+      <div className="rounded border border-[var(--color-spell-border)] bg-[var(--color-spell-surface)] p-3">
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <div className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--color-spell-strong)]">
+            {title}
           </div>
-        ))}
+          <button
+            onClick={() => toggleAllSpellGroups(groupPrefix, spells)}
+            className="rounded border border-[var(--color-spell-border)] px-2 py-1 text-[0.68rem] text-[var(--color-spell-strong)] transition-all hover:bg-[var(--color-spell-chip-bg)]"
+          >
+            {grouped.every(group => collapsedSpellGroups[`${groupPrefix}-${group.level}`] ?? false) ? 'Open All' : 'Close All'}
+          </button>
+        </div>
+        {intro && <div className="mb-3 text-sm leading-6 text-[var(--color-spell-text)]">{intro}</div>}
+        <div className="space-y-4">
+          {grouped.map(group => {
+            const groupKey = `${groupPrefix}-${group.level}`;
+            const collapsed = collapsedSpellGroups[groupKey] ?? false;
+            return (
+              <div key={`detail-group-${groupPrefix}-${group.level}`}>
+                <div className="mb-2 flex items-center justify-between gap-2 rounded border border-[var(--color-spell-border-strong)] bg-[var(--color-spell-surface)] px-3 py-2">
+                  <button onClick={() => toggleSpellGroupCollapsed(groupKey)} className="text-left">
+                    <div className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-[var(--color-spell-strong)]">
+                      {group.level === 0 ? 'Cantrips' : `Level ${group.level} Spells`}
+                    </div>
+                    <div className="mt-1 text-[0.66rem] uppercase tracking-wide text-[var(--color-spell-muted)]">
+                      {group.spells.length} spell{group.spells.length === 1 ? '' : 's'} · {collapsed ? 'Collapsed' : 'Expanded'}
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => toggleSpellGroupCollapsed(groupKey)}
+                    className="rounded border border-[var(--color-spell-border)] px-2 py-1 text-[0.68rem] text-[var(--color-spell-strong)] transition-all hover:bg-[var(--color-spell-chip-bg)]"
+                  >
+                    {collapsed ? 'Open' : 'Close'}
+                  </button>
+                </div>
+                {!collapsed && (
+                  <div className="grid gap-2 lg:grid-cols-2">
+                    {group.spells.map(spell => (
+                      <div key={`${groupPrefix}-${spell.name}`} className="rounded border border-[var(--color-border-strong)] bg-[var(--color-surface-pop)] p-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="text-sm font-bold text-[var(--color-text-strong)]">{spell.name}</div>
+                          <div className="text-[0.68rem] uppercase tracking-wide text-[var(--color-accent)]">
+                            {spell.level === 0 ? 'Cantrip' : `Level ${spell.level}`}
+                          </div>
+                        </div>
+                        <div className="mt-1 text-[0.68rem] uppercase tracking-wide text-[var(--color-text-dim)]">
+                          {spell.school} · {spell.castingTime} · {spell.range}
+                        </div>
+                        <p className="mt-2 text-sm leading-6 text-[var(--color-text-soft)]">{spell.description}</p>
+                        {spell.upcast && <p className="mt-2 text-xs leading-5 text-[var(--color-spell-strong)]">{spell.upcast}</p>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
     );
   };
@@ -942,8 +1131,8 @@ export default function ClassStep({ state, onChange }: Props) {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h2 className="mb-1 text-lg font-bold tracking-wide text-[#f0d080]">Choose Your Class & Level</h2>
-        <p className="text-xs text-[#7a6020]">Your class is the primary definition of what your character can do.</p>
+        <h2 className="mb-1 text-lg font-bold tracking-wide text-[var(--color-text-strong)]">Choose Your Class & Level</h2>
+        <p className="text-xs text-[var(--color-text-dim)]">Your class is the primary definition of what your character can do.</p>
       </div>
 
       <div className="flex flex-col gap-5">
@@ -957,12 +1146,12 @@ export default function ClassStep({ state, onChange }: Props) {
                   onClick={() => selectClass(cls)}
                   className={`rounded border px-3 py-3 text-left transition-all ${
                     state.className === cls.name
-                      ? 'border-[#f0d080] bg-[#1a1200] text-[#f0d080]'
-                      : 'border-[#b8962e] bg-[#0d0d0d] text-[#b8962e] hover:border-[#d4a93a] hover:bg-[#111100]'
+                      ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)] text-[var(--color-text-strong)]'
+                      : 'border-[var(--color-accent)] bg-[var(--color-surface-3)] text-[var(--color-accent)] hover:border-[#d4a93a] hover:bg-[var(--color-hover)]'
                   }`}
                 >
                   <div className="text-sm font-bold">{cls.name}</div>
-                  <div className="mt-1 text-[0.72rem] text-[#8f7635]">d{cls.hitDie} · {cls.primaryAbility}</div>
+                  <div className="mt-1 text-[0.72rem] text-[var(--color-text-muted)]">d{cls.hitDie} · {cls.primaryAbility}</div>
                 </button>
               ))}
             </div>
@@ -977,9 +1166,9 @@ export default function ClassStep({ state, onChange }: Props) {
                     max={20}
                     value={level}
                     onChange={e => handleLevelChange(parseInt(e.target.value, 10))}
-                    className="flex-1 accent-[#b8962e]"
+                    className="flex-1 accent-[var(--color-accent)]"
                   />
-                  <span className="w-10 text-center text-lg font-bold text-[#f0d080]">{level}</span>
+                  <span className="w-10 text-center text-lg font-bold text-[var(--color-text-strong)]">{level}</span>
                 </div>
               </div>
             )}
@@ -991,8 +1180,8 @@ export default function ClassStep({ state, onChange }: Props) {
             <div className="section-box flex flex-col gap-4">
               <div className="flex items-start justify-between">
                 <div>
-                  <h3 className="text-xl font-bold text-[#f0d080]">{previewClass.name}</h3>
-                  <p className="mt-1 text-sm italic leading-6 text-[#7a6020]">{previewClass.flavorText}</p>
+                  <h3 className="text-xl font-bold text-[var(--color-text-strong)]">{previewClass.name}</h3>
+                  <p className="mt-1 text-sm italic leading-6 text-[var(--color-text-dim)]">{previewClass.flavorText}</p>
                 </div>
                 <span className="ml-2 rounded border border-green-700 px-2 py-1 text-xs text-green-400">Selected ✓</span>
               </div>
@@ -1007,7 +1196,7 @@ export default function ClassStep({ state, onChange }: Props) {
                   <div className="field-label">Primary Ability</div>
                 </div>
                 <div className="stat-box lg:col-span-2">
-                  <div className="text-xs font-bold text-[#f0d080]">{previewClass.savingThrows.map(s => ABILITY_NAMES[s]).join(', ')}</div>
+                  <div className="text-xs font-bold text-[var(--color-text-strong)]">{previewClass.savingThrows.map(s => ABILITY_NAMES[s]).join(', ')}</div>
                   <div className="field-label">Saving Throw Proficiencies</div>
                 </div>
                 <div className="stat-box lg:col-span-4">
@@ -1030,12 +1219,12 @@ export default function ClassStep({ state, onChange }: Props) {
               )}
 
               {spellcasting && (
-                <div className="rounded border border-purple-900 bg-[#0b0216] p-4">
-                  <div className="section-title text-purple-200">Spellcasting</div>
+                <div className="rounded border border-[var(--color-spell-border-strong)] bg-[var(--color-spell-panel)] p-4">
+                  <div className="section-title text-[var(--color-spell-strong)]">Spellcasting</div>
                   <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1.2fr)_320px]">
                     <div className="space-y-4">
-                      <div className="rounded border border-purple-950 bg-[#11051f] p-3">
-                        <div className="text-xs font-bold uppercase tracking-[0.18em] text-purple-300">
+                      <div className="rounded border border-[var(--color-spell-border)] bg-[var(--color-spell-surface)] p-3">
+                        <div className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--color-spell-strong)]">
                           {spellcasting.type === 'full'
                             ? 'Full Caster'
                             : spellcasting.type === 'half'
@@ -1044,7 +1233,7 @@ export default function ClassStep({ state, onChange }: Props) {
                             ? 'Third Caster'
                             : 'Pact Magic'}
                         </div>
-                        <p className="mt-2 text-sm leading-6 text-[#b8a0d0]">
+                        <p className="mt-2 text-sm leading-6 text-[var(--color-spell-text)]">
                           {SPELLCASTING_TYPE_DETAILS[spellcasting.type]}
                         </p>
                         <div className="mt-3 grid grid-cols-2 gap-2">
@@ -1067,14 +1256,14 @@ export default function ClassStep({ state, onChange }: Props) {
                         </div>
                       </div>
 
-                      <div className="rounded border border-purple-950 bg-[#11051f] p-3">
+                      <div className="rounded border border-[var(--color-spell-border)] bg-[var(--color-spell-surface)] p-3">
                         <div className="mb-2 flex items-center justify-between gap-2">
-                          <div className="text-xs font-bold uppercase tracking-[0.18em] text-purple-300">
+                          <div className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--color-spell-strong)]">
                             Choose Cantrips
                           </div>
                           <button
                             onClick={() => toggleAllSpellGroups('class-cantrip', classCantripOptions)}
-                            className="rounded border border-[#6b4a92] px-2 py-1 text-[0.68rem] text-purple-200 transition-all hover:bg-[#24113b]"
+                            className="rounded border border-[var(--color-spell-border)] px-2 py-1 text-[0.68rem] text-[var(--color-spell-strong)] transition-all hover:bg-[var(--color-spell-chip-bg)]"
                           >
                             {groupSpellsByLevel(classCantripOptions).every(group => collapsedSpellGroups[`class-cantrip-${group.level}`] ?? false)
                               ? 'Open All'
@@ -1094,21 +1283,21 @@ export default function ClassStep({ state, onChange }: Props) {
                         )}
                       </div>
 
-                      <div className="rounded border border-purple-950 bg-[#11051f] p-3">
+                      <div className="rounded border border-[var(--color-spell-border)] bg-[var(--color-spell-surface)] p-3">
                         <div className="mb-2 flex items-center justify-between gap-2">
-                          <div className="text-xs font-bold uppercase tracking-[0.18em] text-purple-300">
+                          <div className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--color-spell-strong)]">
                             Choose {spellcasting.prepares ? 'Prepared' : 'Known'} Spells
                           </div>
                           <button
                             onClick={() => toggleAllSpellGroups('class-spell', classLevelSpellOptions)}
-                            className="rounded border border-[#6b4a92] px-2 py-1 text-[0.68rem] text-purple-200 transition-all hover:bg-[#24113b]"
+                            className="rounded border border-[var(--color-spell-border)] px-2 py-1 text-[0.68rem] text-[var(--color-spell-strong)] transition-all hover:bg-[var(--color-spell-chip-bg)]"
                           >
                             {groupSpellsByLevel(classLevelSpellOptions).every(group => collapsedSpellGroups[`class-spell-${group.level}`] ?? false)
                               ? 'Open All'
                               : 'Close All'}
                           </button>
                         </div>
-                        <div className="mb-3 text-sm leading-6 text-[#b8a0d0]">
+                        <div className="mb-3 text-sm leading-6 text-[var(--color-spell-text)]">
                           {previewClass.name === 'Bard' ? 'Bard spells selected' : 'Spells selected'} {state.selectedSpells.length}/{spellAllowance}
                           {previewClass.name === 'Bard' && bardMagicalSecretsAllowed > 0
                             ? ` · Magical Secrets ${state.bardMagicalSecretChoices.length}/${bardMagicalSecretsAllowed}${bardAdditionalMagicalSecretsAllowed > 0 ? ` · Additional ${state.bardAdditionalMagicalSecretChoices.length}/${bardAdditionalMagicalSecretsAllowed}` : ''} · Total ${state.selectedSpells.length + bardSecretSelectedNames.length}/${totalSpellAllowance}`
@@ -1127,34 +1316,77 @@ export default function ClassStep({ state, onChange }: Props) {
                         )}
                       </div>
 
-                      {subclassAutoPreparedSpellDetails.length > 0 && (
-                        <div className="rounded border border-purple-950 bg-[#11051f] p-3">
-                          <div className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-purple-300">
-                            {previewClass?.name === 'Cleric' ? 'Domain Spells' : 'Oath Spells'}
+                      {subclassAutoPreparedSpellDetails.length > 0 &&
+                        renderCollapsibleSpellDetails(
+                          'subclass-auto',
+                          subclassAutoPreparedSpellDetails,
+                          previewClass?.name === 'Cleric' ? 'Domain Spells' : 'Oath Spells',
+                          'These spells are granted by your subclass and are always prepared. They do not count against the number of spells you choose manually.'
+                        )}
+
+                      {previewClass.name === 'Cleric' && selectedClericDomain?.name === 'Nature Domain' && (
+                        <div className="rounded border border-[var(--color-spell-border)] bg-[var(--color-spell-surface)] p-3">
+                          <div className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-[var(--color-spell-strong)]">
+                            Acolyte of Nature Cantrip
                           </div>
-                          <div className="mb-3 text-sm leading-6 text-[#b8a0d0]">
-                            These spells are granted by your subclass and are always prepared. They do not count against the number of spells you choose manually.
+                          <div className="mb-3 text-sm leading-6 text-[var(--color-spell-text)]">
+                            Choose one druid cantrip granted by your domain. It does not count against the cleric cantrips you choose manually.
                           </div>
-                          {renderSelectedSpellDetails(subclassAutoPreparedSpellDetails.map(spell => spell.name))}
+                          <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
+                            {availableClericNatureCantrips.map(spell => {
+                              const selected = state.clericNatureCantrip === spell.name;
+                              return (
+                                <button
+                                  key={spell.name}
+                                  onClick={() => onChange({ clericNatureCantrip: selected ? '' : spell.name })}
+                                  className={`rounded border p-3 text-left transition-all ${
+                                    selected
+                                      ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)]'
+                                      : 'border-[var(--color-accent)] bg-[var(--color-surface-3)] hover:bg-[var(--color-hover)]'
+                                  }`}
+                                >
+                                  <div className="text-sm font-bold text-[var(--color-text-strong)]">{spell.name}</div>
+                                  <div className="mt-1 text-[0.7rem] uppercase tracking-wide text-[var(--color-accent)]">{spell.school} Cantrip</div>
+                                  <div className="mt-2 text-[0.72rem] leading-6 text-[var(--color-text-soft)]">{spell.description}</div>
+                                </button>
+                              );
+                            })}
+                          </div>
                         </div>
                       )}
 
+                      {clericDomainGrantedCantripDetails.length > 0 &&
+                        renderCollapsibleSpellDetails(
+                          'subclass-cantrip',
+                          clericDomainGrantedCantripDetails,
+                          'Domain Cantrip',
+                          'This cantrip is granted by your domain and does not count against the number of cantrips you choose manually.'
+                        )}
+
+                      {clericNatureChosenCantripDetails.length > 0 &&
+                        renderCollapsibleSpellDetails(
+                          'nature-domain-cantrip',
+                          clericNatureChosenCantripDetails,
+                          'Chosen Nature Domain Cantrip',
+                          'This druid cantrip is granted by Acolyte of Nature and does not count against the number of cleric cantrips you choose manually.'
+                        )}
+
                       {previewClass.name === 'Bard' && (bardMagicalSecretsAllowed > 0 || bardAdditionalMagicalSecretsAllowed > 0) && (
-                        <div className="rounded border border-purple-950 bg-[#11051f] p-3">
+                        <div className="rounded border border-[var(--color-spell-border)] bg-[var(--color-spell-surface)] p-3">
                           <div className="mb-2 flex items-center justify-between gap-2">
-                            <div className="text-xs font-bold uppercase tracking-[0.18em] text-purple-300">
+                            <div className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--color-spell-strong)]">
                               Magical Secrets
                             </div>
                             <button
                               onClick={() => toggleAllSpellGroups('magical-secrets', filteredMagicalSecretOptions)}
-                              className="rounded border border-[#6b4a92] px-2 py-1 text-[0.68rem] text-purple-200 transition-all hover:bg-[#24113b]"
+                              className="rounded border border-[var(--color-spell-border)] px-2 py-1 text-[0.68rem] text-[var(--color-spell-strong)] transition-all hover:bg-[var(--color-spell-chip-bg)]"
                             >
                               {groupSpellsByLevel(filteredMagicalSecretOptions).every(group => collapsedSpellGroups[`magical-secrets-${group.level}`] ?? false)
                                 ? 'Open All'
                                 : 'Close All'}
                             </button>
                           </div>
-                          <div className="mb-3 text-sm leading-6 text-[#b8a0d0]">
+                          <div className="mb-3 text-sm leading-6 text-[var(--color-spell-text)]">
                             Choose {bardMagicalSecretsAllowed} Magical Secrets spells from any class.
                             {bardAdditionalMagicalSecretsAllowed > 0 && ` You also gain ${bardAdditionalMagicalSecretsAllowed} Additional Magical Secrets picks that do not count against your bard spells known.`}
                           </div>
@@ -1167,8 +1399,8 @@ export default function ClassStep({ state, onChange }: Props) {
                                   onClick={() => setMagicalSecretsSource(source)}
                                   className={`rounded border px-3 py-1 text-xs transition-all ${
                                     selected
-                                      ? 'border-[#f0d080] bg-[#1a1200] text-[#f0d080]'
-                                      : 'border-[#5a4a1b] text-[#b8962e] hover:bg-[#1a1000]'
+                                      ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)] text-[var(--color-text-strong)]'
+                                      : 'border-[var(--color-border-muted)] text-[var(--color-accent)] hover:bg-[var(--color-hover)]'
                                   }`}
                                 >
                                   {source}
@@ -1194,8 +1426,8 @@ export default function ClassStep({ state, onChange }: Props) {
                       )}
                     </div>
 
-                    <div className="rounded border border-purple-950 bg-[#11051f] p-3">
-                      <div className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-purple-300">
+                    <div className="rounded border border-[var(--color-spell-border)] bg-[var(--color-spell-surface)] p-3">
+                      <div className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-[var(--color-spell-strong)]">
                         Spell Slots
                       </div>
                       <div className="grid grid-cols-3 gap-2">
@@ -1203,7 +1435,7 @@ export default function ClassStep({ state, onChange }: Props) {
                           <div
                             key={`slot-${index}`}
                             className={`rounded border p-2 text-center ${
-                              slots > 0 ? 'border-purple-700 bg-purple-950/40 text-purple-200' : 'border-[#241534] bg-[#0d0d0d] text-[#514069]'
+                              slots > 0 ? 'border-[var(--color-spell-chip-border)] bg-[var(--color-spell-chip-bg)] text-[var(--color-spell-strong)]' : 'border-[var(--color-spell-border)] bg-[var(--color-surface-3)] text-[var(--color-spell-muted)]'
                             }`}
                           >
                             <div className="text-sm font-bold">{slots > 0 ? slots : '—'}</div>
@@ -1218,8 +1450,8 @@ export default function ClassStep({ state, onChange }: Props) {
 
               <div>
                 <div className="mb-1 field-label">Armor & Weapon Proficiencies</div>
-                <div className="text-sm leading-6 text-[#c8a84b]">
-                  {[...previewClass.armorProf, ...previewClass.weaponProf].join(' · ') || 'None'}
+                <div className="text-sm leading-6 text-[var(--color-text)]">
+                  {armorWeaponProficiencies.join(' · ') || 'None'}
                 </div>
               </div>
 
@@ -1240,12 +1472,12 @@ export default function ClassStep({ state, onChange }: Props) {
                           disabled={takenByLore || (!chosen && !canAdd)}
                           className={`rounded border px-2 py-0.5 text-[0.68rem] transition-all ${
                             chosen
-                              ? 'border-[#f0d080] bg-[#2a1800] text-[#f0d080]'
+                              ? 'border-[var(--color-text-strong)] bg-[var(--color-selected-strong)] text-[var(--color-text-strong)]'
                               : takenByLore
-                              ? 'cursor-not-allowed border-[#2a1f00] bg-[#15100a] text-[#5b4714]'
+                              ? 'cursor-not-allowed border-[var(--color-border-subtle)] bg-[var(--color-surface-accent)] text-[var(--color-text-dim)]'
                               : canAdd
-                              ? 'border-[#b8962e] text-[#b8962e] hover:bg-[#1a1000]'
-                              : 'cursor-not-allowed border-[#2a1f00] text-[#3a2a00]'
+                              ? 'border-[var(--color-accent)] text-[var(--color-accent)] hover:bg-[var(--color-hover)]'
+                              : 'cursor-not-allowed border-[var(--color-border-subtle)] text-[var(--color-text-dim)]'
                           }`}
                         >
                           {skill}
@@ -1272,10 +1504,10 @@ export default function ClassStep({ state, onChange }: Props) {
                           disabled={!chosen && !canAdd}
                           className={`rounded border px-3 py-1 text-xs transition-all ${
                             chosen
-                              ? 'border-[#f0d080] bg-[#1a1200] text-[#f0d080]'
+                              ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)] text-[var(--color-text-strong)]'
                               : canAdd
-                              ? 'border-[#b8962e] text-[#b8962e] hover:bg-[#1a1000]'
-                              : 'cursor-not-allowed border-[#2a1f00] text-[#3a2a00]'
+                              ? 'border-[var(--color-accent)] text-[var(--color-accent)] hover:bg-[var(--color-hover)]'
+                              : 'cursor-not-allowed border-[var(--color-border-subtle)] text-[var(--color-text-dim)]'
                           }`}
                         >
                           {instrument}
@@ -1294,13 +1526,13 @@ export default function ClassStep({ state, onChange }: Props) {
                     return (
                       <div
                         key={`${feature.level}-${feature.name}-${i}`}
-                        className={`border-l-2 pl-3 ${unlocked ? 'border-[#b8962e]' : 'border-[#4a4020]'}`}
+                        className={`border-l-2 pl-3 ${unlocked ? 'border-[var(--color-accent)]' : 'border-[var(--color-border-faint)]'}`}
                       >
                         <div className="flex items-center gap-3">
-                          <span className={`rounded border px-2 py-0.5 text-[0.8rem] font-bold ${unlocked ? 'border-[#b8962e] text-[#f0d080]' : 'border-[#4a4020] text-[#7a6020]'}`}>
+                          <span className={`rounded border px-2 py-0.5 text-[0.8rem] font-bold ${unlocked ? 'border-[var(--color-accent)] text-[var(--color-text-strong)]' : 'border-[var(--color-border-faint)] text-[var(--color-text-dim)]'}`}>
                             Level {feature.level}
                           </span>
-                          <span className={`text-base font-bold ${unlocked ? 'text-[#f0d080]' : 'text-[#8f7635]'}`}>{feature.name}</span>
+                          <span className={`text-base font-bold ${unlocked ? 'text-[var(--color-text-strong)]' : 'text-[var(--color-text-muted)]'}`}>{feature.name}</span>
                         </div>
                         {renderFeatureDescription(feature, unlocked)}
                       </div>
@@ -1325,10 +1557,10 @@ export default function ClassStep({ state, onChange }: Props) {
                           disabled={!selected && !canAdd}
                           className={`rounded border px-3 py-1 text-xs transition-all ${
                             selected
-                              ? 'border-[#f0d080] bg-[#1a1200] text-[#f0d080]'
+                              ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)] text-[var(--color-text-strong)]'
                               : canAdd
-                              ? 'border-[#b8962e] text-[#b8962e] hover:bg-[#1a1000]'
-                              : 'cursor-not-allowed border-[#2a1f00] text-[#3a2a00]'
+                              ? 'border-[var(--color-accent)] text-[var(--color-accent)] hover:bg-[var(--color-hover)]'
+                              : 'cursor-not-allowed border-[var(--color-border-subtle)] text-[var(--color-text-dim)]'
                           }`}
                         >
                           {skill}
@@ -1342,7 +1574,7 @@ export default function ClassStep({ state, onChange }: Props) {
               {getAvailableAsiPoints(state) > 0 && (
                 <div>
                   <div className="mb-1 field-label">Ability Score Improvement Choices</div>
-                  <div className="mb-2 text-sm leading-6 text-[#9a8040]">
+                  <div className="mb-2 text-sm leading-6 text-[var(--color-text-soft)]">
                     Spend your earned ASI points here. Allocated {getAllocatedAsiPoints(state)}/{getAvailableAsiPoints(state)}.
                   </div>
                   <div className="grid grid-cols-2 gap-2 lg:grid-cols-3">
@@ -1359,16 +1591,16 @@ export default function ClassStep({ state, onChange }: Props) {
                       );
                       const finalCurrent = Math.min(displayedMax, asiCurrent + primalChampionBonus);
                       return (
-                        <div key={key} className="rounded border border-[#5a4a1b] bg-[#0f0f0f] p-3">
-                          <div className="text-xs font-bold uppercase tracking-wide text-[#b8962e]">{ABILITY_NAMES[key]}</div>
-                          <div className="mt-1 text-[0.68rem] uppercase tracking-wide text-[#7a6020]">
+                        <div key={key} className="rounded border border-[var(--color-border-muted)] bg-[var(--color-surface-3)] p-3">
+                          <div className="text-xs font-bold uppercase tracking-wide text-[var(--color-accent)]">{ABILITY_NAMES[key]}</div>
+                          <div className="mt-1 text-[0.68rem] uppercase tracking-wide text-[var(--color-text-dim)]">
                             ASI Current {asiCurrent} · ASI Max {scoreCap}
                             {primalChampionBonus > 0 ? ` · Final ${finalCurrent}/${displayedMax}` : ''}
                           </div>
                           <div className="mt-2 flex items-center justify-between">
-                            <button onClick={() => updateAsi(key, -1)} className="rounded border border-[#5a4a1b] px-2 py-1 text-sm text-[#b8962e]">−</button>
-                            <div className="text-base font-bold text-[#f0d080]">{modString(value)}</div>
-                            <button onClick={() => updateAsi(key, 1)} className="rounded border border-[#5a4a1b] px-2 py-1 text-sm text-[#b8962e]">+</button>
+                            <button onClick={() => updateAsi(key, -1)} className="rounded border border-[var(--color-border-muted)] px-2 py-1 text-sm text-[var(--color-accent)]">−</button>
+                            <div className="text-base font-bold text-[var(--color-text-strong)]">{modString(value)}</div>
+                            <button onClick={() => updateAsi(key, 1)} className="rounded border border-[var(--color-border-muted)] px-2 py-1 text-sm text-[var(--color-accent)]">+</button>
                           </div>
                         </div>
                       );
@@ -1377,9 +1609,12 @@ export default function ClassStep({ state, onChange }: Props) {
                 </div>
               )}
 
-              {previewClass.name === 'Bard' && level >= 3 && (
-                <div className="section-box border-[#5a4a1b] bg-[#0f0f0f]">
+              {previewClass.name === 'Bard' && (
+                <div className="section-box border-[var(--color-border-muted)] bg-[var(--color-surface-3)]">
                   <div className="section-title">Choose Bard College</div>
+                  <div className="mb-3 text-sm leading-6 text-[var(--color-text-soft)]">
+                    Bard College unlocks at level 3. You can choose one now to preview its future features.
+                  </div>
                   <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
                     {BARD_COLLEGES.map(college => {
                       const selected = state.bardCollege === college.name;
@@ -1395,12 +1630,12 @@ export default function ClassStep({ state, onChange }: Props) {
                           }
                           className={`rounded border p-3 text-left transition-all ${
                             selected
-                              ? 'border-[#f0d080] bg-[#1a1200]'
-                              : 'border-[#b8962e] bg-[#0d0d0d] hover:bg-[#111100]'
+                              ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)]'
+                              : 'border-[var(--color-accent)] bg-[var(--color-surface-3)] hover:bg-[var(--color-hover)]'
                           }`}
                         >
-                          <div className="text-sm font-bold text-[#f0d080]">{college.name}</div>
-                          <div className="mt-2 text-sm leading-6 text-[#9a8040]">{college.description}</div>
+                          <div className="text-sm font-bold text-[var(--color-text-strong)]">{college.name}</div>
+                          <div className="mt-2 text-sm leading-6 text-[var(--color-text-soft)]">{college.description}</div>
                         </button>
                       );
                     })}
@@ -1408,10 +1643,31 @@ export default function ClassStep({ state, onChange }: Props) {
 
                   {selectedBardCollege && (
                     <div className="mt-4">
+                      <div className="section-title">Bard College Features</div>
+                      <div className="flex flex-col gap-2">
+                        {bardCollegeFeatures.map((feature, i) => {
+                          const unlocked = feature.level <= level;
+                          return (
+                            <div
+                              key={`${feature.level}-${feature.name}-college-${i}`}
+                              className={`border-l-2 pl-3 ${unlocked ? 'border-[var(--color-accent)]' : 'border-[var(--color-border-faint)]'}`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <span className={`rounded border px-2 py-0.5 text-[0.8rem] font-bold ${unlocked ? 'border-[var(--color-accent)] text-[var(--color-text-strong)]' : 'border-[var(--color-border-faint)] text-[var(--color-text-dim)]'}`}>
+                                  Level {feature.level}
+                                </span>
+                                <span className={`text-base font-bold ${unlocked ? 'text-[var(--color-text-strong)]' : 'text-[var(--color-text-muted)]'}`}>{feature.name}</span>
+                              </div>
+                              {renderFeatureDescription(feature, unlocked)}
+                            </div>
+                          );
+                        })}
+                      </div>
+
                       {selectedBardCollege.name === 'College of Lore' && level >= 3 && (
-                        <div className="mb-4">
+                        <div className="mt-4">
                           <div className="section-title">College of Lore Bonus Proficiencies</div>
-                          <div className="mb-2 text-sm leading-6 text-[#9a8040]">
+                          <div className="mb-2 text-sm leading-6 text-[var(--color-text-soft)]">
                             Choose three additional skill proficiencies that you do not already have. ({state.bardLoreSkillChoices.length}/3)
                           </div>
                           <div className="flex flex-wrap gap-2">
@@ -1425,10 +1681,10 @@ export default function ClassStep({ state, onChange }: Props) {
                                   disabled={!selected && !canAdd}
                                   className={`rounded border px-3 py-1 text-xs transition-all ${
                                     selected
-                                      ? 'border-[#f0d080] bg-[#1a1200] text-[#f0d080]'
+                                      ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)] text-[var(--color-text-strong)]'
                                       : canAdd
-                                      ? 'border-[#b8962e] text-[#b8962e] hover:bg-[#1a1000]'
-                                      : 'cursor-not-allowed border-[#2a1f00] text-[#3a2a00]'
+                                      ? 'border-[var(--color-accent)] text-[var(--color-accent)] hover:bg-[var(--color-hover)]'
+                                      : 'cursor-not-allowed border-[var(--color-border-subtle)] text-[var(--color-text-dim)]'
                                   }`}
                                 >
                                   {skill}
@@ -1440,41 +1696,20 @@ export default function ClassStep({ state, onChange }: Props) {
                       )}
 
                       {selectedBardCollege.name === 'College of Valor' && (
-                        <div className="mb-4">
+                        <div className="mt-4">
                           <div className="section-title">Additional Proficiencies</div>
-                          <div className="text-sm leading-6 text-[#c8a84b]">
+                          <div className="text-sm leading-6 text-[var(--color-text)]">
                             Medium Armor · Shields · Martial Weapons
                           </div>
                         </div>
                       )}
-
-                      <div className="section-title">Bard College Features</div>
-                      <div className="flex flex-col gap-2">
-                        {bardCollegeFeatures.map((feature, i) => {
-                          const unlocked = feature.level <= level;
-                          return (
-                            <div
-                              key={`${feature.level}-${feature.name}-college-${i}`}
-                              className={`border-l-2 pl-3 ${unlocked ? 'border-[#b8962e]' : 'border-[#4a4020]'}`}
-                            >
-                              <div className="flex items-center gap-3">
-                                <span className={`rounded border px-2 py-0.5 text-[0.8rem] font-bold ${unlocked ? 'border-[#b8962e] text-[#f0d080]' : 'border-[#4a4020] text-[#7a6020]'}`}>
-                                  Level {feature.level}
-                                </span>
-                                <span className={`text-base font-bold ${unlocked ? 'text-[#f0d080]' : 'text-[#8f7635]'}`}>{feature.name}</span>
-                              </div>
-                              {renderFeatureDescription(feature, unlocked)}
-                            </div>
-                          );
-                        })}
-                      </div>
                     </div>
                   )}
                 </div>
               )}
 
               {previewClass.name === 'Cleric' && level >= 1 && (
-                <div className="section-box border-[#5a4a1b] bg-[#0f0f0f]">
+                <div className="section-box border-[var(--color-border-muted)] bg-[var(--color-surface-3)]">
                   <div className="section-title">Choose Divine Domain</div>
                   <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
                     {CLERIC_DOMAINS.map(domain => {
@@ -1482,15 +1717,28 @@ export default function ClassStep({ state, onChange }: Props) {
                       return (
                         <button
                           key={domain.name}
-                          onClick={() => onChange({ clericDomain: domain.name })}
+                          onClick={() =>
+                            onChange({
+                              clericDomain: domain.name,
+                              clericKnowledgeSkillChoices: domain.name === 'Knowledge Domain' ? state.clericKnowledgeSkillChoices : [],
+                              clericKnowledgeLanguageChoices: domain.name === 'Knowledge Domain' ? state.clericKnowledgeLanguageChoices : [],
+                              clericNatureSkillChoice: domain.name === 'Nature Domain' ? state.clericNatureSkillChoice : '',
+                              clericNatureCantrip: domain.name === 'Nature Domain' ? state.clericNatureCantrip : '',
+                              classEquipmentSelections: Object.fromEntries(
+                                Object.entries(state.classEquipmentSelections).filter(([key]) => key !== 'cleric-weapon' && key !== 'cleric-armor')
+                              ),
+                            })
+                          }
                           className={`rounded border p-3 text-left transition-all ${
                             selected
-                              ? 'border-[#f0d080] bg-[#1a1200]'
-                              : 'border-[#b8962e] bg-[#0d0d0d] hover:bg-[#111100]'
+                              ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)]'
+                              : 'border-[var(--color-accent)] bg-[var(--color-surface-3)] hover:bg-[var(--color-hover)]'
                           }`}
                         >
-                          <div className="text-sm font-bold text-[#f0d080]">{domain.name}</div>
-                          <div className="mt-2 text-sm leading-6 text-[#9a8040]">{domain.description}</div>
+                          <div className="text-sm font-bold text-[var(--color-text-strong)]">{domain.name}</div>
+                          <div className="mt-2 text-xs uppercase tracking-[0.18em] text-[var(--color-text-dim)]">
+                            Deity and domain overview
+                          </div>
                         </button>
                       );
                     })}
@@ -1498,6 +1746,15 @@ export default function ClassStep({ state, onChange }: Props) {
 
                   {selectedClericDomain && (
                     <div className="mt-4">
+                      <div className="section-title">Divine Domain Description</div>
+                      <div className="mb-4 rounded border border-[var(--color-border-strong)] bg-[var(--color-surface-pop)] px-3 py-3 text-[0.98rem] leading-7 text-[var(--color-text-soft)]">
+                        {selectedClericDomain.description}
+                      </div>
+
+                      <div className="mb-4 rounded border border-[var(--color-border-strong)] bg-[var(--color-surface-pop)] px-3 py-2 text-sm leading-6 text-[var(--color-text-soft)]">
+                        Check the spellcasting section for your domain spells. Those spells unlock at the listed cleric levels and are always prepared for you.
+                      </div>
+
                       <div className="section-title">Divine Domain Features</div>
                       <div className="flex flex-col gap-2">
                         {clericDomainFeatures.map((feature, i) => {
@@ -1505,27 +1762,137 @@ export default function ClassStep({ state, onChange }: Props) {
                           return (
                             <div
                               key={`${feature.level}-${feature.name}-domain-${i}`}
-                              className={`border-l-2 pl-3 ${unlocked ? 'border-[#b8962e]' : 'border-[#4a4020]'}`}
+                              className={`border-l-2 pl-3 ${unlocked ? 'border-[var(--color-accent)]' : 'border-[var(--color-border-faint)]'}`}
                             >
                               <div className="flex items-center gap-3">
-                                <span className={`rounded border px-2 py-0.5 text-[0.8rem] font-bold ${unlocked ? 'border-[#b8962e] text-[#f0d080]' : 'border-[#4a4020] text-[#7a6020]'}`}>
+                                <span className={`rounded border px-2 py-0.5 text-[0.8rem] font-bold ${unlocked ? 'border-[var(--color-accent)] text-[var(--color-text-strong)]' : 'border-[var(--color-border-faint)] text-[var(--color-text-dim)]'}`}>
                                   Level {feature.level}
                                 </span>
-                                <span className={`text-base font-bold ${unlocked ? 'text-[#f0d080]' : 'text-[#8f7635]'}`}>{feature.name}</span>
+                                <span className={`text-base font-bold ${unlocked ? 'text-[var(--color-text-strong)]' : 'text-[var(--color-text-muted)]'}`}>{feature.name}</span>
                               </div>
                               {renderFeatureDescription(feature, unlocked)}
                             </div>
                           );
                         })}
                       </div>
+
+                      {selectedClericDomain.name === 'Knowledge Domain' && (
+                        <div className="mt-4 space-y-4">
+                          <div>
+                            <div className="section-title">Blessings of Knowledge Skills</div>
+                            <div className="mb-2 text-sm leading-6 text-[var(--color-text-soft)]">
+                              Choose two of the following skills to gain proficiency and expertise. ({state.clericKnowledgeSkillChoices.length}/2)
+                            </div>
+                            <div className="mb-2 text-xs leading-5 text-[var(--color-text-dim)]">
+                              Locked skills are already covered by one of your existing proficiencies.
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              {CLERIC_KNOWLEDGE_SKILL_OPTIONS.map(skill => {
+                                const selected = state.clericKnowledgeSkillChoices.includes(skill);
+                                const takenElsewhere = allCurrentSkillProficiencies.includes(skill) && !selected;
+                                const canAdd = state.clericKnowledgeSkillChoices.length < 2;
+                                return (
+                                  <button
+                                    key={skill}
+                                    onClick={() => toggleClericKnowledgeSkill(skill)}
+                                    disabled={takenElsewhere || (!selected && !canAdd)}
+                                    className={`rounded border px-3 py-1 text-xs transition-all ${
+                                      selected
+                                        ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)] text-[var(--color-text-strong)]'
+                                        : takenElsewhere
+                                        ? 'cursor-not-allowed border-[var(--color-border-subtle)] text-[var(--color-text-dim)]'
+                                        : canAdd
+                                        ? 'border-[var(--color-accent)] text-[var(--color-accent)] hover:bg-[var(--color-hover)]'
+                                        : 'cursor-not-allowed border-[var(--color-border-subtle)] text-[var(--color-text-dim)]'
+                                    }`}
+                                >
+                                  {skill}{takenElsewhere ? ' · already proficient' : ''}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          </div>
+
+                          <div>
+                            <div className="section-title">Blessings of Knowledge Languages</div>
+                            <div className="mb-2 text-sm leading-6 text-[var(--color-text-soft)]">
+                              Choose two bonus languages. ({state.clericKnowledgeLanguageChoices.length}/2)
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              {LANGUAGES.map(language => {
+                                const selected = state.clericKnowledgeLanguageChoices.includes(language);
+                                const knownAlready = knownLanguages.has(language) && !selected;
+                                const canAdd = state.clericKnowledgeLanguageChoices.length < 2;
+                                return (
+                                  <button
+                                    key={language}
+                                    onClick={() => toggleClericKnowledgeLanguage(language)}
+                                    disabled={knownAlready || (!selected && !canAdd)}
+                                    className={`rounded border px-3 py-1 text-xs transition-all ${
+                                      selected
+                                        ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)] text-[var(--color-text-strong)]'
+                                        : knownAlready
+                                        ? 'cursor-not-allowed border-[var(--color-border-subtle)] text-[var(--color-text-dim)]'
+                                        : canAdd
+                                        ? 'border-[var(--color-accent)] text-[var(--color-accent)] hover:bg-[var(--color-hover)]'
+                                        : 'cursor-not-allowed border-[var(--color-border-subtle)] text-[var(--color-text-dim)]'
+                                    }`}
+                                  >
+                                    {language}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {selectedClericDomain.name === 'Nature Domain' && (
+                        <div className="mt-4 space-y-4">
+                          <div>
+                            <div className="section-title">Acolyte of Nature Skill</div>
+                            <div className="mb-2 text-sm leading-6 text-[var(--color-text-soft)]">
+                              Choose one skill proficiency.
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              {CLERIC_NATURE_SKILL_OPTIONS.map(skill => {
+                                const selected = state.clericNatureSkillChoice === skill;
+                                const takenElsewhere = allCurrentSkillProficiencies.includes(skill) && !selected;
+                                return (
+                                  <button
+                                    key={skill}
+                                    onClick={() => onChange({ clericNatureSkillChoice: selected ? '' : skill })}
+                                    disabled={takenElsewhere}
+                                    className={`rounded border px-3 py-1 text-xs transition-all ${
+                                      selected
+                                        ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)] text-[var(--color-text-strong)]'
+                                        : takenElsewhere
+                                        ? 'cursor-not-allowed border-[var(--color-border-subtle)] text-[var(--color-text-dim)]'
+                                        : 'border-[var(--color-accent)] text-[var(--color-accent)] hover:bg-[var(--color-hover)]'
+                                    }`}
+                                  >
+                                    {skill}{takenElsewhere ? ' · already proficient' : ''}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                            <div className="mt-2 text-xs leading-5 text-[var(--color-text-dim)]">
+                              Locked skills are unavailable because you already have proficiency in them.
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
               )}
 
-              {previewClass.name === 'Barbarian' && level >= 3 && (
-                <div className="section-box border-[#5a4a1b] bg-[#0f0f0f]">
+              {previewClass.name === 'Barbarian' && (
+                <div className="section-box border-[var(--color-border-muted)] bg-[var(--color-surface-3)]">
                   <div className="section-title">Choose Primal Path</div>
+                  <div className="mb-3 text-sm leading-6 text-[var(--color-text-soft)]">
+                    Primal Path unlocks at level 3. You can choose one now to preview its future features.
+                  </div>
                   <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
                     {BARBARIAN_PRIMAL_PATHS.map(path => {
                       const selected = state.barbarianPath === path.name;
@@ -1542,12 +1909,12 @@ export default function ClassStep({ state, onChange }: Props) {
                           }
                           className={`rounded border p-3 text-left transition-all ${
                             selected
-                              ? 'border-[#f0d080] bg-[#1a1200]'
-                              : 'border-[#b8962e] bg-[#0d0d0d] hover:bg-[#111100]'
+                              ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)]'
+                              : 'border-[var(--color-accent)] bg-[var(--color-surface-3)] hover:bg-[var(--color-hover)]'
                           }`}
                         >
-                          <div className="text-sm font-bold text-[#f0d080]">{path.name}</div>
-                          <div className="mt-2 text-sm leading-6 text-[#9a8040]">{path.description}</div>
+                          <div className="text-sm font-bold text-[var(--color-text-strong)]">{path.name}</div>
+                          <div className="mt-2 text-sm leading-6 text-[var(--color-text-soft)]">{path.description}</div>
                         </button>
                       );
                     })}
@@ -1572,13 +1939,13 @@ export default function ClassStep({ state, onChange }: Props) {
                           return (
                             <div
                               key={`${feature.level}-${feature.name}-${i}`}
-                              className={`border-l-2 pl-3 ${unlocked ? 'border-[#b8962e]' : 'border-[#4a4020]'}`}
+                              className={`border-l-2 pl-3 ${unlocked ? 'border-[var(--color-accent)]' : 'border-[var(--color-border-faint)]'}`}
                             >
                               <div className="flex flex-wrap items-center gap-3">
-                                <span className={`rounded border px-2 py-0.5 text-[0.8rem] font-bold ${unlocked ? 'border-[#b8962e] text-[#f0d080]' : 'border-[#4a4020] text-[#7a6020]'}`}>
+                                <span className={`rounded border px-2 py-0.5 text-[0.8rem] font-bold ${unlocked ? 'border-[var(--color-accent)] text-[var(--color-text-strong)]' : 'border-[var(--color-border-faint)] text-[var(--color-text-dim)]'}`}>
                                   Level {feature.level}
                                 </span>
-                                <span className={`text-base font-bold ${unlocked ? 'text-[#f0d080]' : 'text-[#8f7635]'}`}>{feature.name}</span>
+                                <span className={`text-base font-bold ${unlocked ? 'text-[var(--color-text-strong)]' : 'text-[var(--color-text-muted)]'}`}>{feature.name}</span>
                                 {inlineSpiritChoice}
                               </div>
                               {renderFeatureDescription(feature, unlocked)}
@@ -1591,9 +1958,12 @@ export default function ClassStep({ state, onChange }: Props) {
                 </div>
               )}
 
-              {previewClass.name === 'Paladin' && level >= 3 && (
-                <div className="section-box border-[#5a4a1b] bg-[#0f0f0f]">
+              {previewClass.name === 'Paladin' && (
+                <div className="section-box border-[var(--color-border-muted)] bg-[var(--color-surface-3)]">
                   <div className="section-title">Choose Sacred Oath</div>
+                  <div className="mb-3 text-sm leading-6 text-[var(--color-text-soft)]">
+                    Sacred Oath unlocks at level 3. You can choose one now to preview its future features.
+                  </div>
                   <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
                     {PALADIN_OATHS.map(oath => {
                       const selected = state.paladinOath === oath.name;
@@ -1603,12 +1973,12 @@ export default function ClassStep({ state, onChange }: Props) {
                           onClick={() => onChange({ paladinOath: oath.name })}
                           className={`rounded border p-3 text-left transition-all ${
                             selected
-                              ? 'border-[#f0d080] bg-[#1a1200]'
-                              : 'border-[#b8962e] bg-[#0d0d0d] hover:bg-[#111100]'
+                              ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)]'
+                              : 'border-[var(--color-accent)] bg-[var(--color-surface-3)] hover:bg-[var(--color-hover)]'
                           }`}
                         >
-                          <div className="text-sm font-bold text-[#f0d080]">{oath.name}</div>
-                          <div className="mt-2 text-sm leading-6 text-[#9a8040]">{oath.description}</div>
+                          <div className="text-sm font-bold text-[var(--color-text-strong)]">{oath.name}</div>
+                          <div className="mt-2 text-sm leading-6 text-[var(--color-text-soft)]">{oath.description}</div>
                         </button>
                       );
                     })}
@@ -1623,13 +1993,13 @@ export default function ClassStep({ state, onChange }: Props) {
                           return (
                             <div
                               key={`${feature.level}-${feature.name}-oath-${i}`}
-                              className={`border-l-2 pl-3 ${unlocked ? 'border-[#b8962e]' : 'border-[#4a4020]'}`}
+                              className={`border-l-2 pl-3 ${unlocked ? 'border-[var(--color-accent)]' : 'border-[var(--color-border-faint)]'}`}
                             >
                               <div className="flex items-center gap-3">
-                                <span className={`rounded border px-2 py-0.5 text-[0.8rem] font-bold ${unlocked ? 'border-[#b8962e] text-[#f0d080]' : 'border-[#4a4020] text-[#7a6020]'}`}>
+                                <span className={`rounded border px-2 py-0.5 text-[0.8rem] font-bold ${unlocked ? 'border-[var(--color-accent)] text-[var(--color-text-strong)]' : 'border-[var(--color-border-faint)] text-[var(--color-text-dim)]'}`}>
                                   Level {feature.level}
                                 </span>
-                                <span className={`text-base font-bold ${unlocked ? 'text-[#f0d080]' : 'text-[#8f7635]'}`}>{feature.name}</span>
+                                <span className={`text-base font-bold ${unlocked ? 'text-[var(--color-text-strong)]' : 'text-[var(--color-text-muted)]'}`}>{feature.name}</span>
                               </div>
                               {renderFeatureDescription(feature, unlocked)}
                             </div>
@@ -1642,7 +2012,7 @@ export default function ClassStep({ state, onChange }: Props) {
               )}
 
               {(classEffects.resistances.length > 0 || classEffects.advantages.length > 0) && (
-                <div className="section-box border-[#5a4a1b] bg-[#0f0f0f]">
+                <div className="section-box border-[var(--color-border-muted)] bg-[var(--color-surface-3)]">
                   <div className="section-title">Class Resistances & Advantage Rolls</div>
                   <div className="grid gap-4 lg:grid-cols-2">
                     <div>
@@ -1650,17 +2020,17 @@ export default function ClassStep({ state, onChange }: Props) {
                       <div className="flex flex-col gap-2">
                         {classEffects.resistances.length > 0 ? (
                           classEffects.resistances.map((effect, index) => (
-                            <div key={`resistance-${index}`} className="rounded border border-[#5a4a1b] bg-[#111] px-3 py-2 text-sm text-[#c8a84b]">
+                            <div key={`resistance-${index}`} className="rounded border border-[var(--color-border-muted)] bg-[var(--color-surface-2)] px-3 py-2 text-sm text-[var(--color-text)]">
                               <span>{effect.label}</span>
                               {effect.condition && (
-                                <span className="ml-2 rounded border border-[#7a6020] px-2 py-0.5 text-[0.65rem] uppercase tracking-wide text-[#b8962e]">
+                                <span className="ml-2 rounded border border-[var(--color-text-dim)] px-2 py-0.5 text-[0.65rem] uppercase tracking-wide text-[var(--color-accent)]">
                                   {effect.condition}
                                 </span>
                               )}
                             </div>
                           ))
                         ) : (
-                          <div className="text-sm text-[#6f5b2b]">No class resistances yet.</div>
+                          <div className="text-sm text-[var(--color-text-faint)]">No class resistances yet.</div>
                         )}
                       </div>
                     </div>
@@ -1670,17 +2040,17 @@ export default function ClassStep({ state, onChange }: Props) {
                       <div className="flex flex-col gap-2">
                         {classEffects.advantages.length > 0 ? (
                           classEffects.advantages.map((effect, index) => (
-                            <div key={`advantage-${index}`} className="rounded border border-[#5a4a1b] bg-[#111] px-3 py-2 text-sm text-[#c8a84b]">
+                            <div key={`advantage-${index}`} className="rounded border border-[var(--color-border-muted)] bg-[var(--color-surface-2)] px-3 py-2 text-sm text-[var(--color-text)]">
                               <span>{effect.label}</span>
                               {effect.condition && (
-                                <span className="ml-2 rounded border border-[#7a6020] px-2 py-0.5 text-[0.65rem] uppercase tracking-wide text-[#b8962e]">
+                                <span className="ml-2 rounded border border-[var(--color-text-dim)] px-2 py-0.5 text-[0.65rem] uppercase tracking-wide text-[var(--color-accent)]">
                                   {effect.condition}
                                 </span>
                               )}
                             </div>
                           ))
                         ) : (
-                          <div className="text-sm text-[#6f5b2b]">No class advantage effects yet.</div>
+                          <div className="text-sm text-[var(--color-text-faint)]">No class advantage effects yet.</div>
                         )}
                       </div>
                     </div>
@@ -1695,21 +2065,21 @@ export default function ClassStep({ state, onChange }: Props) {
                     {displayedEquipment.map(item => (
                       <div
                         key={`displayed-equipment-${item}`}
-                        className="rounded border border-[#5a4a1b] bg-[#101010] px-3 py-2 text-sm text-[#c8a84b]"
+                        className="rounded border border-[var(--color-border-muted)] bg-[var(--color-surface-2)] px-3 py-2 text-sm text-[var(--color-text)]"
                       >
                         {item}
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="mb-3 text-sm leading-6 text-[#c8a84b]">No starter equipment listed.</div>
+                  <div className="mb-3 text-sm leading-6 text-[var(--color-text)]">No starter equipment listed.</div>
                 )}
 
                 {packItemsInDisplay.length > 0 && (
                   <div className="mb-4 grid gap-3 lg:grid-cols-2">
                     {packItemsInDisplay.map(pack => (
-                      <div key={`display-pack-${pack}`} className="rounded border border-[#5a4a1b] bg-[#121212] p-3 text-sm leading-6 text-[#9a8040]">
-                        <div className="mb-1 text-[0.68rem] font-bold uppercase tracking-wide text-[#b8962e]">
+                      <div key={`display-pack-${pack}`} className="rounded border border-[var(--color-border-muted)] bg-[var(--color-surface-4)] p-3 text-sm leading-6 text-[var(--color-text-soft)]">
+                        <div className="mb-1 text-[0.68rem] font-bold uppercase tracking-wide text-[var(--color-accent)]">
                           {pack} Contents
                         </div>
                         {EQUIPMENT_PACK_CONTENTS[pack]}
@@ -1734,10 +2104,12 @@ export default function ClassStep({ state, onChange }: Props) {
                           <div className="flex flex-wrap gap-2">
                             {choice.options.map(option => {
                               const selected = selectedOption === option;
+                              const available = isEquipmentOptionAvailable(choice.key, option);
                               return (
                                 <button
                                   key={option}
                                   onClick={() => {
+                                    if (!available) return;
                                     const preservedSelections = Object.fromEntries(
                                       Object.entries(state.classEquipmentSelections).filter(([key]) => !key.startsWith(`${choice.key}-specific-`))
                                     );
@@ -1748,10 +2120,13 @@ export default function ClassStep({ state, onChange }: Props) {
                                       },
                                     });
                                   }}
+                                  disabled={!available}
                                   className={`rounded border px-3 py-1 text-xs transition-all ${
                                     selected
-                                      ? 'border-[#f0d080] bg-[#1a1200] text-[#f0d080]'
-                                      : 'border-[#b8962e] text-[#b8962e] hover:bg-[#1a1000]'
+                                      ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)] text-[var(--color-text-strong)]'
+                                      : available
+                                      ? 'border-[var(--color-accent)] text-[var(--color-accent)] hover:bg-[var(--color-hover)]'
+                                      : 'cursor-not-allowed border-[var(--color-border-subtle)] text-[var(--color-text-dim)] opacity-60'
                                   }`}
                                 >
                                   {formatEquipmentOptionLabel(option)}
@@ -1760,22 +2135,33 @@ export default function ClassStep({ state, onChange }: Props) {
                             })}
                           </div>
 
+                          {previewClass?.name === 'Cleric' && choice.key === 'cleric-weapon' && !clericHasMartialWeapons && (
+                            <div className="mt-2 text-sm italic text-[var(--color-text-dim)]">
+                              Warhammer requires martial weapon proficiency from a domain such as Tempest or War.
+                            </div>
+                          )}
+                          {previewClass?.name === 'Cleric' && choice.key === 'cleric-armor' && !clericHasHeavyArmor && (
+                            <div className="mt-2 text-sm italic text-[var(--color-text-dim)]">
+                              Chain Mail requires heavy armor proficiency from a domain such as Life, Nature, Tempest, or War.
+                            </div>
+                          )}
+
                           {!selectedOption && (
-                            <div className="mt-2 text-sm italic text-[#7a6020]">
+                            <div className="mt-2 text-sm italic text-[var(--color-text-dim)]">
                               Select one of the options above to resolve this equipment choice.
                             </div>
                           )}
 
                           {selectedPackageParts.length > 1 && (
-                            <div className="mt-3 rounded border border-[#5a4a1b] bg-[#121212] p-3">
-                              <div className="mb-1 text-[0.68rem] font-bold uppercase tracking-wide text-[#b8962e]">
+                            <div className="mt-3 rounded border border-[var(--color-border-muted)] bg-[var(--color-surface-4)] p-3">
+                              <div className="mb-1 text-[0.68rem] font-bold uppercase tracking-wide text-[var(--color-accent)]">
                                 This option includes
                               </div>
                               <div className="flex flex-wrap gap-2">
                                 {selectedPackageParts.map(part => (
                                   <span
                                     key={`${choice.key}-${part}`}
-                                    className="rounded border border-[#4a3c15] bg-[#181203] px-2 py-1 text-[0.72rem] text-[#c8a84b]"
+                                    className="rounded border border-[var(--color-border-faint)] bg-[var(--color-surface-accent)] px-2 py-1 text-[0.72rem] text-[var(--color-text)]"
                                   >
                                     {part}
                                   </span>
@@ -1785,8 +2171,8 @@ export default function ClassStep({ state, onChange }: Props) {
                           )}
 
                           {packDescription && (
-                            <div className="mt-3 rounded border border-[#5a4a1b] bg-[#121212] p-3 text-sm leading-6 text-[#9a8040]">
-                              <div className="mb-1 text-[0.68rem] font-bold uppercase tracking-wide text-[#b8962e]">
+                            <div className="mt-3 rounded border border-[var(--color-border-muted)] bg-[var(--color-surface-4)] p-3 text-sm leading-6 text-[var(--color-text-soft)]">
+                              <div className="mb-1 text-[0.68rem] font-bold uppercase tracking-wide text-[var(--color-accent)]">
                                 Pack Contents
                               </div>
                               {packDescription}
@@ -1794,14 +2180,14 @@ export default function ClassStep({ state, onChange }: Props) {
                           )}
 
                           {expandedOptions.length > 0 && (
-                            <div className="mt-3 rounded border border-[#5a4a1b] bg-[#121212] p-3">
-                              <div className="mb-2 border-b border-[#5a4a1b] pb-1 text-[0.68rem] font-bold uppercase tracking-wide text-[#b8962e]">
+                            <div className="mt-3 rounded border border-[var(--color-border-muted)] bg-[var(--color-surface-4)] p-3">
+                              <div className="mb-2 border-b border-[var(--color-border-muted)] pb-1 text-[0.68rem] font-bold uppercase tracking-wide text-[var(--color-accent)]">
                                 Choose a specific item
                               </div>
                               <div className="flex flex-col gap-3">
                                 {expandedOptions.map(entry => (
                                   <div key={entry.specificKey}>
-                                    <div className="mb-1 text-[0.68rem] font-bold uppercase tracking-wide text-[#7a6020]">
+                                    <div className="mb-1 text-[0.68rem] font-bold uppercase tracking-wide text-[var(--color-text-dim)]">
                                       {entry.label}
                                     </div>
                                     <div className="flex flex-wrap gap-2">
@@ -1818,8 +2204,8 @@ export default function ClassStep({ state, onChange }: Props) {
                                             })}
                                             className={`rounded border px-3 py-1 text-xs transition-all ${
                                               selected
-                                                ? 'border-[#f0d080] bg-[#2a1800] text-[#f0d080]'
-                                                : 'border-[#5a4a1b] text-[#b8962e] hover:bg-[#1a1000]'
+                                                ? 'border-[var(--color-text-strong)] bg-[var(--color-selected-strong)] text-[var(--color-text-strong)]'
+                                                : 'border-[var(--color-border-muted)] text-[var(--color-accent)] hover:bg-[var(--color-hover)]'
                                             }`}
                                           >
                                             {option}
@@ -1840,7 +2226,7 @@ export default function ClassStep({ state, onChange }: Props) {
               </div>
             </div>
           ) : (
-            <div className="section-box flex h-48 items-center justify-center text-sm italic text-[#3a2a00]">
+            <div className="section-box flex h-48 items-center justify-center text-sm italic text-[var(--color-text-dim)]">
               Select a class to see details
             </div>
           )}

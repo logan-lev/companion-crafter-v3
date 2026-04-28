@@ -20,6 +20,10 @@ export interface WizardState {
   bardCollege: string;
   clericDomain: string;
   paladinOath: string;
+  clericKnowledgeSkillChoices: string[];
+  clericKnowledgeLanguageChoices: string[];
+  clericNatureSkillChoice: string;
+  clericNatureCantrip: string;
   bardInstrumentChoices: string[];
   bardExpertiseChoices: string[];
   bardLoreSkillChoices: string[];
@@ -74,6 +78,10 @@ export const WIZARD_INITIAL_STATE: WizardState = {
   bardCollege: '',
   clericDomain: '',
   paladinOath: '',
+  clericKnowledgeSkillChoices: [],
+  clericKnowledgeLanguageChoices: [],
+  clericNatureSkillChoice: '',
+  clericNatureCantrip: '',
   bardInstrumentChoices: [],
   bardExpertiseChoices: [],
   bardLoreSkillChoices: [],

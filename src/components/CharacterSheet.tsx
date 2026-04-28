@@ -28,12 +28,12 @@ function ListPanel({ title, items, emptyLabel }: { title: string; items: string[
     <div>
       <div className="section-title">{title}</div>
       {items.length === 0 ? (
-        <div className="text-sm italic text-[#7a6020]">{emptyLabel}</div>
+        <div className="text-sm italic text-[var(--color-text-dim)]">{emptyLabel}</div>
       ) : (
         <div className="flex flex-col gap-2">
           {items.map((item, index) => (
-            <div key={`${title}-${index}`} className="rounded border border-[#2a1f00] px-3 py-2 text-sm leading-6 text-[#e8cf88]">
-              <span className="mr-2 text-[#b8962e]">{index + 1}.</span>
+            <div key={`${title}-${index}`} className="rounded border border-[var(--color-border-subtle)] px-3 py-2 text-sm leading-6 text-[var(--color-text-rich)]">
+              <span className="mr-2 text-[var(--color-accent)]">{index + 1}.</span>
               {item}
             </div>
           ))}
@@ -78,7 +78,7 @@ export default function CharacterSheet({ character, onChange, onSave, onDelete }
     <div className="flex flex-col gap-6">
       <div className="section-box">
         <div className="flex items-center justify-between gap-4">
-          <div className="text-sm leading-6 text-[#c8a84b]">
+          <div className="text-sm leading-6 text-[var(--color-text)]">
             {isEditing
               ? 'Edit mode is on. Make your changes, then save when you are done.'
               : 'This sheet is in view mode. Click Edit Sheet to make changes.'}
@@ -280,7 +280,7 @@ export default function CharacterSheet({ character, onChange, onSave, onDelete }
       {tab === 'backstory' && <div className={lockClass}><Backstory character={character} onChange={onChange} /></div>}
 
       {/* Save / Delete */}
-      <div className="flex gap-3 justify-end pt-2 border-t border-[#2a1f00]">
+      <div className="flex gap-3 justify-end pt-2 border-t border-[var(--color-border-subtle)]">
         <button className="delete-btn" onClick={onDelete}>Delete Character</button>
         {isEditing && (
           <button className="save-btn" onClick={() => {

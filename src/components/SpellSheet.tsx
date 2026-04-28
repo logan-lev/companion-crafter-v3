@@ -22,7 +22,7 @@ export default function SpellSheet({ character, onChange }: Props) {
     return (
       <div className="section-box">
         <div className="section-title">Spells</div>
-        <div className="text-sm italic text-[#7a6020]">This class does not have spellcasting.</div>
+        <div className="text-sm italic text-[var(--color-text-dim)]">This class does not have spellcasting.</div>
       </div>
     );
   }
@@ -108,14 +108,14 @@ export default function SpellSheet({ character, onChange }: Props) {
             <div key={level} className="stat-box">
               <div className="field-label">Level {level}</div>
               <div className="text-lg font-bold">{character.spellSlots[level]?.total ?? 0}</div>
-              <div className="mt-2 text-[0.65rem] text-[#8f7635]">Used</div>
+              <div className="mt-2 text-[0.65rem] text-[var(--color-text-muted)]">Used</div>
               <input
                 type="number"
                 min={0}
                 max={character.spellSlots[level]?.total ?? 0}
                 value={character.spellSlots[level]?.used ?? 0}
                 onChange={(e) => updateSlotUsed(level, parseInt(e.target.value) || 0)}
-                className="mt-1 w-14 border-b border-[#b8962e] bg-transparent text-center text-sm font-bold text-[#f0d080] outline-none"
+                className="mt-1 w-14 border-b border-[var(--color-accent)] bg-transparent text-center text-sm font-bold text-[var(--color-text-strong)] outline-none"
               />
             </div>
           ))}
@@ -149,20 +149,20 @@ export default function SpellSheet({ character, onChange }: Props) {
               </select>
               <button
                 onClick={() => addSpellFromLevel(level)}
-                className="text-xs text-[#b8962e] border border-[#b8962e] px-3 py-1 hover:bg-[#1a1500]"
+                className="text-xs text-[var(--color-accent)] border border-[var(--color-accent)] px-3 py-1 hover:bg-[var(--color-hover)]"
               >
                 + Add {level === 0 ? 'Cantrip' : 'Spell'}
               </button>
             </div>
 
             {existingSpells.length === 0 ? (
-              <div className="text-[#7a6020] text-xs italic text-center py-2">No spells selected.</div>
+              <div className="text-[var(--color-text-dim)] text-xs italic text-center py-2">No spells selected.</div>
             ) : (
               <div className="flex flex-col gap-2">
                 {existingSpells.map(spell => (
-                  <div key={spell.id} className="rounded border border-[#2a1f00]">
+                  <div key={spell.id} className="rounded border border-[var(--color-border-subtle)]">
                     <div
-                      className="flex cursor-pointer items-center gap-2 p-3 hover:bg-[#1a1000]"
+                      className="flex cursor-pointer items-center gap-2 p-3 hover:bg-[var(--color-hover)]"
                       onClick={() => setExpandedSpell(expandedSpell === spell.id ? null : spell.id)}
                     >
                       {level > 0 && spellcasting.prepares && (
@@ -176,10 +176,10 @@ export default function SpellSheet({ character, onChange }: Props) {
                         />
                       )}
                       <div className="flex-1">
-                        <div className="font-bold text-[#f0d080]">{spell.name}</div>
-                        <div className="text-xs text-[#8f7635]">{spell.school} · {spell.castingTime} · {spell.range}</div>
+                        <div className="font-bold text-[var(--color-text-strong)]">{spell.name}</div>
+                        <div className="text-xs text-[var(--color-text-muted)]">{spell.school} · {spell.castingTime} · {spell.range}</div>
                       </div>
-                      <span className="text-[#7a6020] text-xs">{expandedSpell === spell.id ? '▲' : '▼'}</span>
+                      <span className="text-[var(--color-text-dim)] text-xs">{expandedSpell === spell.id ? '▲' : '▼'}</span>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -191,10 +191,10 @@ export default function SpellSheet({ character, onChange }: Props) {
                       </button>
                     </div>
                     {expandedSpell === spell.id && (
-                      <div className="border-t border-[#2a1f00] p-3 text-sm leading-6 text-[#d7ba66]">
-                        <div><span className="text-[#b8962e]">Components:</span> {spell.components}</div>
-                        <div><span className="text-[#b8962e]">Duration:</span> {spell.duration}</div>
-                        <div className="mt-2 text-[#e8cf88]">{spell.description}</div>
+                      <div className="border-t border-[var(--color-border-subtle)] p-3 text-sm leading-6 text-[var(--color-text-rich)]">
+                        <div><span className="text-[var(--color-accent)]">Components:</span> {spell.components}</div>
+                        <div><span className="text-[var(--color-accent)]">Duration:</span> {spell.duration}</div>
+                        <div className="mt-2 text-[var(--color-text-rich)]">{spell.description}</div>
                       </div>
                     )}
                   </div>

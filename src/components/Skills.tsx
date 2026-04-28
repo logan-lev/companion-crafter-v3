@@ -27,15 +27,15 @@ export default function Skills({ character, onChange }: Props) {
           const total = base + bonus;
           const sign = total >= 0 ? '+' : '';
           return (
-            <div key={name} className="flex items-center gap-2 rounded border border-[#2a1f00] px-3 py-2">
+            <div key={name} className="flex items-center gap-2 rounded border border-[var(--color-border-subtle)] px-3 py-2">
               <span
                 className={`circle-check ${prof ? 'checked' : ''} ${prof === 'expertise' ? 'ring-2 ring-yellow-400' : ''}`}
                 onClick={() => toggle(name)}
                 title={prof === 'expertise' ? 'Expertise (click to remove)' : prof ? 'Proficient (click for expertise)' : 'Click to add proficiency'}
               />
-              <span className="text-sm text-[#f0d080] w-8 text-right">{sign}{total}</span>
-              <span className="text-sm text-[#c8a84b] flex-1">{name}</span>
-              <span className="text-[0.65rem] text-[#7a6020]">({ability.toUpperCase()})</span>
+              <span className="text-sm text-[var(--color-text-strong)] w-8 text-right">{sign}{total}</span>
+              <span className="text-sm text-[var(--color-text)] flex-1">{name}</span>
+              <span className="text-[0.65rem] text-[var(--color-text-dim)]">({ability.toUpperCase()})</span>
             </div>
           );
         })}

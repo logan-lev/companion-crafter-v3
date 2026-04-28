@@ -37,7 +37,7 @@ export default function AbilityScores({ character, onChange }: Props) {
               pattern="[0-9]*"
               value={score}
               onChange={(e) => set(key, e.target.value)}
-              className="ability-score h-20 w-full overflow-visible bg-transparent border-none text-center text-[4rem] leading-none tracking-tight text-[#f0d080] outline-none"
+              className="ability-score h-20 w-full overflow-visible bg-transparent border-none text-center text-[4rem] leading-none tracking-tight text-[var(--color-text-strong)] outline-none"
             />
             <div className="flex flex-col items-center gap-1">
               <div className="modifier-badge min-w-[86px] px-3 py-1 text-xl">{modStr(score)}</div>

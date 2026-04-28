@@ -24,7 +24,7 @@ function StatBlock({
         inputMode="numeric"
         value={displayValue ?? String(value)}
         onChange={(e) => onChange(parseInt(e.target.value.replace(/[^\d-]/g, '')) || 0)}
-        className="text-xl font-bold text-center w-full bg-transparent border-none outline-none text-[#f0d080]"
+        className="text-xl font-bold text-center w-full bg-transparent border-none outline-none text-[var(--color-text-strong)]"
       />
       <span className="field-label">{label}</span>
     </div>
@@ -129,7 +129,7 @@ export default function CombatStats({ character, onChange }: Props) {
               <div className="flex gap-1">
                 {[0, 1, 2].map(i => (
                   <span key={i}
-                    className={`circle-check ${i < character.deathSaves.failures ? 'bg-red-700 border-red-700' : ''}`}
+                    className={`circle-check ${i < character.deathSaves.failures ? 'bg-red-700 border-[var(--color-danger-border)]' : ''}`}
                     onClick={() => toggleFailure(i)} />
                 ))}
               </div>
@@ -205,7 +205,7 @@ export default function CombatStats({ character, onChange }: Props) {
               ]);
               setAttackItemName('');
             }}
-            className="text-xs text-[#b8962e] border border-[#b8962e] px-3 py-1 hover:bg-[#1a1500]">
+            className="text-xs text-[var(--color-accent)] border border-[var(--color-accent)] px-3 py-1 hover:bg-[var(--color-hover)]">
             + Add Attack
           </button>
         </div>

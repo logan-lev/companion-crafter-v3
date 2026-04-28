@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Character } from './types/character';
 import { loadCharacters, saveCharacters, createBlankCharacter } from './utils/storage';
 import { normalizeCharacter } from './utils/character-sheet';
@@ -7,6 +7,7 @@ import CharacterWizard from './components/CharacterWizard';
 import MainMenu from './components/MainMenu';
 
 type AppView = 'menu' | 'wizard' | 'sheet';
+type ThemeMode = 'dark' | 'light';
 
 export default function App() {
   const [characters, setCharacters] = useState<Character[]>(() => loadCharacters());
@@ -14,8 +15,18 @@ export default function App() {
   const [savedFlash, setSavedFlash] = useState(false);
   const [creatingId, setCreatingId] = useState<string | null>(null);
   const [view, setView] = useState<AppView>('menu');
+  const [theme, setTheme] = useState<ThemeMode>(() => {
+    if (typeof window === 'undefined') return 'dark';
+    const saved = window.localStorage.getItem('companion-crafter-theme');
+    return saved === 'light' ? 'light' : 'dark';
+  });
 
   const activeCharacter = characters.find(c => c.id === activeId) ?? null;
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    window.localStorage.setItem('companion-crafter-theme', theme);
+  }, [theme]);
 
   const handleNew = () => {
     const blank = createBlankCharacter();
@@ -84,14 +95,17 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
+    <div className="min-h-screen bg-[var(--color-bg-app)]">
       {/* Top bar */}
-      <header className="border-b border-[#b8962e] bg-[#080808] px-4 py-3 flex items-center justify-between">
-        <span className="text-[#b8962e] text-xl font-bold tracking-widest uppercase" style={{ fontFamily: 'Georgia, serif' }}>
+      <header className="border-b border-[var(--color-accent)] bg-[var(--color-bg-header)] px-4 py-3 flex items-center justify-between">
+        <span className="text-[var(--color-accent)] text-xl font-bold tracking-widest uppercase" style={{ fontFamily: 'Georgia, serif' }}>
           ⚔ Companion Crafter
         </span>
         <div className="flex items-center gap-3">
           {savedFlash && <span className="text-xs text-green-400 animate-pulse">Saved!</span>}
+          <button onClick={() => setTheme(current => current === 'dark' ? 'light' : 'dark')} className="theme-toggle">
+            {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+          </button>
           {view !== 'menu' && (
             <button onClick={() => setView('menu')} className="tab-btn">
               Main Menu

@@ -25,8 +25,8 @@ export default function BackgroundStep({ state, onChange }: Props) {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h2 className="text-[#f0d080] text-lg font-bold tracking-wide mb-1">Choose Your Background</h2>
-        <p className="text-[#7a6020] text-xs">Your background reflects where you came from, your original occupation, and your place in the world.</p>
+        <h2 className="text-[var(--color-text-strong)] text-lg font-bold tracking-wide mb-1">Choose Your Background</h2>
+        <p className="text-[var(--color-text-dim)] text-xs">Your background reflects where you came from, your original occupation, and your place in the world.</p>
       </div>
 
       <div className="flex flex-col gap-5">
@@ -39,12 +39,12 @@ export default function BackgroundStep({ state, onChange }: Props) {
                 onClick={() => onChange({ background: bg.name, backgroundLanguageChoices: [], backgroundSelections: {} })}
                 className={`rounded border px-3 py-3 text-left transition-all ${
                   state.background === bg.name
-                    ? 'border-[#f0d080] bg-[#1a1200] text-[#f0d080]'
-                    : 'border-[#b8962e] bg-[#0d0d0d] text-[#b8962e] hover:bg-[#111100] hover:border-[#d4a93a]'
+                    ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)] text-[var(--color-text-strong)]'
+                    : 'border-[var(--color-accent)] bg-[var(--color-surface-3)] text-[var(--color-accent)] hover:bg-[var(--color-hover)] hover:border-[#d4a93a]'
                 }`}
               >
                 <div className="text-sm font-bold">{bg.name}</div>
-                <div className="mt-1 text-[0.7rem] text-[#8f7635]">{bg.skillProfs.join(', ')}</div>
+                <div className="mt-1 text-[0.7rem] text-[var(--color-text-muted)]">{bg.skillProfs.join(', ')}</div>
               </button>
             ))}
           </div>
@@ -55,8 +55,8 @@ export default function BackgroundStep({ state, onChange }: Props) {
             <div className="section-box flex flex-col gap-3">
               <div className="flex items-start justify-between">
                 <div>
-                  <h3 className="text-[#f0d080] text-xl font-bold">{preview.name}</h3>
-                  <p className="mt-1 text-sm italic leading-6 text-[#7a6020]">{preview.flavorText}</p>
+                  <h3 className="text-[var(--color-text-strong)] text-xl font-bold">{preview.name}</h3>
+                  <p className="mt-1 text-sm italic leading-6 text-[var(--color-text-dim)]">{preview.flavorText}</p>
                 </div>
                 {state.background === preview.name && (
                   <span className="text-green-400 text-xs border border-green-700 px-2 py-1 rounded ml-2 flex-shrink-0">Selected ✓</span>
@@ -69,7 +69,7 @@ export default function BackgroundStep({ state, onChange }: Props) {
                   <div className="field-label mb-1">Skill Proficiencies</div>
                   <div className="flex gap-1 flex-wrap">
                     {preview.skillProfs.map(s => (
-                      <span key={s} className="text-[0.65rem] bg-[#1a1200] border border-[#b8962e] px-2 py-0.5 rounded text-[#f0d080]">{s}</span>
+                      <span key={s} className="text-[0.65rem] bg-[var(--color-selected)] border border-[var(--color-accent)] px-2 py-0.5 rounded text-[var(--color-text-strong)]">{s}</span>
                     ))}
                   </div>
                 </div>
@@ -80,7 +80,7 @@ export default function BackgroundStep({ state, onChange }: Props) {
                     <div className="field-label mb-1">Tool Proficiencies</div>
                     <div className="flex gap-1 flex-wrap">
                       {(resolvedToolProficiencies.length ? resolvedToolProficiencies : preview.toolProfs).map(t => (
-                        <span key={t} className="text-[0.65rem] bg-[#0d0d1a] border border-purple-800 px-2 py-0.5 rounded text-purple-300">{t}</span>
+                        <span key={t} className="text-[0.65rem] bg-[#0d0d1a] border border-[var(--color-spell-border)] px-2 py-0.5 rounded text-[var(--color-spell-strong)]">{t}</span>
                       ))}
                     </div>
                   </div>
@@ -90,27 +90,27 @@ export default function BackgroundStep({ state, onChange }: Props) {
                 {preview.languages > 0 && (
                   <div>
                     <div className="field-label mb-1">Bonus Languages</div>
-                    <div className="text-sm leading-6 text-[#c8a84b]">{preview.languages} of your choice</div>
+                    <div className="text-sm leading-6 text-[var(--color-text)]">{preview.languages} of your choice</div>
                   </div>
                 )}
 
                 {/* Equipment */}
                 <div className="col-span-2">
                   <div className="field-label mb-1">Starting Equipment</div>
-                  <div className="text-sm leading-6 text-[#9a8040]">{resolvedEquipment || preview.equipment}</div>
+                  <div className="text-sm leading-6 text-[var(--color-text-soft)]">{resolvedEquipment || preview.equipment}</div>
                 </div>
               </div>
 
               {/* Feature */}
-              <div className="border border-[#2a1f00] rounded p-2">
-                <div className="text-[#f0d080] text-xs font-bold mb-1">Feature: {preview.feature.name}</div>
-                <div className="text-sm leading-6 text-[#9a8040]">{preview.feature.description}</div>
+              <div className="border border-[var(--color-border-subtle)] rounded p-2">
+                <div className="text-[var(--color-text-strong)] text-xs font-bold mb-1">Feature: {preview.feature.name}</div>
+                <div className="text-sm leading-6 text-[var(--color-text-soft)]">{preview.feature.description}</div>
               </div>
 
               {state.background === preview.name && preview.languages > 0 && (
                 <div>
                   <div className="section-title">Bonus Languages</div>
-                  <div className="mb-2 text-sm leading-6 text-[#c8a84b]">
+                  <div className="mb-2 text-sm leading-6 text-[var(--color-text)]">
                     Pick {preview.languages} total. Chosen {state.backgroundLanguageChoices.length}/{preview.languages}.
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -134,10 +134,10 @@ export default function BackgroundStep({ state, onChange }: Props) {
                           disabled={disabled}
                           className={`rounded border px-3 py-1 text-xs transition-all ${
                             selected
-                              ? 'border-[#f0d080] bg-[#2a1800] text-[#f0d080]'
+                              ? 'border-[var(--color-text-strong)] bg-[var(--color-selected-strong)] text-[var(--color-text-strong)]'
                               : disabled
-                              ? 'cursor-not-allowed border-[#2a1f00] bg-[#101010] text-[#4d4d4d]'
-                              : 'border-[#b8962e] bg-[#0d0d0d] text-[#b8962e] hover:bg-[#1a1000]'
+                              ? 'cursor-not-allowed border-[var(--color-border-subtle)] bg-[var(--color-surface-2)] text-[var(--color-text-dim)]'
+                              : 'border-[var(--color-accent)] bg-[var(--color-surface-3)] text-[var(--color-accent)] hover:bg-[var(--color-hover)]'
                           }`}
                         >
                           {language}
@@ -165,8 +165,8 @@ export default function BackgroundStep({ state, onChange }: Props) {
                           })}
                           className={`rounded border px-3 py-1 text-xs transition-all ${
                             selected
-                              ? 'border-[#f0d080] bg-[#2a1800] text-[#f0d080]'
-                              : 'border-[#b8962e] bg-[#0d0d0d] text-[#b8962e] hover:bg-[#1a1000]'
+                              ? 'border-[var(--color-text-strong)] bg-[var(--color-selected-strong)] text-[var(--color-text-strong)]'
+                              : 'border-[var(--color-accent)] bg-[var(--color-surface-3)] text-[var(--color-accent)] hover:bg-[var(--color-hover)]'
                           }`}
                         >
                           {option}
@@ -194,8 +194,8 @@ export default function BackgroundStep({ state, onChange }: Props) {
                           })}
                           className={`rounded border px-3 py-1 text-xs transition-all ${
                             selected
-                              ? 'border-[#f0d080] bg-[#2a1800] text-[#f0d080]'
-                              : 'border-[#b8962e] bg-[#0d0d0d] text-[#b8962e] hover:bg-[#1a1000]'
+                              ? 'border-[var(--color-text-strong)] bg-[var(--color-selected-strong)] text-[var(--color-text-strong)]'
+                              : 'border-[var(--color-accent)] bg-[var(--color-surface-3)] text-[var(--color-accent)] hover:bg-[var(--color-hover)]'
                           }`}
                         >
                           {option}
@@ -217,7 +217,7 @@ export default function BackgroundStep({ state, onChange }: Props) {
                           <button
                             key={i}
                             onClick={() => onChange({ personalityTraits: t })}
-                            className="text-left text-[0.65rem] text-[#9a8040] hover:text-[#f0d080] border-b border-[#1a1500] pb-1"
+                            className="text-left text-[0.65rem] text-[var(--color-text-soft)] hover:text-[var(--color-text-strong)] border-b border-[#1a1500] pb-1"
                           >
                             "{t}"
                           </button>
@@ -233,7 +233,7 @@ export default function BackgroundStep({ state, onChange }: Props) {
                           <button
                             key={i}
                             onClick={() => onChange({ ideals: t })}
-                            className="text-left text-[0.65rem] text-[#9a8040] hover:text-[#f0d080] border-b border-[#1a1500] pb-1"
+                            className="text-left text-[0.65rem] text-[var(--color-text-soft)] hover:text-[var(--color-text-strong)] border-b border-[#1a1500] pb-1"
                           >
                             "{t}"
                           </button>
@@ -245,7 +245,7 @@ export default function BackgroundStep({ state, onChange }: Props) {
               )}
             </div>
           ) : (
-            <div className="section-box flex items-center justify-center h-48 text-[#3a2a00] text-sm italic">
+            <div className="section-box flex items-center justify-center h-48 text-[var(--color-text-dim)] text-sm italic">
               Select a background to see details
             </div>
           )}

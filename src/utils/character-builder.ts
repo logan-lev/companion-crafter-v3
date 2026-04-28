@@ -151,6 +151,8 @@ export function getAllSkillProficiencies(state: WizardState): string[] {
     ...((subrace?.proficiencies ?? []).filter(item => SKILL_NAMES.has(item))),
     ...(state.raceSkillChoices ?? []),
     ...(state.bardLoreSkillChoices ?? []),
+    ...(state.clericKnowledgeSkillChoices ?? []),
+    ...(state.clericNatureSkillChoice ? [state.clericNatureSkillChoice] : []),
   ]);
 }
 
@@ -170,9 +172,6 @@ export function getAllOtherProficiencies(state: WizardState): string[] {
     ...((cls?.toolProf ?? []).filter(item => item !== 'Three musical instruments of your choice')),
     ...(state.bardInstrumentChoices ?? []),
     ...(state.bardCollege === 'College of Valor' ? ['Medium Armor', 'Shields', 'Martial Weapons'] : []),
-    ...(state.className === 'Cleric' && clericDomain?.name === 'Knowledge Domain'
-      ? ['Two bonus languages', 'Arcana expertise', 'History expertise']
-      : []),
     ...(state.className === 'Cleric' && clericDomain?.name === 'Life Domain' ? ['Heavy Armor'] : []),
     ...(state.className === 'Cleric' && clericDomain?.name === 'Nature Domain' ? ['Heavy Armor'] : []),
     ...(state.className === 'Cleric' && (clericDomain?.name === 'Tempest Domain' || clericDomain?.name === 'War Domain')
@@ -188,6 +187,7 @@ export function getLanguages(state: WizardState): string[] {
 
   languages.push(...(state.raceLanguageChoices ?? []));
   languages.push(...(state.backgroundLanguageChoices ?? []));
+  languages.push(...(state.clericKnowledgeLanguageChoices ?? []));
 
   return unique(languages);
 }
@@ -250,6 +250,18 @@ export function getTraitEntries(state: WizardState): string[] {
 
   if (state.clericDomain) {
     entries.push(`Divine Domain: You chose ${state.clericDomain}.`);
+  }
+  if (state.clericKnowledgeSkillChoices.length) {
+    entries.push(`Blessings of Knowledge: You chose ${state.clericKnowledgeSkillChoices.join(' and ')}.`);
+  }
+  if (state.clericKnowledgeLanguageChoices.length) {
+    entries.push(`Blessings of Knowledge Languages: You chose ${state.clericKnowledgeLanguageChoices.join(' and ')}.`);
+  }
+  if (state.clericNatureSkillChoice) {
+    entries.push(`Acolyte of Nature Skill: You chose ${state.clericNatureSkillChoice}.`);
+  }
+  if (state.clericNatureCantrip) {
+    entries.push(`Acolyte of Nature Cantrip: You learned ${state.clericNatureCantrip}.`);
   }
 
   if (state.paladinOath) {
@@ -376,6 +388,8 @@ function getExtraSpellNames(state: WizardState): string[] {
       })
     );
   }
+  if (state.className === 'Cleric' && state.clericDomain === 'Light Domain') names.push('Light');
+  if (state.className === 'Cleric' && state.clericNatureCantrip) names.push(state.clericNatureCantrip);
   names.push(...(state.bardMagicalSecretChoices ?? []));
   names.push(...(state.bardAdditionalMagicalSecretChoices ?? []));
 
@@ -483,7 +497,11 @@ export function createCharacterFromWizard(state: WizardState): Character {
       return profs;
     }, {} as Record<AbilityKey, boolean>),
     skillProfs: skillProfs.reduce((profs, skill) => {
-      profs[skill] = state.bardExpertiseChoices.includes(skill) ? 'expertise' : true;
+      profs[skill] =
+        state.bardExpertiseChoices.includes(skill) ||
+        state.clericKnowledgeSkillChoices.includes(skill)
+          ? 'expertise'
+          : true;
       return profs;
     }, {} as Record<string, boolean | 'expertise'>),
     armorClass: getArmorClass(state),

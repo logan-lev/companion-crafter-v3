@@ -254,8 +254,8 @@ export default function AbilityScoreStep({ state, onChange }: Props) {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h2 className="text-[#f0d080] text-lg font-bold tracking-wide mb-1">Set Ability Scores</h2>
-        <p className="text-[#7a6020] text-xs">Choose how to generate your ability scores. Racial bonuses are applied automatically.</p>
+        <h2 className="text-[var(--color-text-strong)] text-lg font-bold tracking-wide mb-1">Set Ability Scores</h2>
+        <p className="text-[var(--color-text-dim)] text-xs">Choose how to generate your ability scores. Racial bonuses are applied automatically.</p>
       </div>
 
       {/* Method tabs */}
@@ -294,7 +294,7 @@ export default function AbilityScoreStep({ state, onChange }: Props) {
           {state.abilityMethod === 'standard' && (
             <div className="mb-3">
               <div className="section-title">Assign Standard Array [15, 14, 13, 12, 10, 8]</div>
-              <p className="text-[#7a6020] text-[0.65rem] mb-2">Click a value, then click an ability score row to assign it. Click an assigned value to free it up.</p>
+              <p className="text-[var(--color-text-dim)] text-[0.65rem] mb-2">Click a value, then click an ability score row to assign it. Click an assigned value to free it up.</p>
               <div className="flex gap-2 mb-3">
                 {STANDARD_ARRAY.map((v, i) => {
                       const alreadyUsed = usedStandard.includes(i);
@@ -315,10 +315,10 @@ export default function AbilityScoreStep({ state, onChange }: Props) {
                           }}
                           className={`px-3 py-1 border rounded text-sm font-bold transition-all ${
                             alreadyUsed
-                              ? 'border-[#5e4c1c] bg-[#1b1404] text-[#f0d080]'
+                              ? 'border-[var(--color-border-faint)] bg-[var(--color-surface-accent)] text-[var(--color-text-strong)]'
                               : isSelected
-                              ? 'border-[#f0d080] bg-[#2a1800] text-[#f0d080]'
-                              : 'border-[#b8962e] text-[#b8962e] hover:bg-[#1a1000]'
+                              ? 'border-[var(--color-text-strong)] bg-[var(--color-selected-strong)] text-[var(--color-text-strong)]'
+                              : 'border-[var(--color-accent)] text-[var(--color-accent)] hover:bg-[var(--color-hover)]'
                           }`}
                         >{v}</button>
                   );
@@ -331,7 +331,7 @@ export default function AbilityScoreStep({ state, onChange }: Props) {
             <div className="mb-3">
               <div className="flex items-center justify-between mb-2">
                 <div className="section-title">Point Buy</div>
-                <span className={`text-xs font-bold ${pointsSpent(state.baseScores) > POINT_BUY_BUDGET ? 'text-red-400' : 'text-green-400'}`}>
+                <span className={`text-xs font-bold ${pointsSpent(state.baseScores) > POINT_BUY_BUDGET ? 'text-[var(--color-danger-text)]' : 'text-green-400'}`}>
                   {POINT_BUY_BUDGET - pointsSpent(state.baseScores)} pts remaining
                 </span>
               </div>
@@ -366,16 +366,16 @@ export default function AbilityScoreStep({ state, onChange }: Props) {
                           }}
                           className={`px-2 py-1 border rounded text-sm font-bold transition-all ${
                             alreadyUsed
-                              ? 'border-[#5e4c1c] bg-[#1b1404] text-[#f0d080]'
+                              ? 'border-[var(--color-border-faint)] bg-[var(--color-surface-accent)] text-[var(--color-text-strong)]'
                               : isSelected
-                              ? 'border-[#f0d080] bg-[#2a1800] text-[#f0d080]'
-                              : 'border-[#b8962e] text-[#b8962e] hover:bg-[#1a1000]'
+                              ? 'border-[var(--color-text-strong)] bg-[var(--color-selected-strong)] text-[var(--color-text-strong)]'
+                              : 'border-[var(--color-accent)] text-[var(--color-accent)] hover:bg-[var(--color-hover)]'
                           }`}
                         >{r}</button>
                       );
                     })}
                   </div>
-                  <div className="text-[0.65rem] text-[#7a6020]">
+                  <div className="text-[0.65rem] text-[var(--color-text-dim)]">
                     Total: {rolls.reduce((a, b) => a + b, 0)} · Avg: {(rolls.reduce((a, b) => a + b, 0) / 6).toFixed(1)}
                   </div>
                   <button onClick={resetAssignments} className="tab-btn text-[0.65rem] py-1 px-3 mt-2">
@@ -409,37 +409,37 @@ export default function AbilityScoreStep({ state, onChange }: Props) {
                   }}
                   className={`flex items-center gap-3 rounded border px-3 py-2 text-left transition-all ${
                     (state.abilityMethod === 'standard' && selectedStandardIndex !== null) || (state.abilityMethod === 'roll' && selectedRollIndex !== null)
-                      ? 'border-[#b8962e] hover:bg-[#120f08]'
-                      : 'border-[#2a1f00]'
+                      ? 'border-[var(--color-accent)] hover:bg-[var(--color-hover)]'
+                      : 'border-[var(--color-border-subtle)]'
                   }`}
                 >
-                  <div className="w-24 text-[#b8962e] text-xs font-bold">{ABILITY_NAMES[key]}</div>
+                  <div className="w-24 text-[var(--color-accent)] text-xs font-bold">{ABILITY_NAMES[key]}</div>
 
                   {state.abilityMethod === 'pointbuy' && (
                     <div className="flex items-center gap-1">
-                      <button onClick={() => setBase(key, base - 1)} className="text-[#b8962e] w-5 h-5 border border-[#b8962e] rounded text-xs hover:bg-[#1a1000]">−</button>
-                      <span className="w-6 text-center text-[#f0d080] font-bold">{base}</span>
-                      <button onClick={() => setBase(key, base + 1)} className="text-[#b8962e] w-5 h-5 border border-[#b8962e] rounded text-xs hover:bg-[#1a1000]">+</button>
-                      <span className="text-[#7a6020] text-[0.6rem] w-12">({POINT_COST[base] ?? '?'} pts)</span>
+                      <button onClick={() => setBase(key, base - 1)} className="text-[var(--color-accent)] w-5 h-5 border border-[var(--color-accent)] rounded text-xs hover:bg-[var(--color-hover)]">−</button>
+                      <span className="w-6 text-center text-[var(--color-text-strong)] font-bold">{base}</span>
+                      <button onClick={() => setBase(key, base + 1)} className="text-[var(--color-accent)] w-5 h-5 border border-[var(--color-accent)] rounded text-xs hover:bg-[var(--color-hover)]">+</button>
+                      <span className="text-[var(--color-text-dim)] text-[0.6rem] w-12">({POINT_COST[base] ?? '?'} pts)</span>
                     </div>
                   )}
 
                   {(state.abilityMethod === 'standard' || state.abilityMethod === 'roll') && (
                     <div className={`w-16 h-10 border rounded text-base font-bold flex items-center justify-center ${
-                      assignedValue !== null ? 'border-[#b8962e] text-[#f0d080]' : 'border-[#2a1f00] text-[#7a6020]'
+                      assignedValue !== null ? 'border-[var(--color-accent)] text-[var(--color-text-strong)]' : 'border-[var(--color-border-subtle)] text-[var(--color-text-dim)]'
                     }`}>
                       {assignedValue ?? '—'}
                     </div>
                   )}
 
                   {bonus !== 0 && (
-                    <span className={`text-[0.65rem] font-bold ${bonus > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    <span className={`text-[0.65rem] font-bold ${bonus > 0 ? 'text-green-400' : 'text-[var(--color-danger-text)]'}`}>
                       {bonus > 0 ? '+' : ''}{bonus}
                     </span>
                   )}
 
                   <div className="flex-1 flex items-center gap-3">
-                    <span className="text-[#f0d080] font-bold w-10 text-center text-xl">{final}</span>
+                    <span className="text-[var(--color-text-strong)] font-bold w-10 text-center text-xl">{final}</span>
                     <div className="modifier-badge text-sm">{modStr(final)}</div>
                   </div>
                 </div>
@@ -484,8 +484,8 @@ export default function AbilityScoreStep({ state, onChange }: Props) {
                 return (
                   <div key={name} className="flex items-center gap-1">
                     <span className={`circle-check ${prof ? 'checked' : ''} w-2 h-2`} style={{ width: '0.5rem', height: '0.5rem' }} />
-                    <span className="text-[0.6rem] text-[#c8a84b] flex-1">{name}</span>
-                    <span className={`text-[0.65rem] font-bold ${prof ? 'text-[#f0d080]' : 'text-[#7a6020]'}`}>
+                    <span className="text-[0.6rem] text-[var(--color-text)] flex-1">{name}</span>
+                    <span className={`text-[0.65rem] font-bold ${prof ? 'text-[var(--color-text-strong)]' : 'text-[var(--color-text-dim)]'}`}>
                       {total >= 0 ? '+' : ''}{total}
                     </span>
                   </div>
@@ -500,7 +500,7 @@ export default function AbilityScoreStep({ state, onChange }: Props) {
               <div className="section-title">Racial Bonuses Applied</div>
               <div className="flex gap-2 flex-wrap">
                 {Object.entries(racialBonus).map(([k, v]) => (
-                  <span key={k} className="text-[0.65rem] bg-[#0a1a00] border border-green-800 px-2 py-0.5 rounded text-green-400">
+                  <span key={k} className="text-[0.65rem] bg-[var(--color-surface-accent)] border border-[var(--color-border-muted)] px-2 py-0.5 rounded text-green-400">
                     +{v} {ABILITY_NAMES[k as AbilityKey].slice(0, 3)}
                   </span>
                 ))}

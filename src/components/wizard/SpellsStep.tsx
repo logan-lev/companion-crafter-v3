@@ -13,8 +13,8 @@ interface Props {
 
 const SCHOOLS = ['Abjuration', 'Conjuration', 'Divination', 'Enchantment', 'Evocation', 'Illusion', 'Necromancy', 'Transmutation'];
 const SCHOOL_COLORS: Record<string, string> = {
-  Abjuration: 'text-blue-300', Conjuration: 'text-yellow-300', Divination: 'text-purple-300',
-  Enchantment: 'text-pink-300', Evocation: 'text-orange-300', Illusion: 'text-indigo-300',
+  Abjuration: 'text-blue-300', Conjuration: 'text-yellow-300', Divination: 'text-[var(--color-spell-strong)]',
+  Enchantment: 'text-pink-300', Evocation: 'text-orange-300', Illusion: 'text-[var(--color-spell-strong)]',
   Necromancy: 'text-green-300', Transmutation: 'text-red-300',
 };
 
@@ -35,26 +35,26 @@ function getFinalScores(state: WizardState) {
 function SpellCard({ spell, isSelected, onClick }: { spell: SpellData; isSelected: boolean; onClick: () => void }) {
   const [expanded, setExpanded] = useState(false);
   return (
-    <div className={`border rounded mb-1 transition-all ${isSelected ? 'border-[#f0d080] bg-[#1a1200]' : 'border-[#2a1f00] bg-[#0d0d0d] hover:border-[#b8962e]'}`}>
+    <div className={`border rounded mb-1 transition-all ${isSelected ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)]' : 'border-[var(--color-border-subtle)] bg-[var(--color-surface-3)] hover:border-[var(--color-accent)]'}`}>
       <div className="flex items-center gap-2 p-2">
         <button
           onClick={onClick}
-          className={`w-4 h-4 border rounded flex-shrink-0 transition-all ${isSelected ? 'bg-[#b8962e] border-[#f0d080]' : 'border-[#b8962e]'}`}
+          className={`w-4 h-4 border rounded flex-shrink-0 transition-all ${isSelected ? 'bg-[#b8962e] border-[var(--color-text-strong)]' : 'border-[var(--color-accent)]'}`}
         />
         <button className="flex-1 text-left" onClick={() => setExpanded(!expanded)}>
-          <span className={`text-xs font-bold ${isSelected ? 'text-[#f0d080]' : 'text-[#c8a84b]'}`}>{spell.name}</span>
-          <span className={`text-[0.55rem] ml-2 ${SCHOOL_COLORS[spell.school] ?? 'text-[#7a6020]'}`}>{spell.school}</span>
-          <span className="text-[0.55rem] text-[#7a6020] ml-2">{spell.castingTime} · {spell.range}</span>
+          <span className={`text-xs font-bold ${isSelected ? 'text-[var(--color-text-strong)]' : 'text-[var(--color-text)]'}`}>{spell.name}</span>
+          <span className={`text-[0.55rem] ml-2 ${SCHOOL_COLORS[spell.school] ?? 'text-[var(--color-text-dim)]'}`}>{spell.school}</span>
+          <span className="text-[0.55rem] text-[var(--color-text-dim)] ml-2">{spell.castingTime} · {spell.range}</span>
         </button>
-        <span className="text-[#7a6020] text-[0.6rem]">{expanded ? '▲' : '▼'}</span>
+        <span className="text-[var(--color-text-dim)] text-[0.6rem]">{expanded ? '▲' : '▼'}</span>
       </div>
       {expanded && (
         <div className="px-3 pb-2 border-t border-[#1a1500]">
           <div className="flex gap-3 mb-1 flex-wrap">
-            <span className="text-[0.6rem] text-[#7a6020]">Components: {spell.components}</span>
-            <span className="text-[0.6rem] text-[#7a6020]">Duration: {spell.duration}</span>
+            <span className="text-[0.6rem] text-[var(--color-text-dim)]">Components: {spell.components}</span>
+            <span className="text-[0.6rem] text-[var(--color-text-dim)]">Duration: {spell.duration}</span>
           </div>
-          <p className="text-[0.65rem] text-[#9a8040]">{spell.description}</p>
+          <p className="text-[0.65rem] text-[var(--color-text-soft)]">{spell.description}</p>
           {spell.upcast && <p className="text-[0.6rem] text-purple-400 mt-1"><em>At Higher Levels:</em> {spell.upcast}</p>}
         </div>
       )}
@@ -70,7 +70,7 @@ export default function SpellsStep({ state, onChange }: Props) {
   const cls = CLASS_DATA.find(c => c.name === state.className);
   if (!cls?.spellcasting) {
     return (
-      <div className="section-box flex items-center justify-center h-48 text-[#7a6020] italic">
+      <div className="section-box flex items-center justify-center h-48 text-[var(--color-text-dim)] italic">
         {state.className || 'Your class'} is not a spellcaster. Skip this step.
       </div>
     );
@@ -124,8 +124,8 @@ export default function SpellsStep({ state, onChange }: Props) {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h2 className="text-[#f0d080] text-lg font-bold tracking-wide mb-1">Choose Your Spells</h2>
-        <p className="text-[#7a6020] text-xs">Select cantrips and spells from your class spell list based on your level.</p>
+        <h2 className="text-[var(--color-text-strong)] text-lg font-bold tracking-wide mb-1">Choose Your Spells</h2>
+        <p className="text-[var(--color-text-dim)] text-xs">Select cantrips and spells from your class spell list based on your level.</p>
       </div>
 
       {/* Spellcasting stats */}
@@ -143,7 +143,7 @@ export default function SpellsStep({ state, onChange }: Props) {
           </div>
         </div>
         {sc.prepares && (
-          <p className="text-[#7a6020] text-[0.65rem] mt-2">
+          <p className="text-[var(--color-text-dim)] text-[0.65rem] mt-2">
             You can prepare {spellsAllowed} spells ({sc.ability.toUpperCase()} mod + {sc.type === 'half' ? 'half ' : ''}level). After a long rest, you may change your prepared spells.
           </p>
         )}
@@ -152,7 +152,7 @@ export default function SpellsStep({ state, onChange }: Props) {
       {/* Filters */}
       <div className="flex flex-wrap gap-1 items-center">
         <input value={search} onChange={e => setSearch(e.target.value)}
-          placeholder="Search spells..." className="field-input w-40 text-xs px-2 py-1 border border-[#b8962e] rounded bg-[#0d0d0d]" />
+          placeholder="Search spells..." className="field-input w-40 text-xs px-2 py-1 border border-[var(--color-accent)] rounded bg-[var(--color-surface-3)]" />
         <button onClick={() => setFilterSchool(null)} className={`tab-btn text-[0.6rem] py-0.5 px-2 ${!filterSchool ? 'active' : ''}`}>All Schools</button>
         {SCHOOLS.map(s => (
           <button key={s} onClick={() => setFilterSchool(filterSchool === s ? null : s)}
@@ -166,7 +166,7 @@ export default function SpellsStep({ state, onChange }: Props) {
           <div className="flex items-center justify-between mb-2">
             <div className="section-title flex-1">Cantrips ({state.selectedCantrips.length}/{cantripsAllowed})</div>
           </div>
-          {filteredCantrips.length === 0 && <div className="text-[#3a2a00] text-xs italic">No cantrips available for this filter.</div>}
+          {filteredCantrips.length === 0 && <div className="text-[var(--color-text-dim)] text-xs italic">No cantrips available for this filter.</div>}
           {filteredCantrips.map(spell => (
             <SpellCard key={spell.name} spell={spell}
               isSelected={state.selectedCantrips.includes(spell.name)}
@@ -199,7 +199,7 @@ export default function SpellsStep({ state, onChange }: Props) {
             ) : null)}
           </div>
 
-          {filteredSpells.length === 0 && <div className="text-[#3a2a00] text-xs italic">No spells available for this filter.</div>}
+          {filteredSpells.length === 0 && <div className="text-[var(--color-text-dim)] text-xs italic">No spells available for this filter.</div>}
           {filteredSpells.map(spell => (
             <SpellCard key={spell.name} spell={spell}
               isSelected={state.selectedSpells.includes(spell.name)}

@@ -33,12 +33,12 @@ export default function LanguageListEditor({ title, items, onChange, emptyLabel 
     <div className="section-box">
       {title && <div className="section-title">{title}</div>}
       {items.length === 0 ? (
-        <div className="mb-3 text-sm italic text-[#7a6020]">{emptyLabel}</div>
+        <div className="mb-3 text-sm italic text-[var(--color-text-dim)]">{emptyLabel}</div>
       ) : (
         <div className="mb-3 flex flex-col gap-2">
           {items.map((item, index) => (
             <div key={`${item}-${index}`} className="flex items-center gap-2">
-              <span className="w-7 shrink-0 text-sm font-bold text-[#b8962e]">{index + 1}.</span>
+              <span className="w-7 shrink-0 text-sm font-bold text-[var(--color-accent)]">{index + 1}.</span>
               <div className="field-input flex-1 text-sm">{item}</div>
               <button onClick={() => onChange(items.filter((_, itemIndex) => itemIndex !== index))} className="text-red-500 text-xs px-2">✕</button>
             </div>

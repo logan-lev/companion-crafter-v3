@@ -62,8 +62,8 @@ export default function FeaturesTraits({ character, onChange, editable = true }:
         ) : (
           <div className="flex flex-col gap-2">
             {featureItems.map((item, index) => (
-              <div key={index} className="rounded border border-[#2a1f00] px-3 py-2 text-sm leading-6 text-[#e8cf88]">
-                <span className="mr-2 text-[#b8962e]">{index + 1}.</span>
+              <div key={index} className="rounded border border-[var(--color-border-subtle)] px-3 py-2 text-sm leading-6 text-[var(--color-text-rich)]">
+                <span className="mr-2 text-[var(--color-accent)]">{index + 1}.</span>
                 {item}
               </div>
             ))}
@@ -85,8 +85,8 @@ export default function FeaturesTraits({ character, onChange, editable = true }:
         ) : (
           <div className="flex flex-col gap-2">
             {proficiencyItems.map((item, index) => (
-              <div key={index} className="rounded border border-[#2a1f00] px-3 py-2 text-sm leading-6 text-[#e8cf88]">
-                <span className="mr-2 text-[#b8962e]">{index + 1}.</span>
+              <div key={index} className="rounded border border-[var(--color-border-subtle)] px-3 py-2 text-sm leading-6 text-[var(--color-text-rich)]">
+                <span className="mr-2 text-[var(--color-accent)]">{index + 1}.</span>
                 {item}
               </div>
             ))}
@@ -105,8 +105,8 @@ export default function FeaturesTraits({ character, onChange, editable = true }:
         ) : (
           <div className="flex flex-col gap-2">
             {languageItems.map((item, index) => (
-              <div key={index} className="rounded border border-[#2a1f00] px-3 py-2 text-sm leading-6 text-[#e8cf88]">
-                <span className="mr-2 text-[#b8962e]">{index + 1}.</span>
+              <div key={index} className="rounded border border-[var(--color-border-subtle)] px-3 py-2 text-sm leading-6 text-[var(--color-text-rich)]">
+                <span className="mr-2 text-[var(--color-accent)]">{index + 1}.</span>
                 {item}
               </div>
             ))}
