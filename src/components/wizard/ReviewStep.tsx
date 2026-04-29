@@ -38,7 +38,18 @@ export default function ReviewStep({ state, onFinish }: Props) {
     ...(bg?.skillProfs || []),
   ];
 
-  const features = cls ? getFeaturesUpToLevel(cls.name, state.level) : [];
+  const features = cls
+    ? getFeaturesUpToLevel(cls.name, state.level, {
+        barbarianPath: state.barbarianPath,
+        barbarianTotemSpirit: state.barbarianTotemSpirit,
+        barbarianAspectSpirit: state.barbarianAspectSpirit,
+        barbarianAttunementSpirit: state.barbarianAttunementSpirit,
+        bardCollege: state.bardCollege,
+        clericDomain: state.clericDomain,
+        druidCircle: state.druidCircle,
+        paladinOath: state.paladinOath,
+      })
+    : [];
 
   const isValid = state.name && state.race && state.className && state.background;
 

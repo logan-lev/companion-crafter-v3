@@ -8,6 +8,8 @@ import {
   BARBARIAN_TOTEM_SPIRITS,
   CLASS_DATA,
   CLERIC_DOMAINS,
+  DRUID_CIRCLES,
+  DRUID_LAND_TERRAINS,
   PALADIN_OATHS,
   type ClassFeature,
   getCantripsKnown,
@@ -216,7 +218,7 @@ function getCombinedFeatureEffects(
   className: string,
   features: ClassFeature[]
 ): { resistances: EffectSummary[]; advantages: EffectSummary[] } {
-  if (className !== 'Barbarian' && className !== 'Cleric') {
+  if (className !== 'Barbarian' && className !== 'Cleric' && className !== 'Druid') {
     return { resistances: [], advantages: [] };
   }
 
@@ -312,6 +314,22 @@ function getCombinedFeatureEffects(
         label: 'Bludgeoning, piercing, and slashing damage from nonmagical weapons',
       });
     }
+
+    if (feature.name === 'Dampen Elements') {
+      resistances.push({
+        label: 'Acid, cold, fire, lightning, or thunder damage',
+        condition: 'When you use your reaction on yourself or a creature within 30 feet',
+      });
+    }
+
+    if (feature.name === "Nature's Ward") {
+      resistances.push({
+        label: 'Poison and disease',
+      });
+      advantages.push({
+        label: "You can't be charmed or frightened by elementals or fey",
+      });
+    }
   });
 
   return { resistances, advantages };
@@ -362,6 +380,12 @@ function isClericDomainFeature(feature: ClassFeature): boolean {
   );
 }
 
+function isDruidCircleFeature(feature: ClassFeature): boolean {
+  return DRUID_CIRCLES.some(circle =>
+    circle.features.some(circleFeature => circleFeature.level === feature.level && circleFeature.name === feature.name)
+  );
+}
+
 export default function ClassStep({ state, onChange }: Props) {
   const [magicalSecretsSource, setMagicalSecretsSource] = useState<MagicalSecretsSource>('All');
   const [collapsedSpellGroups, setCollapsedSpellGroups] = useState<Record<string, boolean>>({});
@@ -382,6 +406,9 @@ export default function ClassStep({ state, onChange }: Props) {
       barbarianAttunementSpirit: '',
       bardCollege: '',
       clericDomain: '',
+      druidCircle: '',
+      druidLandTerrain: '',
+      druidLandCantrip: '',
       paladinOath: '',
       clericKnowledgeSkillChoices: [],
       clericKnowledgeLanguageChoices: [],
@@ -633,17 +660,23 @@ export default function ClassStep({ state, onChange }: Props) {
         barbarianAspectSpirit: state.barbarianAspectSpirit,
         barbarianAttunementSpirit: state.barbarianAttunementSpirit,
         bardCollege: state.bardCollege,
-        clericDomain: state.clericDomain,
-        paladinOath: state.paladinOath,
-      })
+      clericDomain: state.clericDomain,
+      druidCircle: state.druidCircle,
+      paladinOath: state.paladinOath,
+    })
     : [];
   const baseFeatures = features.filter(
-    feature => !isBarbarianPathFeature(feature) && !isBardCollegeFeature(feature) && !isClericDomainFeature(feature)
+    feature =>
+      !isBarbarianPathFeature(feature) &&
+      !isBardCollegeFeature(feature) &&
+      !isClericDomainFeature(feature) &&
+      !isDruidCircleFeature(feature)
   );
   const unlockedFeatures = features.filter(feature => feature.level <= level);
   const selectedPrimalPath = BARBARIAN_PRIMAL_PATHS.find(path => path.name === state.barbarianPath);
   const selectedBardCollege = BARD_COLLEGES.find(college => college.name === state.bardCollege);
   const selectedClericDomain = CLERIC_DOMAINS.find(domain => domain.name === state.clericDomain);
+  const selectedDruidCircle = DRUID_CIRCLES.find(circle => circle.name === state.druidCircle);
   const selectedPaladinOath = PALADIN_OATHS.find(oath => oath.name === state.paladinOath);
   const selectedTotemSpirit = getTotemSpiritOption(3, state.barbarianTotemSpirit);
   const selectedAspectSpirit = getTotemSpiritOption(6, state.barbarianAspectSpirit);
@@ -667,6 +700,7 @@ export default function ClassStep({ state, onChange }: Props) {
   const classEffects = getCombinedFeatureEffects(previewClass?.name ?? '', unlockedFeatures);
   const bardCollegeFeatures = selectedBardCollege?.features ?? [];
   const clericDomainFeatures = selectedClericDomain?.features ?? [];
+  const druidCircleFeatures = selectedDruidCircle?.features ?? [];
   const paladinOathFeatures = selectedPaladinOath?.features ?? [];
 
   const classEquipmentChoices = previewClass ? (CLASS_EQUIPMENT_CHOICES[previewClass.name] ?? []) : [];
@@ -706,6 +740,12 @@ export default function ClassStep({ state, onChange }: Props) {
         ...(previewClass.name === 'Cleric' && clericHasMartialWeapons ? ['Martial Weapons'] : []),
       ]
     : [];
+  const toolProficiencies = previewClass
+    ? [
+        ...((previewClass.toolProf ?? []).filter(item => item !== 'Three musical instruments of your choice')),
+        ...(previewClass.name === 'Bard' ? state.bardInstrumentChoices : []),
+      ]
+    : [];
   const availableClericNatureCantrips = CLERIC_NATURE_CANTRIP_OPTIONS.filter(
     spell => spell.name !== 'Light' || state.clericDomain !== 'Light Domain'
   );
@@ -734,9 +774,11 @@ export default function ClassStep({ state, onChange }: Props) {
   const spellAllowance = Math.max(0, baseSpellAllowance - reservedMagicalSecretsSlots);
   const classSpellOptions = previewClass ? SPELL_LIST.filter(spell => spell.classes.includes(previewClass.name)) : [];
   const subclassAutoPreparedSpells =
-    previewClass && (previewClass.name === 'Cleric' || previewClass.name === 'Paladin')
+    previewClass && (previewClass.name === 'Cleric' || previewClass.name === 'Paladin' || previewClass.name === 'Druid')
       ? getSubclassAutoPreparedSpells(previewClass.name, level, {
           clericDomain: state.clericDomain,
+          druidCircle: state.druidCircle,
+          druidLandTerrain: state.druidLandTerrain,
           paladinOath: state.paladinOath,
         })
       : [];
@@ -755,7 +797,19 @@ export default function ClassStep({ state, onChange }: Props) {
     state.clericNatureCantrip
       ? SPELL_LIST.filter(spell => spell.name === state.clericNatureCantrip)
       : [];
+  const druidLandChosenCantripDetails =
+    previewClass?.name === 'Druid' &&
+    selectedDruidCircle?.name === 'Circle of the Land' &&
+    state.druidLandCantrip
+      ? SPELL_LIST.filter(spell => spell.name === state.druidLandCantrip)
+      : [];
   const classCantripOptions = classSpellOptions.filter(spell => spell.level === 0);
+  const availableDruidLandCantrips =
+    previewClass?.name === 'Druid'
+      ? classCantripOptions.filter(
+          spell => !state.selectedCantrips.includes(spell.name) || state.druidLandCantrip === spell.name
+        )
+      : [];
   const classLevelSpellOptions = classSpellOptions.filter(spell => spell.level > 0 && spell.level <= Math.max(1, maxSpellLevel));
   const bardMagicalSecretOptions = previewClass?.name === 'Bard'
     ? SPELL_LIST.filter(spell => spell.level === 0 || spell.level <= Math.max(1, maxSpellLevel))
@@ -885,6 +939,52 @@ export default function ClassStep({ state, onChange }: Props) {
               <div className="text-lg font-bold italic text-[var(--color-text-strong)]">Area Reading.</div>
               <p className="mt-1">{areaSection}</p>
               {areaDetails && <p className="mt-2">{areaDetails}</p>}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (feature.name === 'Wild Shape') {
+      return (
+        <div className={`mt-2 rounded border border-[var(--color-border-strong)] bg-[var(--color-surface-pop)] p-4 ${unlocked ? '' : 'opacity-70'}`}>
+          <div className="border-b border-[var(--color-border-strong)] pb-2 text-lg font-bold uppercase tracking-[0.22em] text-[var(--color-text-strong)]">
+            Wild Shape
+          </div>
+          <div className="mt-3 space-y-4 text-[0.98rem] leading-8 text-[var(--color-text-soft)]">
+            <p>Starting at 2nd level, you can use your action to magically assume the shape of a beast that you have seen before. You can use this feature twice. You regain expended uses when you finish a short or long rest.</p>
+            <p>Your druid level determines the beasts you can transform into, as shown in the Beast Shapes table. At 2nd level, for example, you can transform into any beast that has a challenge rating of 1/4 or lower that doesn't have a flying or swimming speed.</p>
+            <div className="rounded border border-[var(--color-border-strong)] bg-[var(--color-surface-2)] p-3">
+              <div className="text-lg font-bold uppercase tracking-[0.18em] text-[var(--color-text-strong)]">Beast Shapes</div>
+              <div className="mt-3 grid grid-cols-[100px_100px_minmax(0,1fr)_100px] gap-2 text-sm">
+                <div className="font-bold text-[var(--color-text-strong)]">Level</div>
+                <div className="font-bold text-[var(--color-text-strong)]">Max. CR</div>
+                <div className="font-bold text-[var(--color-text-strong)]">Limitations</div>
+                <div className="font-bold text-[var(--color-text-strong)]">Example</div>
+                <div>2nd</div>
+                <div>1/4</div>
+                <div>No flying or swimming speed</div>
+                <div>Wolf</div>
+                <div>4th</div>
+                <div>1/2</div>
+                <div>No flying speed</div>
+                <div>Crocodile</div>
+                <div>8th</div>
+                <div>1</div>
+                <div>—</div>
+                <div>Giant eagle</div>
+              </div>
+            </div>
+            <p>You can stay in a beast shape for a number of hours equal to half your druid level (rounded down). You then revert to your normal form unless you expend another use of this feature. You can revert to your normal form earlier by using a bonus action on your turn. You automatically revert if you fall unconscious, drop to 0 hit points, or die.</p>
+            <div>
+              <p className="mb-2">While you are transformed, the following rules apply:</p>
+              <ul className="list-disc space-y-2 pl-6">
+                <li>Your game statistics are replaced by the statistics of the beast, but you retain your alignment, personality, and Intelligence, Wisdom, and Charisma scores. You also retain all of your skill and saving throw proficiencies, in addition to gaining those of the creature. If the creature has the same proficiency as you and the bonus in its stat block is higher than yours, use the creature's bonus instead of yours. If the creature has any legendary or lair actions, you can't use them.</li>
+                <li>When you transform, you assume the beast's hit points and Hit Dice. When you revert to your normal form, you return to the number of hit points you had before you transformed. However, if you revert as a result of dropping to 0 hit points, any excess damage carries over to your normal form. For example, if you take 10 damage in animal form and have only 1 hit point left, you revert and take 9 damage. As long as the excess damage doesn't reduce your normal form to 0 hit points, you aren't knocked unconscious.</li>
+                <li>You can't cast spells, and your ability to speak or take any action that requires hands is limited to the capabilities of your beast form. Transforming doesn't break your concentration on a spell you've already cast, however, or prevent you from taking actions that are part of a spell, such as call lightning, that you've already cast.</li>
+                <li>You retain the benefit of any features from your class, race, or other source and can use them if the new form is physically capable of doing so. However, you can't use any of your special senses, such as darkvision, unless your new form also has that sense.</li>
+                <li>You choose whether your equipment falls to the ground in your space, merges into your new form, or is worn by it. Worn equipment functions as normal, but the DM decides whether it is practical for the new form to wear a piece of equipment, based on the creature's shape and size. Your equipment doesn't change size or shape to match the new form, and any equipment that the new form can't wear must either fall to the ground or merge with it. Equipment that merges with the form has no effect until you leave the form.</li>
+              </ul>
             </div>
           </div>
         </div>
@@ -1320,9 +1420,75 @@ export default function ClassStep({ state, onChange }: Props) {
                         renderCollapsibleSpellDetails(
                           'subclass-auto',
                           subclassAutoPreparedSpellDetails,
-                          previewClass?.name === 'Cleric' ? 'Domain Spells' : 'Oath Spells',
-                          'These spells are granted by your subclass and are always prepared. They do not count against the number of spells you choose manually.'
+                          previewClass?.name === 'Cleric'
+                            ? 'Domain Spells'
+                            : previewClass?.name === 'Druid'
+                            ? 'Circle Spells'
+                            : 'Oath Spells',
+                          previewClass?.name === 'Druid'
+                            ? 'These spells are granted by your druid circle terrain and are always prepared for you. They do not count against the number of spells you prepare manually.'
+                            : 'These spells are granted by your subclass and are always prepared. They do not count against the number of spells you choose manually.'
                         )}
+
+                      {previewClass.name === 'Druid' && selectedDruidCircle?.name === 'Circle of the Land' && (
+                        <div className="rounded border border-[var(--color-spell-border)] bg-[var(--color-spell-surface)] p-3">
+                          <div className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-[var(--color-spell-strong)]">
+                            Circle of the Land
+                          </div>
+                          <div className="mb-3 text-sm leading-6 text-[var(--color-spell-text)]">
+                            Your mystical connection to the land infuses you with the ability to cast certain spells. At 3rd, 5th, 7th, and 9th level you gain access to circle spells connected to the land where you became a druid. Choose that land-arctic, coast, desert, forest, grassland, mountain, swamp, or Underdark-and consult the associated list of spells.
+                            Once you gain access to a circle spell, you always have it prepared, and it doesn't count against the number of spells you can prepare each day. If you gain access to a spell that doesn't appear on the druid spell list, the spell is nonetheless a druid spell for you.
+                          </div>
+                          <div className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-[var(--color-spell-strong)]">
+                            Choose Terrain
+                          </div>
+                          <div className="mb-3 flex flex-wrap gap-2">
+                            {DRUID_LAND_TERRAINS.map(terrain => {
+                              const selected = state.druidLandTerrain === terrain;
+                              return (
+                                <button
+                                  key={`druid-terrain-${terrain}`}
+                                  onClick={() => onChange({ druidLandTerrain: selected ? '' : terrain })}
+                                  className={`rounded border px-3 py-1 text-xs transition-all ${
+                                    selected
+                                      ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)] text-[var(--color-text-strong)]'
+                                      : 'border-[var(--color-accent)] text-[var(--color-accent)] hover:bg-[var(--color-hover)]'
+                                  }`}
+                                >
+                                  {terrain}
+                                </button>
+                              );
+                            })}
+                          </div>
+
+                          <div className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-[var(--color-spell-strong)]">
+                            Bonus Cantrip
+                          </div>
+                          <div className="mb-3 text-sm leading-6 text-[var(--color-spell-text)]">
+                            Choose one additional druid cantrip. It does not count against the druid cantrips you choose manually.
+                          </div>
+                          <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
+                            {availableDruidLandCantrips.map(spell => {
+                              const selected = state.druidLandCantrip === spell.name;
+                              return (
+                                <button
+                                  key={`druid-land-cantrip-${spell.name}`}
+                                  onClick={() => onChange({ druidLandCantrip: selected ? '' : spell.name })}
+                                  className={`rounded border p-3 text-left transition-all ${
+                                    selected
+                                      ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)]'
+                                      : 'border-[var(--color-accent)] bg-[var(--color-surface-3)] hover:bg-[var(--color-hover)]'
+                                  }`}
+                                >
+                                  <div className="text-sm font-bold text-[var(--color-text-strong)]">{spell.name}</div>
+                                  <div className="mt-1 text-[0.7rem] uppercase tracking-wide text-[var(--color-accent)]">{spell.school} Cantrip</div>
+                                  <div className="mt-2 text-[0.72rem] leading-6 text-[var(--color-text-soft)]">{spell.description}</div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
 
                       {previewClass.name === 'Cleric' && selectedClericDomain?.name === 'Nature Domain' && (
                         <div className="rounded border border-[var(--color-spell-border)] bg-[var(--color-spell-surface)] p-3">
@@ -1369,6 +1535,14 @@ export default function ClassStep({ state, onChange }: Props) {
                           clericNatureChosenCantripDetails,
                           'Chosen Nature Domain Cantrip',
                           'This druid cantrip is granted by Acolyte of Nature and does not count against the number of cleric cantrips you choose manually.'
+                        )}
+
+                      {druidLandChosenCantripDetails.length > 0 &&
+                        renderCollapsibleSpellDetails(
+                          'land-circle-cantrip',
+                          druidLandChosenCantripDetails,
+                          'Chosen Circle of the Land Cantrip',
+                          'This druid cantrip is granted by Circle of the Land and does not count against the number of druid cantrips you choose manually.'
                         )}
 
                       {previewClass.name === 'Bard' && (bardMagicalSecretsAllowed > 0 || bardAdditionalMagicalSecretsAllowed > 0) && (
@@ -1452,6 +1626,13 @@ export default function ClassStep({ state, onChange }: Props) {
                 <div className="mb-1 field-label">Armor & Weapon Proficiencies</div>
                 <div className="text-sm leading-6 text-[var(--color-text)]">
                   {armorWeaponProficiencies.join(' · ') || 'None'}
+                </div>
+              </div>
+
+              <div>
+                <div className="mb-1 field-label">Tool Proficiencies</div>
+                <div className="text-sm leading-6 text-[var(--color-text)]">
+                  {toolProficiencies.join(' · ') || 'None'}
                 </div>
               </div>
 
@@ -1612,9 +1793,11 @@ export default function ClassStep({ state, onChange }: Props) {
               {previewClass.name === 'Bard' && (
                 <div className="section-box border-[var(--color-border-muted)] bg-[var(--color-surface-3)]">
                   <div className="section-title">Choose Bard College</div>
-                  <div className="mb-3 text-sm leading-6 text-[var(--color-text-soft)]">
-                    Bard College unlocks at level 3. You can choose one now to preview its future features.
-                  </div>
+                  {level < 3 && (
+                    <div className="mb-3 text-sm leading-6 text-[var(--color-text-soft)]">
+                      Bard College unlocks at level 3. You can choose one now to preview its future features.
+                    </div>
+                  )}
                   <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
                     {BARD_COLLEGES.map(college => {
                       const selected = state.bardCollege === college.name;
@@ -1887,12 +2070,75 @@ export default function ClassStep({ state, onChange }: Props) {
                 </div>
               )}
 
+              {previewClass.name === 'Druid' && (
+                <div className="section-box border-[var(--color-border-muted)] bg-[var(--color-surface-3)]">
+                  <div className="section-title">Choose Druid Circle</div>
+                  {level < 2 && (
+                    <div className="mb-3 text-sm leading-6 text-[var(--color-text-soft)]">
+                      Druid Circle unlocks at level 2. You can choose one now to preview its future features.
+                    </div>
+                  )}
+                  <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
+                    {DRUID_CIRCLES.map(circle => {
+                      const selected = state.druidCircle === circle.name;
+                      return (
+                        <button
+                          key={circle.name}
+                          onClick={() =>
+                            onChange({
+                              druidCircle: circle.name,
+                              druidLandTerrain: circle.name === 'Circle of the Land' ? state.druidLandTerrain : '',
+                              druidLandCantrip: circle.name === 'Circle of the Land' ? state.druidLandCantrip : '',
+                            })
+                          }
+                          className={`rounded border p-3 text-left transition-all ${
+                            selected
+                              ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)]'
+                              : 'border-[var(--color-accent)] bg-[var(--color-surface-3)] hover:bg-[var(--color-hover)]'
+                          }`}
+                        >
+                          <div className="text-sm font-bold text-[var(--color-text-strong)]">{circle.name}</div>
+                          <div className="mt-2 text-sm leading-6 text-[var(--color-text-soft)]">{circle.description}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {selectedDruidCircle && (
+                    <div className="mt-4">
+                      <div className="section-title">Druid Circle Features</div>
+                      <div className="flex flex-col gap-2">
+                        {druidCircleFeatures.map((feature, i) => {
+                          const unlocked = feature.level <= level;
+                          return (
+                            <div
+                              key={`${feature.level}-${feature.name}-circle-${i}`}
+                              className={`border-l-2 pl-3 ${unlocked ? 'border-[var(--color-accent)]' : 'border-[var(--color-border-faint)]'}`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <span className={`rounded border px-2 py-0.5 text-[0.8rem] font-bold ${unlocked ? 'border-[var(--color-accent)] text-[var(--color-text-strong)]' : 'border-[var(--color-border-faint)] text-[var(--color-text-dim)]'}`}>
+                                  Level {feature.level}
+                                </span>
+                                <span className={`text-base font-bold ${unlocked ? 'text-[var(--color-text-strong)]' : 'text-[var(--color-text-muted)]'}`}>{feature.name}</span>
+                              </div>
+                              {renderFeatureDescription(feature, unlocked)}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {previewClass.name === 'Barbarian' && (
                 <div className="section-box border-[var(--color-border-muted)] bg-[var(--color-surface-3)]">
                   <div className="section-title">Choose Primal Path</div>
-                  <div className="mb-3 text-sm leading-6 text-[var(--color-text-soft)]">
-                    Primal Path unlocks at level 3. You can choose one now to preview its future features.
-                  </div>
+                  {level < 3 && (
+                    <div className="mb-3 text-sm leading-6 text-[var(--color-text-soft)]">
+                      Primal Path unlocks at level 3. You can choose one now to preview its future features.
+                    </div>
+                  )}
                   <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
                     {BARBARIAN_PRIMAL_PATHS.map(path => {
                       const selected = state.barbarianPath === path.name;
@@ -1961,9 +2207,11 @@ export default function ClassStep({ state, onChange }: Props) {
               {previewClass.name === 'Paladin' && (
                 <div className="section-box border-[var(--color-border-muted)] bg-[var(--color-surface-3)]">
                   <div className="section-title">Choose Sacred Oath</div>
-                  <div className="mb-3 text-sm leading-6 text-[var(--color-text-soft)]">
-                    Sacred Oath unlocks at level 3. You can choose one now to preview its future features.
-                  </div>
+                  {level < 3 && (
+                    <div className="mb-3 text-sm leading-6 text-[var(--color-text-soft)]">
+                      Sacred Oath unlocks at level 3. You can choose one now to preview its future features.
+                    </div>
+                  )}
                   <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
                     {PALADIN_OATHS.map(oath => {
                       const selected = state.paladinOath === oath.name;

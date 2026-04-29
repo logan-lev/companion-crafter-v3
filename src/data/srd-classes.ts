@@ -357,6 +357,95 @@ export const CLERIC_DOMAINS: ClassSubclassOption[] = [
   },
 ];
 
+export const DRUID_LAND_TERRAINS = [
+  'Arctic',
+  'Coast',
+  'Desert',
+  'Forest',
+  'Grassland',
+  'Mountain',
+  'Swamp',
+  'Underdark',
+] as const;
+
+export const DRUID_LAND_CIRCLE_SPELLS: Record<(typeof DRUID_LAND_TERRAINS)[number], { level: number; spells: string[] }[]> = {
+  Arctic: [
+    { level: 3, spells: ['Hold Person', 'Spike Growth'] },
+    { level: 5, spells: ['Sleet Storm', 'Slow'] },
+    { level: 7, spells: ['Freedom of Movement', 'Ice Storm'] },
+    { level: 9, spells: ['Commune with Nature', 'Cone of Cold'] },
+  ],
+  Coast: [
+    { level: 3, spells: ['Mirror Image', 'Misty Step'] },
+    { level: 5, spells: ['Water Breathing', 'Water Walk'] },
+    { level: 7, spells: ['Control Water', 'Freedom of Movement'] },
+    { level: 9, spells: ['Conjure Elemental', 'Scrying'] },
+  ],
+  Desert: [
+    { level: 3, spells: ['Blur', 'Silence'] },
+    { level: 5, spells: ['Create Food and Water', 'Protection from Energy'] },
+    { level: 7, spells: ['Blight', 'Hallucinatory Terrain'] },
+    { level: 9, spells: ['Insect Plague', 'Wall of Stone'] },
+  ],
+  Forest: [
+    { level: 3, spells: ['Barkskin', 'Spider Climb'] },
+    { level: 5, spells: ['Call Lightning', 'Plant Growth'] },
+    { level: 7, spells: ['Divination', 'Freedom of Movement'] },
+    { level: 9, spells: ['Commune with Nature', 'Tree Stride'] },
+  ],
+  Grassland: [
+    { level: 3, spells: ['Invisibility', 'Pass without Trace'] },
+    { level: 5, spells: ['Daylight', 'Haste'] },
+    { level: 7, spells: ['Divination', 'Freedom of Movement'] },
+    { level: 9, spells: ['Dream', 'Insect Plague'] },
+  ],
+  Mountain: [
+    { level: 3, spells: ['Spider Climb', 'Spike Growth'] },
+    { level: 5, spells: ['Lightning Bolt', 'Meld into Stone'] },
+    { level: 7, spells: ['Stone Shape', 'Stoneskin'] },
+    { level: 9, spells: ['Passwall', 'Wall of Stone'] },
+  ],
+  Swamp: [
+    { level: 3, spells: ['Darkness', "Melf's Acid Arrow"] },
+    { level: 5, spells: ['Water Walk', 'Stinking Cloud'] },
+    { level: 7, spells: ['Freedom of Movement', 'Locate Creature'] },
+    { level: 9, spells: ['Insect Plague', 'Scrying'] },
+  ],
+  Underdark: [
+    { level: 3, spells: ['Spider Climb', 'Web'] },
+    { level: 5, spells: ['Gaseous Form', 'Stinking Cloud'] },
+    { level: 7, spells: ['Greater Invisibility', 'Stone Shape'] },
+    { level: 9, spells: ['Cloudkill', 'Insect Plague'] },
+  ],
+};
+
+export const DRUID_CIRCLES: ClassSubclassOption[] = [
+  {
+    name: 'Circle of the Land',
+    description: "The Circle of the Land is made up of mystics and sages who safeguard ancient knowledge and rites through a vast oral tradition. These druids meet within sacred circles of trees or standing stones to whisper primal secrets in Druidic. The circle's wisest members preside as the chief priests of communities that hold to the Old Faith and serve as advisors to the rulers of those folk. As a member of this circle, your magic is influenced by the land where you were initiated into the circle's mysterious rites.",
+    features: [
+      { level: 2, name: 'Bonus Cantrip', description: 'You learn one additional druid cantrip of your choice.' },
+      { level: 2, name: 'Circle Spells', description: "Your mystical connection to the land infuses you with the ability to cast certain spells. At 3rd, 5th, 7th, and 9th level you gain access to circle spells connected to the land where you became a druid. Choose that land-arctic, coast, desert, forest, grassland, mountain, swamp, or Underdark-and consult the associated list of spells.\nOnce you gain access to a circle spell, you always have it prepared, and it doesn't count against the number of spells you can prepare each day. If you gain access to a spell that doesn't appear on the druid spell list, the spell is nonetheless a druid spell for you." },
+      { level: 2, name: 'Natural Recovery', description: "You can regain some of your magical energy by sitting in meditation and communing with nature. During a short rest, you choose expended spell slots to recover. The spell slots can have a combined level that is equal to or less than half your druid level (rounded up), and none of the slots can be 6th level or higher. You can't use this feature again until you finish a long rest." },
+      { level: 6, name: "Land's Stride", description: 'Moving through nonmagical difficult terrain costs you no extra movement. You can also pass through nonmagical plants without being slowed by them and without taking damage from them if they have thorns, spines, or a similar hazard. In addition, you have advantage on saving throws against plants that are magically created or manipulated to impede movement, such as those created by the entangle spell.' },
+      { level: 10, name: "Nature's Ward", description: "You can't be charmed or frightened by elementals or fey, and you are immune to poison and disease." },
+      { level: 14, name: "Nature's Sanctuary", description: "Creatures of the natural world sense your connection to nature and become hesitant to attack you. When a beast or plant creature attacks you, that creature must make a Wisdom saving throw against your druid spell save DC. On a failed save, the creature must choose a different target, or the attack automatically misses. On a successful save, the creature is immune to this effect for 24 hours. The creature is aware of this effect before it makes its attack against you." },
+    ],
+  },
+  {
+    name: 'Circle of the Moon',
+    description: "Druids of the Circle of the Moon are fierce guardians of the wilds. Their order gathers under the full moon to share news and trade warnings. They haunt the deepest parts of the wilderness, where they might go for weeks on end before crossing paths with another humanoid creature, let alone another druid. Changeable as the moon, a druid of this circle might prowl as a great cat one night, soar over the treetops as an eagle the next day, and crash through the undergrowth in bear form to drive off a trespassing monster. The wild is in the druid's blood.",
+    features: [
+      { level: 2, name: 'Combat Wild Shape', description: 'You gain the ability to use Wild Shape on your turn as a bonus action, rather than as an action. Additionally, while you are transformed by Wild Shape, you can use a bonus action to expend one spell slot to regain 1d8 hit points per level of the spell slot expended.' },
+      { level: 2, name: 'Circle Forms', description: 'The rites of your circle grant you the ability to transform into more dangerous animal forms. You can use your Wild Shape to transform into a beast with a challenge rating as high as 1.' },
+      { level: 6, name: 'Circle Forms Improvement', description: 'You can transform into a beast with a challenge rating as high as your druid level divided by 3, rounded down.' },
+      { level: 6, name: 'Primal Strike', description: 'Your attacks in beast form count as magical for the purpose of overcoming resistance and immunity to nonmagical attacks and damage.' },
+      { level: 10, name: 'Elemental Wild Shape', description: 'You can expend two uses of Wild Shape at the same time to transform into an air elemental, earth elemental, fire elemental, or water elemental.' },
+      { level: 14, name: 'Thousand Forms', description: 'You have learned to use magic to alter your physical form in more subtle ways. You can cast the alter self spell at will.' },
+    ],
+  },
+];
+
 export const PALADIN_OATHS: ClassSubclassOption[] = [
   {
     name: 'Oath of Devotion',
@@ -511,7 +600,7 @@ export const CLASS_DATA: ClassData[] = [
     hitDie: 8,
     primaryAbility: 'Wisdom',
     savingThrows: ['int', 'wis'],
-    armorProf: ['Light Armor', 'Medium Armor', 'Shields (non-metal)'],
+    armorProf: ['Light Armor', 'Medium Armor', 'Shields (druids will not wear armor or use shields made of metal)'],
     weaponProf: ['Clubs', 'Daggers', 'Darts', 'Javelins', 'Maces', 'Quarterstaffs', 'Scimitars', 'Sickles', 'Slings', 'Spears'],
     toolProf: ["Herbalism Kit"],
     skillCount: 2,
@@ -526,14 +615,14 @@ export const CLASS_DATA: ClassData[] = [
       slots: FULL_CASTER_SLOTS,
     },
     features: [
-      { level: 1, name: 'Druidic', description: 'You know Druidic, the secret language of druids. You can speak the language and use it to leave hidden messages.' },
+      { level: 1, name: 'Druidic', description: "You know Druidic, the secret language of druids. You can speak the language and use it to leave hidden messages. You and others who know this language automatically spot such a message. Others spot the message's presence with a successful DC 15 Wisdom (Perception) check but can't decipher it without magic." },
       { level: 1, name: 'Spellcasting', description: 'Drawing on divine essence of nature, you can cast druid spells. You prepare WIS modifier + druid level spells from the druid spell list after each long rest.' },
-      { level: 2, name: 'Wild Shape', description: 'You can use your action to magically assume the shape of a beast you have seen before. CR limit: 1/4 at L2 (no swim/fly speed), 1/2 at L4 (no fly speed), 1 at L8. You can use this feature twice per short or long rest.' },
-      { level: 2, name: 'Druid Circle', description: 'You choose to identify with a circle of druids (Circle of the Land or Circle of the Moon). Your choice grants you features at 2nd, 6th, 10th, and 14th level.' },
+      { level: 2, name: 'Wild Shape', description: "Starting at 2nd level, you can use your action to magically assume the shape of a beast that you have seen before. You can use this feature twice. You regain expended uses when you finish a short or long rest.\nYour druid level determines the beasts you can transform into, as shown in the Beast Shapes table. At 2nd level, for example, you can transform into any beast that has a challenge rating of 1/4 or lower that doesn't have a flying or swimming speed.\nYou can stay in a beast shape for a number of hours equal to half your druid level (rounded down). You then revert to your normal form unless you expend another use of this feature. You can revert to your normal form earlier by using a bonus action on your turn. You automatically revert if you fall unconscious, drop to 0 hit points, or die.\nWhile you are transformed, the following rules apply:\n• Your game statistics are replaced by the statistics of the beast, but you retain your alignment, personality, and Intelligence, Wisdom, and Charisma scores. You also retain all of your skill and saving throw proficiencies, in addition to gaining those of the creature. If the creature has the same proficiency as you and the bonus in its stat block is higher than yours, use the creature's bonus instead of yours. If the creature has any legendary or lair actions, you can't use them.\n• When you transform, you assume the beast's hit points and Hit Dice. When you revert to your normal form, you return to the number of hit points you had before you transformed. However, if you revert as a result of dropping to 0 hit points, any excess damage carries over to your normal form. For example, if you take 10 damage in animal form and have only 1 hit point left, you revert and take 9 damage. As long as the excess damage doesn't reduce your normal form to 0 hit points, you aren't knocked unconscious.\n• You can't cast spells, and your ability to speak or take any action that requires hands is limited to the capabilities of your beast form. Transforming doesn't break your concentration on a spell you've already cast, however, or prevent you from taking actions that are part of a spell, such as call lightning, that you've already cast.\n• You retain the benefit of any features from your class, race, or other source and can use them if the new form is physically capable of doing so. However, you can't use any of your special senses, such as darkvision, unless your new form also has that sense.\n• You choose whether your equipment falls to the ground in your space, merges into your new form, or is worn by it. Worn equipment functions as normal, but the DM decides whether it is practical for the new form to wear a piece of equipment, based on the creature's shape and size. Your equipment doesn't change size or shape to match the new form, and any equipment that the new form can't wear must either fall to the ground or merge with it. Equipment that merges with the form has no effect until you leave the form." },
+      { level: 2, name: 'Druid Circle', description: 'You choose to identify with a circle of druids: the Circle of the Land or the Circle of the Moon, both detailed at the end of the class description. Your choice grants you features at 2nd level and again at 6th, 10th, and 14th level.' },
       { level: 4, name: 'Ability Score Improvement', description: 'You can increase one ability score by 2, or two ability scores by 1 each. Also at levels 8, 12, 16, and 19.' },
       { level: 18, name: 'Timeless Body', description: 'The primal magic that you wield causes you to age more slowly. For every 10 years that pass, your body ages only 1 year.' },
-      { level: 18, name: 'Beast Spells', description: 'You can cast many of your druid spells in any shape you assume using Wild Shape. You can perform the somatic and verbal components of a druid spell while in a beast shape.' },
-      { level: 20, name: 'Archdruid', description: 'You can use your Wild Shape an unlimited number of times. Additionally, you can ignore the verbal and somatic components of your druid spells, as well as any material components that lack a cost.' },
+      { level: 18, name: 'Beast Spells', description: "You can cast many of your druid spells in any shape you assume using Wild Shape. You can perform the somatic and verbal components of a druid spell while in a beast shape, but you aren't able to provide material components." },
+      { level: 20, name: 'Archdruid', description: "You can use your Wild Shape an unlimited number of times. Additionally, you can ignore the verbal and somatic components of your druid spells, as well as any material components that lack a cost and aren't consumed by a spell. You gain this benefit in both your normal shape and your beast shape from Wild Shape." },
     ],
   },
   {
@@ -948,6 +1037,7 @@ export function getClassFeatureTimeline(
     barbarianAttunementSpirit?: string;
     bardCollege?: string;
     clericDomain?: string;
+    druidCircle?: string;
     paladinOath?: string;
   }
 ): ClassFeature[] {
@@ -976,6 +1066,8 @@ export function getClassFeatureTimeline(
       ? BARD_COLLEGES.find(college => college.name === options.bardCollege)?.features ?? []
       : className === 'Cleric' && options?.clericDomain
       ? CLERIC_DOMAINS.find(domain => domain.name === options.clericDomain)?.features ?? []
+      : className === 'Druid' && options?.druidCircle
+      ? DRUID_CIRCLES.find(circle => circle.name === options.druidCircle)?.features ?? []
       : className === 'Paladin' && options?.paladinOath
       ? PALADIN_OATHS.find(oath => oath.name === options.paladinOath)?.features ?? []
       : [];
@@ -996,6 +1088,7 @@ export function getFeaturesUpToLevel(
     barbarianAttunementSpirit?: string;
     bardCollege?: string;
     clericDomain?: string;
+    druidCircle?: string;
     paladinOath?: string;
   }
 ): ClassFeature[] {
@@ -1007,19 +1100,28 @@ export function getSubclassAutoPreparedSpells(
   level: number,
   options?: {
     clericDomain?: string;
+    druidCircle?: string;
+    druidLandTerrain?: string;
     paladinOath?: string;
   }
 ): string[] {
   const source =
     className === 'Cleric' && options?.clericDomain
       ? CLERIC_DOMAINS.find(domain => domain.name === options.clericDomain)
+      : className === 'Druid' && options?.druidCircle
+      ? DRUID_CIRCLES.find(circle => circle.name === options.druidCircle)
       : className === 'Paladin' && options?.paladinOath
       ? PALADIN_OATHS.find(oath => oath.name === options.paladinOath)
       : undefined;
 
-  if (!source?.bonusSpells) return [];
+  const bonusSpells =
+    className === 'Druid' && options?.druidCircle === 'Circle of the Land' && options?.druidLandTerrain
+      ? DRUID_LAND_CIRCLE_SPELLS[options.druidLandTerrain as keyof typeof DRUID_LAND_CIRCLE_SPELLS] ?? []
+      : source?.bonusSpells ?? [];
 
-  return source.bonusSpells
+  if (!bonusSpells.length) return [];
+
+  return bonusSpells
     .filter(entry => entry.level <= level)
     .flatMap(entry => entry.spells);
 }

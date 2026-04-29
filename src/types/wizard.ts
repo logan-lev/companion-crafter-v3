@@ -19,6 +19,9 @@ export interface WizardState {
   barbarianAttunementSpirit: string;
   bardCollege: string;
   clericDomain: string;
+  druidCircle: string;
+  druidLandTerrain: string;
+  druidLandCantrip: string;
   paladinOath: string;
   clericKnowledgeSkillChoices: string[];
   clericKnowledgeLanguageChoices: string[];
@@ -77,6 +80,9 @@ export const WIZARD_INITIAL_STATE: WizardState = {
   barbarianAttunementSpirit: '',
   bardCollege: '',
   clericDomain: '',
+  druidCircle: '',
+  druidLandTerrain: '',
+  druidLandCantrip: '',
   paladinOath: '',
   clericKnowledgeSkillChoices: [],
   clericKnowledgeLanguageChoices: [],

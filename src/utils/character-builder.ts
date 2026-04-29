@@ -6,6 +6,7 @@ import {
   BARD_COLLEGES,
   CLERIC_DOMAINS,
   CLASS_DATA,
+  DRUID_CIRCLES,
   getFeaturesUpToLevel,
   getSlotsAtLevel,
   getSubclassAutoPreparedSpells,
@@ -188,6 +189,9 @@ export function getLanguages(state: WizardState): string[] {
   languages.push(...(state.raceLanguageChoices ?? []));
   languages.push(...(state.backgroundLanguageChoices ?? []));
   languages.push(...(state.clericKnowledgeLanguageChoices ?? []));
+  if (state.className === 'Druid') {
+    languages.push('Druidic');
+  }
 
   return unique(languages);
 }
@@ -204,6 +208,7 @@ export function getTraitEntries(state: WizardState): string[] {
         barbarianAttunementSpirit: state.barbarianAttunementSpirit,
         bardCollege: state.bardCollege,
         clericDomain: state.clericDomain,
+        druidCircle: state.druidCircle,
         paladinOath: state.paladinOath,
       })
     : [];
@@ -263,6 +268,16 @@ export function getTraitEntries(state: WizardState): string[] {
   if (state.clericNatureCantrip) {
     entries.push(`Acolyte of Nature Cantrip: You learned ${state.clericNatureCantrip}.`);
   }
+  if (state.druidCircle) {
+    const circle = DRUID_CIRCLES.find(option => option.name === state.druidCircle);
+    if (circle) entries.push(`Druid Circle: You chose ${circle.name}.`);
+  }
+  if (state.druidLandTerrain) {
+    entries.push(`Circle of the Land Terrain: You chose ${state.druidLandTerrain}.`);
+  }
+  if (state.druidLandCantrip) {
+    entries.push(`Circle of the Land Bonus Cantrip: You learned ${state.druidLandCantrip}.`);
+  }
 
   if (state.paladinOath) {
     entries.push(`Sacred Oath: You chose ${state.paladinOath}.`);
@@ -281,6 +296,7 @@ export function getFutureClassFeatures(state: WizardState): ClassFeature[] {
     barbarianAttunementSpirit: state.barbarianAttunementSpirit,
     bardCollege: state.bardCollege,
     clericDomain: state.clericDomain,
+    druidCircle: state.druidCircle,
     paladinOath: state.paladinOath,
   })
     .filter(feature => feature.level > state.level)
@@ -380,16 +396,19 @@ function getExtraSpellNames(state: WizardState): string[] {
   if (state.race === 'Tiefling') names.push('Thaumaturgy');
   if (state.race === 'Gnome' && state.subrace === 'Forest Gnome') names.push('Minor Illusion');
   if (state.race === 'Elf' && state.subrace === 'Dark Elf (Drow)') names.push('Dancing Lights');
-  if (state.className === 'Cleric' || state.className === 'Paladin') {
+  if (state.className === 'Cleric' || state.className === 'Paladin' || state.className === 'Druid') {
     names.push(
       ...getSubclassAutoPreparedSpells(state.className, state.level, {
         clericDomain: state.clericDomain,
+        druidCircle: state.druidCircle,
+        druidLandTerrain: state.druidLandTerrain,
         paladinOath: state.paladinOath,
       })
     );
   }
   if (state.className === 'Cleric' && state.clericDomain === 'Light Domain') names.push('Light');
   if (state.className === 'Cleric' && state.clericNatureCantrip) names.push(state.clericNatureCantrip);
+  if (state.className === 'Druid' && state.druidLandCantrip) names.push(state.druidLandCantrip);
   names.push(...(state.bardMagicalSecretChoices ?? []));
   names.push(...(state.bardAdditionalMagicalSecretChoices ?? []));
 
