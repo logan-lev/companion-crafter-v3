@@ -1,19 +1,24 @@
 import { useState } from 'react';
 import type { WizardState } from '../../types/wizard';
 import {
+  ARTISAN_TOOL_OPTIONS,
   BARD_COLLEGES,
   BARBARIAN_PRIMAL_PATHS,
   BARBARIAN_RAGE_DAMAGE_BY_LEVEL,
   BARBARIAN_RAGES_BY_LEVEL,
   BARBARIAN_TOTEM_SPIRITS,
+  BATTLE_MASTER_MANEUVERS,
   CLASS_DATA,
   CLERIC_DOMAINS,
   DRUID_CIRCLES,
   DRUID_LAND_TERRAINS,
+  FIGHTER_ARCHETYPES,
+  FIGHTING_STYLE_OPTIONS,
   PALADIN_OATHS,
   type ClassFeature,
   getCantripsKnown,
   getClassFeatureTimeline,
+  getEffectiveSpellcasting,
   getSubclassAutoPreparedSpells,
   getSlotsAtLevel,
   getSpellsKnown,
@@ -66,6 +71,17 @@ const SPELLCASTING_TYPE_DETAILS: Record<'full' | 'half' | 'third' | 'pact', stri
   half: 'Half caster: slower spell progression, reaching up to 5th-level spells.',
   third: 'Third caster: limited spell progression, reaching up to 4th-level spells.',
   pact: 'Pact magic: very few slots that recharge on a short rest and scale to a fixed slot level.',
+};
+
+const SPELL_LIST_CLASS_MAP: Record<string, string> = {
+  bard: 'Bard',
+  cleric: 'Cleric',
+  druid: 'Druid',
+  paladin: 'Paladin',
+  ranger: 'Ranger',
+  sorcerer: 'Sorcerer',
+  warlock: 'Warlock',
+  wizard: 'Wizard',
 };
 
 const CLERIC_KNOWLEDGE_SKILL_OPTIONS = ['Arcana', 'History', 'Nature', 'Religion'];
@@ -386,6 +402,12 @@ function isDruidCircleFeature(feature: ClassFeature): boolean {
   );
 }
 
+function isFighterArchetypeFeature(feature: ClassFeature): boolean {
+  return FIGHTER_ARCHETYPES.some(archetype =>
+    archetype.features.some(archetypeFeature => archetypeFeature.level === feature.level && archetypeFeature.name === feature.name)
+  );
+}
+
 export default function ClassStep({ state, onChange }: Props) {
   const [magicalSecretsSource, setMagicalSecretsSource] = useState<MagicalSecretsSource>('All');
   const [collapsedSpellGroups, setCollapsedSpellGroups] = useState<Record<string, boolean>>({});
@@ -409,6 +431,10 @@ export default function ClassStep({ state, onChange }: Props) {
       druidCircle: '',
       druidLandTerrain: '',
       druidLandCantrip: '',
+      fighterArchetype: '',
+      fighterFightingStyles: [],
+      fighterStudentOfWarTool: '',
+      fighterManeuverChoices: [],
       paladinOath: '',
       clericKnowledgeSkillChoices: [],
       clericKnowledgeLanguageChoices: [],
@@ -444,8 +470,9 @@ export default function ClassStep({ state, onChange }: Props) {
       }
     }
 
-    const nextClass = CLASS_DATA.find(item => item.name === state.className);
-    const nextSpellcasting = nextClass?.spellcasting;
+    const nextSpellcasting = getEffectiveSpellcasting(state.className, {
+      fighterArchetype: state.fighterArchetype,
+    });
     const nextCantripLimit = nextSpellcasting ? getCantripsKnown(nextSpellcasting, nextLevel) : 0;
     const nextBaseSpellsKnown = nextSpellcasting?.spellsKnown ? getSpellsKnown(nextSpellcasting, nextLevel) : 0;
     const nextMagicalSecrets = state.className === 'Bard'
@@ -478,6 +505,25 @@ export default function ClassStep({ state, onChange }: Props) {
           : [],
       bardMagicalSecretChoices: nextMagicalSecretChoices,
       bardAdditionalMagicalSecretChoices: nextAdditionalMagicalSecretChoices,
+      fighterFightingStyles:
+        state.className === 'Fighter'
+          ? state.fighterFightingStyles.slice(
+              0,
+              1 +
+                (state.fighterArchetype === 'Champion' && nextLevel >= 10 ? 1 : 0)
+            )
+          : [],
+      fighterStudentOfWarTool:
+        state.className === 'Fighter' && state.fighterArchetype === 'Battle Master' && nextLevel >= 3
+          ? state.fighterStudentOfWarTool
+          : '',
+      fighterManeuverChoices:
+        state.className === 'Fighter' && state.fighterArchetype === 'Battle Master'
+          ? state.fighterManeuverChoices.slice(
+              0,
+              nextLevel >= 15 ? 9 : nextLevel >= 10 ? 7 : nextLevel >= 7 ? 5 : nextLevel >= 3 ? 3 : 0
+            )
+          : [],
       ...(nextLevel < 3
         ? {
             barbarianPath: '',
@@ -486,6 +532,9 @@ export default function ClassStep({ state, onChange }: Props) {
             barbarianAttunementSpirit: '',
             bardCollege: '',
             bardLoreSkillChoices: [],
+            fighterArchetype: '',
+            fighterStudentOfWarTool: '',
+            fighterManeuverChoices: [],
             paladinOath: '',
           }
         : nextLevel < 1
@@ -512,6 +561,26 @@ export default function ClassStep({ state, onChange }: Props) {
       onChange({ classSkillChoices: cur.filter(s => s !== skill) });
     } else if (cur.length < cls.skillCount) {
       onChange({ classSkillChoices: [...cur, skill] });
+    }
+  };
+
+  const toggleFighterFightingStyle = (style: string) => {
+    if (previewClass?.name !== 'Fighter') return;
+    const current = state.fighterFightingStyles;
+    if (current.includes(style)) {
+      onChange({ fighterFightingStyles: current.filter(item => item !== style) });
+    } else if (current.length < fighterFightingStyleLimit) {
+      onChange({ fighterFightingStyles: [...current, style] });
+    }
+  };
+
+  const toggleFighterManeuver = (maneuver: string) => {
+    if (state.fighterArchetype !== 'Battle Master') return;
+    const current = state.fighterManeuverChoices;
+    if (current.includes(maneuver)) {
+      onChange({ fighterManeuverChoices: current.filter(item => item !== maneuver) });
+    } else if (current.length < fighterManeuverLimit) {
+      onChange({ fighterManeuverChoices: [...current, maneuver] });
     }
   };
 
@@ -610,6 +679,24 @@ export default function ClassStep({ state, onChange }: Props) {
     if (current.includes(name)) {
       onChange({ selectedSpells: current.filter(item => item !== name) });
     } else if (!state.bardMagicalSecretChoices.includes(name) && current.length < spellAllowance) {
+      if (
+        previewClass?.name === 'Fighter' &&
+        state.fighterArchetype === 'Eldritch Knight'
+      ) {
+        const spell = classLevelSpellOptions.find(option => option.name === name);
+        if (!spell) return;
+
+        const unrestrictedSpellChoices = [8, 14, 20].filter(levelValue => level >= levelValue).length;
+        const selectedUnrestrictedCount = current.filter(selectedName => {
+          const selectedSpell = classLevelSpellOptions.find(option => option.name === selectedName);
+          return selectedSpell && !['Abjuration', 'Evocation'].includes(selectedSpell.school);
+        }).length;
+        const isRestrictedSchool = ['Abjuration', 'Evocation'].includes(spell.school);
+
+        if (!isRestrictedSchool && selectedUnrestrictedCount >= unrestrictedSpellChoices) {
+          return;
+        }
+      }
       onChange({ selectedSpells: [...current, name] });
     }
   };
@@ -660,23 +747,26 @@ export default function ClassStep({ state, onChange }: Props) {
         barbarianAspectSpirit: state.barbarianAspectSpirit,
         barbarianAttunementSpirit: state.barbarianAttunementSpirit,
         bardCollege: state.bardCollege,
-      clericDomain: state.clericDomain,
-      druidCircle: state.druidCircle,
-      paladinOath: state.paladinOath,
-    })
+        clericDomain: state.clericDomain,
+        druidCircle: state.druidCircle,
+        fighterArchetype: state.fighterArchetype,
+        paladinOath: state.paladinOath,
+      })
     : [];
   const baseFeatures = features.filter(
     feature =>
       !isBarbarianPathFeature(feature) &&
       !isBardCollegeFeature(feature) &&
       !isClericDomainFeature(feature) &&
-      !isDruidCircleFeature(feature)
+      !isDruidCircleFeature(feature) &&
+      !isFighterArchetypeFeature(feature)
   );
   const unlockedFeatures = features.filter(feature => feature.level <= level);
   const selectedPrimalPath = BARBARIAN_PRIMAL_PATHS.find(path => path.name === state.barbarianPath);
   const selectedBardCollege = BARD_COLLEGES.find(college => college.name === state.bardCollege);
   const selectedClericDomain = CLERIC_DOMAINS.find(domain => domain.name === state.clericDomain);
   const selectedDruidCircle = DRUID_CIRCLES.find(circle => circle.name === state.druidCircle);
+  const selectedFighterArchetype = FIGHTER_ARCHETYPES.find(archetype => archetype.name === state.fighterArchetype);
   const selectedPaladinOath = PALADIN_OATHS.find(oath => oath.name === state.paladinOath);
   const selectedTotemSpirit = getTotemSpiritOption(3, state.barbarianTotemSpirit);
   const selectedAspectSpirit = getTotemSpiritOption(6, state.barbarianAspectSpirit);
@@ -701,7 +791,23 @@ export default function ClassStep({ state, onChange }: Props) {
   const bardCollegeFeatures = selectedBardCollege?.features ?? [];
   const clericDomainFeatures = selectedClericDomain?.features ?? [];
   const druidCircleFeatures = selectedDruidCircle?.features ?? [];
+  const fighterArchetypeFeatures = selectedFighterArchetype?.features ?? [];
   const paladinOathFeatures = selectedPaladinOath?.features ?? [];
+  const fightingStyleOptions = previewClass ? FIGHTING_STYLE_OPTIONS[previewClass.name] ?? [] : [];
+  const fighterFightingStyleLimit =
+    previewClass?.name === 'Fighter' ? 1 + (state.fighterArchetype === 'Champion' && level >= 10 ? 1 : 0) : 0;
+  const fighterManeuverLimit =
+    state.fighterArchetype === 'Battle Master'
+      ? level >= 15
+        ? 9
+        : level >= 10
+        ? 7
+        : level >= 7
+        ? 5
+        : level >= 3
+        ? 3
+        : 0
+      : 0;
 
   const classEquipmentChoices = previewClass ? (CLASS_EQUIPMENT_CHOICES[previewClass.name] ?? []) : [];
   const displayedEquipment = previewClass
@@ -744,6 +850,7 @@ export default function ClassStep({ state, onChange }: Props) {
     ? [
         ...((previewClass.toolProf ?? []).filter(item => item !== 'Three musical instruments of your choice')),
         ...(previewClass.name === 'Bard' ? state.bardInstrumentChoices : []),
+        ...(previewClass.name === 'Fighter' && state.fighterStudentOfWarTool ? [state.fighterStudentOfWarTool] : []),
       ]
     : [];
   const availableClericNatureCantrips = CLERIC_NATURE_CANTRIP_OPTIONS.filter(
@@ -758,7 +865,11 @@ export default function ClassStep({ state, onChange }: Props) {
   const bardAdditionalMagicalSecretsAllowed =
     state.className === 'Bard' && state.bardCollege === 'College of Lore' && level >= 6 ? 2 : 0;
   const finalScores = getFinalAbilityScores(state);
-  const spellcasting = previewClass?.spellcasting;
+  const spellcasting = previewClass
+    ? getEffectiveSpellcasting(previewClass.name, {
+        fighterArchetype: state.fighterArchetype,
+      })
+    : undefined;
   const spellcastingAbilityMod = spellcasting ? Math.floor(((finalScores[spellcasting.ability] ?? 10) - 10) / 2) : 0;
   const spellSaveDC = spellcasting ? 8 + profBonus + spellcastingAbilityMod : 0;
   const spellAttackBonus = spellcastingAbilityMod + profBonus;
@@ -772,7 +883,11 @@ export default function ClassStep({ state, onChange }: Props) {
     previewClass?.name === 'Bard' ? baseSpellAllowance + bardAdditionalMagicalSecretsAllowed : baseSpellAllowance;
   const reservedMagicalSecretsSlots = previewClass?.name === 'Bard' ? bardMagicalSecretsAllowed : 0;
   const spellAllowance = Math.max(0, baseSpellAllowance - reservedMagicalSecretsSlots);
-  const classSpellOptions = previewClass ? SPELL_LIST.filter(spell => spell.classes.includes(previewClass.name)) : [];
+  const spellListClass = spellcasting ? SPELL_LIST_CLASS_MAP[spellcasting.spellListKey] : '';
+  const classSpellOptions =
+    spellcasting && spellListClass
+      ? SPELL_LIST.filter(spell => spell.classes.includes(spellListClass))
+      : [];
   const subclassAutoPreparedSpells =
     previewClass && (previewClass.name === 'Cleric' || previewClass.name === 'Paladin' || previewClass.name === 'Druid')
       ? getSubclassAutoPreparedSpells(previewClass.name, level, {
@@ -811,6 +926,31 @@ export default function ClassStep({ state, onChange }: Props) {
         )
       : [];
   const classLevelSpellOptions = classSpellOptions.filter(spell => spell.level > 0 && spell.level <= Math.max(1, maxSpellLevel));
+  const eldritchKnightFreeSchoolChoices =
+    previewClass?.name === 'Fighter' && state.fighterArchetype === 'Eldritch Knight'
+      ? [8, 14, 20].filter(levelValue => level >= levelValue).length
+      : 0;
+  const eldritchKnightSelectedFreeSchoolChoices =
+    previewClass?.name === 'Fighter' && state.fighterArchetype === 'Eldritch Knight'
+      ? state.selectedSpells.filter(name => {
+          const spell = classLevelSpellOptions.find(option => option.name === name);
+          return spell && !['Abjuration', 'Evocation'].includes(spell.school);
+        }).length
+      : 0;
+  const eldritchKnightSelectedMeta =
+    previewClass?.name === 'Fighter' && state.fighterArchetype === 'Eldritch Knight'
+      ? Object.fromEntries(
+          state.selectedSpells.map(name => {
+            const spell = classLevelSpellOptions.find(option => option.name === name);
+            return [
+              name,
+              spell && !['Abjuration', 'Evocation'].includes(spell.school)
+                ? 'Any-school spell'
+                : 'Abjuration/Evocation',
+            ];
+          })
+        )
+      : undefined;
   const bardMagicalSecretOptions = previewClass?.name === 'Bard'
     ? SPELL_LIST.filter(spell => spell.level === 0 || spell.level <= Math.max(1, maxSpellLevel))
     : [];
@@ -829,6 +969,7 @@ export default function ClassStep({ state, onChange }: Props) {
     spell => magicalSecretsSource === 'All' || spell.classes.includes(magicalSecretsSource)
   );
   const bardSecretSelectedNames = [...state.bardMagicalSecretChoices, ...state.bardAdditionalMagicalSecretChoices];
+  const selectedFighterArchetypeFeatureNames = new Set(fighterArchetypeFeatures.map(feature => feature.name));
 
   const isEquipmentOptionAvailable = (choiceKey: string, option: string) => {
     if (previewClass?.name !== 'Cleric') return true;
@@ -859,6 +1000,113 @@ export default function ClassStep({ state, onChange }: Props) {
   };
 
   const renderFeatureDescription = (feature: ClassFeature, unlocked: boolean) => {
+    if (feature.name === 'Fighting Style') {
+      const styleOptions = fightingStyleOptions;
+
+      return (
+        <div className={`mt-2 rounded border border-[var(--color-border-strong)] bg-[var(--color-surface-pop)] p-4 ${unlocked ? '' : 'opacity-70'}`}>
+          <div className="border-b border-[var(--color-border-strong)] pb-2 text-lg font-bold uppercase tracking-[0.22em] text-[var(--color-text-strong)]">
+            Fighting Style
+          </div>
+          <div className="mt-3 space-y-4 text-[0.98rem] leading-8 text-[var(--color-text-soft)]">
+            <p>{feature.description}</p>
+            {styleOptions.map(option => (
+              <div key={`${previewClass?.name}-${option.name}`}>
+                <div className="text-lg font-bold uppercase tracking-[0.14em] text-[var(--color-text-strong)]">{option.name}</div>
+                <p className="mt-1">{option.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    if (feature.name === 'Additional Fighting Style') {
+      return (
+        <div className={`mt-2 rounded border border-[var(--color-border-strong)] bg-[var(--color-surface-pop)] p-4 ${unlocked ? '' : 'opacity-70'}`}>
+          <div className="border-b border-[var(--color-border-strong)] pb-2 text-lg font-bold uppercase tracking-[0.22em] text-[var(--color-text-strong)]">
+            Additional Fighting Style
+          </div>
+          <div className="mt-3 space-y-3 text-[0.98rem] leading-8 text-[var(--color-text-soft)]">
+            <p>{feature.description}</p>
+            {state.fighterFightingStyles.length > 1 && (
+              <div className="rounded border border-[var(--color-border-muted)] bg-[var(--color-surface-accent)] p-3 text-sm">
+                Chosen additional style: <span className="font-bold text-[var(--color-text-strong)]">{state.fighterFightingStyles[1]}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    if (feature.name === 'Combat Superiority') {
+      const paragraphs = normalizeFeatureParagraphs(feature.description);
+      return (
+        <div className={`mt-2 rounded border border-[var(--color-border-strong)] bg-[var(--color-surface-pop)] p-4 ${unlocked ? '' : 'opacity-70'}`}>
+          <div className="border-b border-[var(--color-border-strong)] pb-2 text-lg font-bold uppercase tracking-[0.22em] text-[var(--color-text-strong)]">
+            Combat Superiority
+          </div>
+          <div className="mt-3 space-y-4 text-[0.98rem] leading-8 text-[var(--color-text-soft)]">
+            <p>{paragraphs[0]}</p>
+            {paragraphs.slice(1).map((paragraph, index) => {
+              const [heading, ...rest] = paragraph.split('. ');
+              const body = rest.join('. ');
+              const isNamedSection = ['Maneuvers', 'Superiority Dice', 'Saving Throws'].includes(heading);
+              return isNamedSection ? (
+                <div key={`combat-superiority-${index}`}>
+                  <div className="text-lg font-bold italic text-[var(--color-text-strong)]">{heading}.</div>
+                  <p className="mt-1">{body}</p>
+                </div>
+              ) : (
+                <p key={`combat-superiority-${index}`}>{paragraph}</p>
+              );
+            })}
+            {state.fighterManeuverChoices.length > 0 && (
+              <div>
+                <div className="mb-2 text-sm font-bold uppercase tracking-[0.18em] text-[var(--color-accent)]">
+                  Chosen Maneuvers
+                </div>
+                <div className="grid gap-2 lg:grid-cols-2">
+                  {state.fighterManeuverChoices.map(name => {
+                    const maneuver = BATTLE_MASTER_MANEUVERS.find(option => option.name === name);
+                    if (!maneuver) return null;
+                    return (
+                      <div key={`chosen-maneuver-${name}`} className="rounded border border-[var(--color-border-muted)] bg-[var(--color-surface-accent)] p-3">
+                        <div className="text-sm font-bold text-[var(--color-text-strong)]">{maneuver.name}</div>
+                        <p className="mt-2 text-sm leading-6 text-[var(--color-text-soft)]">{maneuver.description}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    if (feature.name === 'Know Your Enemy') {
+      const [intro, ...rest] = feature.description.split('\n');
+      const bullets = rest.filter(line => line.trim().startsWith('•')).map(line => line.replace(/^•\s*/, '').trim());
+      return (
+        <div className={`mt-2 rounded border border-[var(--color-border-strong)] bg-[var(--color-surface-pop)] p-4 ${unlocked ? '' : 'opacity-70'}`}>
+          <div className="border-b border-[var(--color-border-strong)] pb-2 text-lg font-bold uppercase tracking-[0.22em] text-[var(--color-text-strong)]">
+            Know Your Enemy
+          </div>
+          <div className="mt-3 space-y-3 text-[0.98rem] leading-8 text-[var(--color-text-soft)]">
+            <p>{intro}</p>
+            {bullets.length > 0 && (
+              <ul className="list-disc space-y-1 pl-6">
+                {bullets.map(item => (
+                  <li key={`know-your-enemy-${item}`}>{item}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      );
+    }
+
     if (feature.name === 'Rage') {
       return (
         <div className={`mt-2 rounded border border-[var(--color-border-strong)] bg-[var(--color-surface-pop)] p-4 ${unlocked ? '' : 'opacity-70'}`}>
@@ -1354,6 +1602,13 @@ export default function ClassStep({ state, onChange }: Props) {
                             <div className="field-label">Spell Attack Modifier</div>
                           </div>
                         </div>
+                        {previewClass.name === 'Fighter' && state.fighterArchetype === 'Eldritch Knight' && (
+                          <div className="mt-3 rounded border border-[var(--color-border-muted)] bg-[var(--color-surface-accent)] p-3 text-sm leading-6 text-[var(--color-text-soft)]">
+                            You learn two wizard cantrips of your choice at 3rd level and a third at 10th level.
+                            Most Eldritch Knight spells must be from the <span className="font-bold text-[var(--color-text-strong)]">Abjuration</span> or <span className="font-bold text-[var(--color-text-strong)]">Evocation</span> schools.
+                            At 8th, 14th, and 20th level, one spell you learn at that level can be from any school of magic.
+                          </div>
+                        )}
                       </div>
 
                       <div className="rounded border border-[var(--color-spell-border)] bg-[var(--color-spell-surface)] p-3">
@@ -1403,6 +1658,11 @@ export default function ClassStep({ state, onChange }: Props) {
                             ? ` · Magical Secrets ${state.bardMagicalSecretChoices.length}/${bardMagicalSecretsAllowed}${bardAdditionalMagicalSecretsAllowed > 0 ? ` · Additional ${state.bardAdditionalMagicalSecretChoices.length}/${bardAdditionalMagicalSecretsAllowed}` : ''} · Total ${state.selectedSpells.length + bardSecretSelectedNames.length}/${totalSpellAllowance}`
                             : ''}
                         </div>
+                        {previewClass.name === 'Fighter' && state.fighterArchetype === 'Eldritch Knight' && (
+                          <div className="mb-3 text-sm leading-6 text-[var(--color-spell-text)]">
+                            Any-school spell choices used {eldritchKnightSelectedFreeSchoolChoices}/{eldritchKnightFreeSchoolChoices}. All other known spells must be Abjuration or Evocation.
+                          </div>
+                        )}
                         {renderGroupedSpellPicker(
                           'class-spell',
                           classLevelSpellOptions,
@@ -1411,7 +1671,7 @@ export default function ClassStep({ state, onChange }: Props) {
                           state.selectedSpells.length,
                           spellAllowance,
                           'No leveled spells available at this level yet.',
-                          undefined,
+                          eldritchKnightSelectedMeta,
                           clearClassSpellsInGroup
                         )}
                       </div>
@@ -1721,6 +1981,39 @@ export default function ClassStep({ state, onChange }: Props) {
                   })}
                 </div>
               </div>
+
+              {previewClass.name === 'Fighter' && (
+                <div className="space-y-4">
+                  <div>
+                    <div className="mb-1 field-label">
+                      Choose Fighting Style{fighterFightingStyleLimit > 1 ? 's' : ''} ({state.fighterFightingStyles.length}/{fighterFightingStyleLimit})
+                    </div>
+                    <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
+                      {fightingStyleOptions.map(option => {
+                        const selected = state.fighterFightingStyles.includes(option.name);
+                        const canAdd = state.fighterFightingStyles.length < fighterFightingStyleLimit;
+                        return (
+                          <button
+                            key={`fighter-style-${option.name}`}
+                            onClick={() => toggleFighterFightingStyle(option.name)}
+                            disabled={!selected && !canAdd}
+                            className={`rounded border p-3 text-left transition-all ${
+                              selected
+                                ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)]'
+                                : !canAdd
+                                ? 'cursor-not-allowed border-[var(--color-border-subtle)] text-[var(--color-text-dim)]'
+                                : 'border-[var(--color-accent)] bg-[var(--color-surface-3)] hover:bg-[var(--color-hover)]'
+                            }`}
+                          >
+                            <div className="text-sm font-bold text-[var(--color-text-strong)]">{option.name}</div>
+                            <div className="mt-2 text-sm leading-6 text-[var(--color-text-soft)]">{option.description}</div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {previewClass.name === 'Bard' && bardExpertiseAllowed > 0 && (
                 <div>
@@ -2126,6 +2419,146 @@ export default function ClassStep({ state, onChange }: Props) {
                           );
                         })}
                       </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {previewClass.name === 'Fighter' && (
+                <div className="section-box border-[var(--color-border-muted)] bg-[var(--color-surface-3)]">
+                  <div className="section-title">Choose Martial Archetype</div>
+                  {level < 3 && (
+                    <div className="mb-3 text-sm leading-6 text-[var(--color-text-soft)]">
+                      Martial Archetype unlocks at level 3. You can choose one now to preview its future features.
+                    </div>
+                  )}
+                  <div className="grid grid-cols-1 gap-2 lg:grid-cols-3">
+                    {FIGHTER_ARCHETYPES.map(archetype => {
+                      const selected = state.fighterArchetype === archetype.name;
+                      return (
+                        <button
+                          key={archetype.name}
+                          onClick={() =>
+                            onChange({
+                              fighterArchetype: archetype.name,
+                              fighterFightingStyles:
+                                archetype.name === 'Champion'
+                                  ? state.fighterFightingStyles
+                                  : state.fighterFightingStyles.slice(0, 1),
+                              fighterStudentOfWarTool:
+                                archetype.name === 'Battle Master' ? state.fighterStudentOfWarTool : '',
+                              fighterManeuverChoices:
+                                archetype.name === 'Battle Master' ? state.fighterManeuverChoices : [],
+                              selectedCantrips:
+                                archetype.name === 'Eldritch Knight' ? state.selectedCantrips : [],
+                              selectedSpells:
+                                archetype.name === 'Eldritch Knight' ? state.selectedSpells : [],
+                            })
+                          }
+                          className={`rounded border p-3 text-left transition-all ${
+                            selected
+                              ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)]'
+                              : 'border-[var(--color-accent)] bg-[var(--color-surface-3)] hover:bg-[var(--color-hover)]'
+                          }`}
+                        >
+                          <div className="text-sm font-bold text-[var(--color-text-strong)]">{archetype.name}</div>
+                          <div className="mt-2 text-sm leading-6 text-[var(--color-text-soft)]">{archetype.description}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {selectedFighterArchetype && (
+                    <div className="mt-4">
+                      <div className="section-title">Martial Archetype Features</div>
+                      <div className="flex flex-col gap-2">
+                        {fighterArchetypeFeatures.map((feature, i) => {
+                          const unlocked = feature.level <= level;
+                          return (
+                            <div
+                              key={`${feature.level}-${feature.name}-fighter-archetype-${i}`}
+                              className={`border-l-2 pl-3 ${unlocked ? 'border-[var(--color-accent)]' : 'border-[var(--color-border-faint)]'}`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <span className={`rounded border px-2 py-0.5 text-[0.8rem] font-bold ${unlocked ? 'border-[var(--color-accent)] text-[var(--color-text-strong)]' : 'border-[var(--color-border-faint)] text-[var(--color-text-dim)]'}`}>
+                                  Level {feature.level}
+                                </span>
+                                <span className={`text-base font-bold ${unlocked ? 'text-[var(--color-text-strong)]' : 'text-[var(--color-text-muted)]'}`}>{feature.name}</span>
+                              </div>
+                              {renderFeatureDescription(feature, unlocked)}
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {selectedFighterArchetype.name === 'Battle Master' && level >= 3 && (
+                        <div className="mt-4 space-y-4">
+                          {selectedFighterArchetypeFeatureNames.has('Student of War') && (
+                            <div>
+                              <div className="section-title">Student of War Tool Proficiency</div>
+                              <div className="mb-2 text-sm leading-6 text-[var(--color-text-soft)]">
+                                Choose one type of artisan&apos;s tools.
+                              </div>
+                              <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
+                                {ARTISAN_TOOL_OPTIONS.map(tool => {
+                                  const selected = state.fighterStudentOfWarTool === tool;
+                                  return (
+                                    <button
+                                      key={`student-of-war-${tool}`}
+                                      onClick={() =>
+                                        onChange({
+                                          fighterStudentOfWarTool: selected ? '' : tool,
+                                        })
+                                      }
+                                      className={`rounded border p-3 text-left transition-all ${
+                                        selected
+                                          ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)]'
+                                          : 'border-[var(--color-accent)] bg-[var(--color-surface-3)] hover:bg-[var(--color-hover)]'
+                                      }`}
+                                    >
+                                      <div className="text-sm font-bold text-[var(--color-text-strong)]">{tool}</div>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+
+                          {selectedFighterArchetypeFeatureNames.has('Combat Superiority') && (
+                            <div>
+                              <div className="section-title">
+                                Choose Maneuvers ({state.fighterManeuverChoices.length}/{fighterManeuverLimit})
+                              </div>
+                              <div className="mb-2 text-sm leading-6 text-[var(--color-text-soft)]">
+                                Choose your Battle Master maneuvers. At 7th, 10th, and 15th level, choose two additional maneuvers. You can deselect one to replace it.
+                              </div>
+                              <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
+                                {BATTLE_MASTER_MANEUVERS.map(maneuver => {
+                                  const selected = state.fighterManeuverChoices.includes(maneuver.name);
+                                  const canAdd = state.fighterManeuverChoices.length < fighterManeuverLimit;
+                                  return (
+                                    <button
+                                      key={`maneuver-${maneuver.name}`}
+                                      onClick={() => toggleFighterManeuver(maneuver.name)}
+                                      disabled={!selected && !canAdd}
+                                      className={`rounded border p-3 text-left transition-all ${
+                                        selected
+                                          ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)]'
+                                          : canAdd
+                                          ? 'border-[var(--color-accent)] bg-[var(--color-surface-3)] hover:bg-[var(--color-hover)]'
+                                          : 'cursor-not-allowed border-[var(--color-border-subtle)] text-[var(--color-text-dim)]'
+                                      }`}
+                                    >
+                                      <div className="text-sm font-bold text-[var(--color-text-strong)]">{maneuver.name}</div>
+                                      <div className="mt-2 text-sm leading-6 text-[var(--color-text-soft)]">{maneuver.description}</div>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

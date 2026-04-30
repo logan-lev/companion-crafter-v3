@@ -47,6 +47,7 @@ export default function ReviewStep({ state, onFinish }: Props) {
         bardCollege: state.bardCollege,
         clericDomain: state.clericDomain,
         druidCircle: state.druidCircle,
+        fighterArchetype: state.fighterArchetype,
         paladinOath: state.paladinOath,
       })
     : [];

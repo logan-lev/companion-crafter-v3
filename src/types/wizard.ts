@@ -22,6 +22,10 @@ export interface WizardState {
   druidCircle: string;
   druidLandTerrain: string;
   druidLandCantrip: string;
+  fighterArchetype: string;
+  fighterFightingStyles: string[];
+  fighterStudentOfWarTool: string;
+  fighterManeuverChoices: string[];
   paladinOath: string;
   clericKnowledgeSkillChoices: string[];
   clericKnowledgeLanguageChoices: string[];
@@ -83,6 +87,10 @@ export const WIZARD_INITIAL_STATE: WizardState = {
   druidCircle: '',
   druidLandTerrain: '',
   druidLandCantrip: '',
+  fighterArchetype: '',
+  fighterFightingStyles: [],
+  fighterStudentOfWarTool: '',
+  fighterManeuverChoices: [],
   paladinOath: '',
   clericKnowledgeSkillChoices: [],
   clericKnowledgeLanguageChoices: [],

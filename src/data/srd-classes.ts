@@ -39,6 +39,7 @@ export interface ClassSubclassOption {
   description: string;
   features: ClassFeature[];
   bonusSpells?: { level: number; spells: string[] }[];
+  spellcasting?: SpellcastingInfo;
 }
 
 export interface TotemSpiritOption {
@@ -46,6 +47,11 @@ export interface TotemSpiritOption {
   level3: ClassFeature;
   level6: ClassFeature;
   level14: ClassFeature;
+}
+
+export interface NamedDescriptionOption {
+  name: string;
+  description: string;
 }
 
 // Spell slot tables: index = char level - 1, value = [L1,L2,L3,L4,L5,L6,L7,L8,L9]
@@ -95,6 +101,29 @@ const HALF_CASTER_SLOTS: number[][] = [
   [4,3,3,3,2,0,0,0,0], // 20
 ];
 
+const THIRD_CASTER_SLOTS: number[][] = [
+  [0,0,0,0,0,0,0,0,0], // 1
+  [0,0,0,0,0,0,0,0,0], // 2
+  [2,0,0,0,0,0,0,0,0], // 3
+  [3,0,0,0,0,0,0,0,0], // 4
+  [3,0,0,0,0,0,0,0,0], // 5
+  [3,0,0,0,0,0,0,0,0], // 6
+  [4,2,0,0,0,0,0,0,0], // 7
+  [4,2,0,0,0,0,0,0,0], // 8
+  [4,2,0,0,0,0,0,0,0], // 9
+  [4,3,0,0,0,0,0,0,0], // 10
+  [4,3,0,0,0,0,0,0,0], // 11
+  [4,3,0,0,0,0,0,0,0], // 12
+  [4,3,2,0,0,0,0,0,0], // 13
+  [4,3,2,0,0,0,0,0,0], // 14
+  [4,3,2,0,0,0,0,0,0], // 15
+  [4,3,3,0,0,0,0,0,0], // 16
+  [4,3,3,0,0,0,0,0,0], // 17
+  [4,3,3,0,0,0,0,0,0], // 18
+  [4,3,3,1,0,0,0,0,0], // 19
+  [4,3,3,1,0,0,0,0,0], // 20
+];
+
 // Warlock pact magic: [slots, slot level] indexed by char level 1-20
 export const WARLOCK_PACT_SLOTS = [1,2,2,2,2,2,2,2,2,2,3,3,3,3,3,3,4,4,4,4];
 export const WARLOCK_PACT_LEVEL = [1,1,2,2,3,3,4,4,5,5,5,5,5,5,5,5,5,5,5,5];
@@ -131,6 +160,68 @@ export const BARBARIAN_TOTEM_SPIRITS: TotemSpiritOption[] = [
     level6: { level: 6, name: 'Aspect of the Beast (Wolf)', description: 'You gain the hunting sensibilities of a wolf. You can track other creatures while traveling at a fast pace, and you can move stealthily while traveling at a normal pace.' },
     level14: { level: 14, name: 'Totemic Attunement (Wolf)', description: 'While you’re raging, you can use a bonus action on your turn to knock a Large or smaller creature prone when you hit it with a melee weapon attack.' },
   },
+];
+
+export const FIGHTING_STYLE_OPTIONS: Record<string, NamedDescriptionOption[]> = {
+  Fighter: [
+    { name: 'Archery', description: 'You gain a +2 bonus to attack rolls you make with ranged weapons.' },
+    { name: 'Defense', description: 'While you are wearing armor, you gain a +1 bonus to AC.' },
+    { name: 'Dueling', description: 'When you are wielding a melee weapon in one hand and no other weapons, you gain a +2 bonus to damage rolls with that weapon.' },
+    { name: 'Great Weapon Fighting', description: 'When you roll a 1 or 2 on a damage die for an attack you make with a melee weapon that you are wielding with two hands, you can reroll the die and must use the new roll, even if the new roll is a 1 or a 2. The weapon must have the two-handed or versatile property for you to gain this benefit.' },
+    { name: 'Protection', description: 'When a creature you can see attacks a target other than you that is within 5 feet of you, you can use your reaction to impose disadvantage on the attack roll. You must be wielding a shield.' },
+    { name: 'Two-Weapon Fighting', description: 'When you engage in two-weapon fighting, you can add your ability modifier to the damage of the second attack.' },
+  ],
+  Paladin: [
+    { name: 'Defense', description: 'While you are wearing armor, you gain a +1 bonus to AC.' },
+    { name: 'Dueling', description: 'When you are wielding a melee weapon in one hand and no other weapons, you gain a +2 bonus to damage rolls with that weapon.' },
+    { name: 'Great Weapon Fighting', description: 'When you roll a 1 or 2 on a damage die for an attack you make with a melee weapon that you are wielding with two hands, you can reroll the die and must use the new roll, even if the new roll is a 1 or a 2. The weapon must have the two-handed or versatile property for you to gain this benefit.' },
+    { name: 'Protection', description: 'When a creature you can see attacks a target other than you that is within 5 feet of you, you can use your reaction to impose disadvantage on the attack roll. You must be wielding a shield.' },
+  ],
+  Ranger: [
+    { name: 'Archery', description: 'You gain a +2 bonus to attack rolls you make with ranged weapons.' },
+    { name: 'Defense', description: 'While you are wearing armor, you gain a +1 bonus to AC.' },
+    { name: 'Dueling', description: 'When you are wielding a melee weapon in one hand and no other weapons, you gain a +2 bonus to damage rolls with that weapon.' },
+    { name: 'Two-Weapon Fighting', description: 'When you engage in two-weapon fighting, you can add your ability modifier to the damage of the second attack.' },
+  ],
+};
+
+export const ARTISAN_TOOL_OPTIONS: string[] = [
+  "Alchemist's Supplies",
+  "Brewer's Supplies",
+  "Calligrapher's Supplies",
+  "Carpenter's Tools",
+  "Cartographer's Tools",
+  "Cobbler's Tools",
+  "Cook's Utensils",
+  "Glassblower's Tools",
+  "Jeweler's Tools",
+  "Leatherworker's Tools",
+  "Mason's Tools",
+  "Painter's Supplies",
+  "Potter's Tools",
+  "Smith's Tools",
+  "Tinker's Tools",
+  "Weaver's Tools",
+  "Woodcarver's Tools",
+];
+
+export const BATTLE_MASTER_MANEUVERS: NamedDescriptionOption[] = [
+  { name: "Commander's Strike", description: 'When you take the Attack action on your turn, you can forgo one of your attacks and use a bonus action to direct one of your companions to strike. When you do so, choose a friendly creature who can see or hear you and expend one superiority die. That creature can immediately use its reaction to make one weapon attack, adding the superiority die to the attack’s damage roll.' },
+  { name: 'Disarming Attack', description: 'When you hit a creature with a weapon attack, you can expend one superiority die to attempt to disarm the target, forcing it to drop one item of your choice that it’s holding. You add the superiority die to the attack’s damage roll, and the target must make a Strength saving throw. On a failed save, it drops the object you choose. The object lands at its feet.' },
+  { name: 'Distracting Strike', description: 'When you hit a creature with a weapon attack, you can expend one superiority die to distract the creature, giving your allies an opening. You add the superiority die to the attack’s damage roll. The next attack roll against the target by an attacker other than you has advantage if the attack is made before the start of your next turn.' },
+  { name: 'Evasive Footwork', description: 'When you move, you can expend one superiority die, rolling the die and adding the number rolled to your AC until you stop moving.' },
+  { name: 'Feinting Attack', description: 'You can expend one superiority die and use a bonus action on your turn to feint, choosing one creature within 5 feet of you as your target. You have advantage on your next attack roll against that creature. If that attack hits, add the superiority die to the attack’s damage roll.' },
+  { name: 'Goading Attack', description: 'When you hit a creature with a weapon attack, you can expend one superiority die to attempt to goad the target into attacking you. You add the superiority die to the attack’s damage roll, and the target must make a Wisdom saving throw. On a failed save, the target has disadvantage on all attack rolls against targets other than you until the end of your next turn.' },
+  { name: 'Lunging Attack', description: 'When you make a melee weapon attack on your turn, you can expend one superiority die to increase your reach for that attack by 5 feet. If you hit, you add the superiority die to the attack’s damage roll.' },
+  { name: 'Maneuvering Attack', description: 'When you hit a creature with a weapon attack, you can expend one superiority die to maneuver one of your comrades into a more advantageous position. You add the superiority die to the attack’s damage roll, and you choose a friendly creature who can see or hear you. That creature can use its reaction to move up to half its speed without provoking opportunity attacks from the target of your attack.' },
+  { name: 'Menacing Attack', description: 'When you hit a creature with a weapon attack, you can expend one superiority die to attempt to frighten the target. You add the superiority die to the attack’s damage roll, and the target must make a Wisdom saving throw. On a failed save, it is frightened of you until the end of your next turn.' },
+  { name: 'Parry', description: 'When another creature damages you with a melee attack, you can use your reaction and expend one superiority die to reduce the damage by the number you roll on your superiority die + your Dexterity modifier.' },
+  { name: 'Precision Attack', description: 'When you make a weapon attack roll against a creature, you can expend one superiority die to add it to the roll. You can use this maneuver before or after making the attack roll, but before any effects of the attack are applied.' },
+  { name: 'Pushing Attack', description: 'When you hit a creature with a weapon attack, you can expend one superiority die to attempt to drive the target back. You add the superiority die to the attack’s damage roll, and if the target is Large or smaller, it must make a Strength saving throw. On a failed save, you push the target up to 15 feet away from you.' },
+  { name: 'Rally', description: 'On your turn, you can use a bonus action and expend one superiority die to bolster the resolve of one of your companions. When you do so, choose a friendly creature who can see or hear you. That creature gains temporary hit points equal to the superiority die roll + your Charisma modifier.' },
+  { name: 'Riposte', description: 'When a creature misses you with a melee attack, you can use your reaction and expend one superiority die to make a melee weapon attack against the creature. If you hit, you add the superiority die to the attack’s damage roll.' },
+  { name: 'Sweeping Attack', description: 'When you hit a creature with a melee weapon attack, you can expend one superiority die to attempt to damage another creature with the same attack. Choose another creature within 5 feet of the original target and within your reach. If the original attack roll would hit the second creature, it takes damage equal to the number you roll on your superiority die. The damage is of the same type dealt by the original attack.' },
+  { name: 'Trip Attack', description: 'When you hit a creature with a weapon attack, you can expend one superiority die to attempt to knock the target down. You add the superiority die to the attack’s damage roll, and if the target is Large or smaller, it must make a Strength saving throw. On a failed save, you knock the target prone.' },
 ];
 
 export const BARBARIAN_PRIMAL_PATHS: ClassSubclassOption[] = [
@@ -446,6 +537,53 @@ export const DRUID_CIRCLES: ClassSubclassOption[] = [
   },
 ];
 
+export const FIGHTER_ARCHETYPES: ClassSubclassOption[] = [
+  {
+    name: 'Champion',
+    description: 'The archetypal Champion focuses on the development of raw physical power honed to deadly perfection. Those who model themselves on this archetype combine rigorous training with physical excellence to deal devastating blows.',
+    features: [
+      { level: 3, name: 'Improved Critical', description: 'Your weapon attacks score a critical hit on a roll of 19 or 20.' },
+      { level: 7, name: 'Remarkable Athlete', description: 'You can add half your proficiency bonus (rounded up) to any Strength, Dexterity, or Constitution check you make that doesn’t already use your proficiency bonus. In addition, when you make a running long jump, the distance you can cover increases by a number of feet equal to your Strength modifier.' },
+      { level: 10, name: 'Additional Fighting Style', description: 'You can choose a second option from the Fighting Style class feature.' },
+      { level: 15, name: 'Superior Critical', description: 'Your weapon attacks score a critical hit on a roll of 18-20.' },
+      { level: 18, name: 'Survivor', description: 'You attain the pinnacle of resilience in battle. At the start of each of your turns, you regain hit points equal to 5 + your Constitution modifier if you have no more than half of your hit points left. You don’t gain this benefit if you have 0 hit points.' },
+    ],
+  },
+  {
+    name: 'Battle Master',
+    description: 'Those who emulate the archetypal Battle Master employ martial techniques passed down through generations. To a Battle Master, combat is an academic field, sometimes including subjects beyond battle such as weaponsmithing and calligraphy. Not every fighter absorbs the lessons of history, theory, and artistry that are reflected in the Battle Master archetype, but those who do are well-rounded fighters of great skill and knowledge.',
+    features: [
+      { level: 3, name: 'Combat Superiority', description: 'When you choose this archetype at 3rd level, you learn maneuvers that are fueled by special dice called superiority dice.\nManeuvers. You learn three maneuvers of your choice, which are detailed under “Maneuvers” below. Many maneuvers enhance an attack in some way. You can use only one maneuver per attack.\nYou learn two additional maneuvers of your choice at 7th, 10th, and 15th level. Each time you learn new maneuvers, you can also replace one maneuver you know with a different one.\nSuperiority Dice. You have four superiority dice, which are d8s. A superiority die is expended when you use it. You regain all of your expended superiority dice when you finish a short or long rest.\nYou gain another superiority die at 7th level and one more at 15th level.\nSaving Throws. Some of your maneuvers require your target to make a saving throw to resist the maneuver’s effects. The saving throw DC is calculated as follows:\nManeuver save DC = 8 + your proficiency bonus + your Strength or Dexterity modifier (your choice)' },
+      { level: 3, name: 'Student of War', description: 'You gain proficiency with one type of artisan’s tools of your choice.' },
+      { level: 7, name: 'Know Your Enemy', description: 'If you spend at least 1 minute observing or interacting with another creature outside combat, you can learn certain information about its capabilities compared to your own. The DM tells you if the creature is your equal, superior, or inferior in regard to two of the following characteristics of your choice:\n• Strength score\n• Dexterity score\n• Constitution score\n• Armor Class\n• Current hit points\n• Total class levels (if any)\n• Fighter class levels (if any)' },
+      { level: 10, name: 'Improved Combat Superiority', description: 'Your superiority dice turn into d10s.' },
+      { level: 15, name: 'Relentless', description: 'When you roll initiative and have no superiority dice remaining, you regain one superiority die.' },
+      { level: 18, name: 'Improved Combat Superiority (d12)', description: 'Your superiority dice turn into d12s.' },
+    ],
+  },
+  {
+    name: 'Eldritch Knight',
+    description: 'The archetypal Eldritch Knight combines the martial mastery common to all fighters with a careful study of magic. Eldritch Knights use magical techniques similar to those practiced by wizards. They focus their study on two of the eight schools of magic: abjuration and evocation. Abjuration spells grant an Eldritch Knight additional protection in battle, and evocation spells deal damage to many foes at once, extending the fighter\'s reach in combat. These knights learn a comparatively small number of spells, committing them to memory instead of keeping them in a spellbook.',
+    spellcasting: {
+      ability: 'int',
+      type: 'third',
+      prepares: false,
+      spellListKey: 'wizard',
+      cantripsKnown: [0,0,2,2,2,2,2,2,2,3,3,3,3,3,3,3,3,3,3,3],
+      spellsKnown: [0,0,3,4,4,4,5,6,6,7,8,8,9,10,10,11,11,11,12,13],
+      slots: THIRD_CASTER_SLOTS,
+    },
+    features: [
+      { level: 3, name: 'Weapon Bond', description: 'You learn a ritual that creates a magical bond between yourself and one weapon. You perform the ritual over the course of 1 hour, which can be done during a short rest. The weapon must be within your reach throughout the ritual, at the conclusion of which you touch the weapon and forge the bond.\nOnce you have bonded a weapon to yourself, you can\'t be disarmed of that weapon unless you are incapacitated. If it is on the same plane of existence, you can summon that weapon as a bonus action on your turn, causing it to teleport instantly to your hand. You can have up to two bonded weapons, but can summon only one at a time with your bonus action. If you attempt to bond with a third weapon, you must break the bond with one of the other two.' },
+      { level: 3, name: 'Spellcasting', description: 'You augment your martial prowess with the ability to cast spells. You learn wizard cantrips and spells, primarily from the abjuration and evocation schools, and you use Intelligence as your spellcasting ability for them.' },
+      { level: 7, name: 'War Magic', description: 'When you use your action to cast a cantrip, you can make one weapon attack as a bonus action.' },
+      { level: 10, name: 'Eldritch Strike', description: "You learn how to make your weapon strikes undercut a creature's resistance to your spells. When you hit a creature with a weapon attack, that creature has disadvantage on the next saving throw it makes against a spell you cast before the end of your next turn." },
+      { level: 15, name: 'Arcane Charge', description: 'You gain the ability to teleport up to 30 feet to an unoccupied space you can see when you use your Action Surge. You can teleport before or after the additional action.' },
+      { level: 18, name: 'Improved War Magic', description: 'When you use your action to cast a spell, you can make one weapon attack as a bonus action.' },
+    ],
+  },
+];
+
 export const PALADIN_OATHS: ClassSubclassOption[] = [
   {
     name: 'Oath of Devotion',
@@ -637,13 +775,18 @@ export const CLASS_DATA: ClassData[] = [
     skillOptions: ['Acrobatics', 'Animal Handling', 'Athletics', 'History', 'Insight', 'Intimidation', 'Perception', 'Survival'],
     flavorText: 'A master of martial combat, skilled with a variety of weapons and armor. Fighters have mastered the art of combat, through training or experience.',
     features: [
-      { level: 1, name: 'Fighting Style', description: 'You adopt a particular style of fighting as your specialty. Choose one: Archery (+2 to ranged attack rolls), Defense (+1 AC while wearing armor), Dueling (+2 damage with one-handed weapon when no other weapon in hand), Great Weapon Fighting, Protection, Two-Weapon Fighting.' },
+      { level: 1, name: 'Fighting Style', description: "You adopt a particular style of fighting as your specialty. Choose one of the following options. You can't take a Fighting Style option more than once, even if you later get to choose again." },
       { level: 1, name: 'Second Wind', description: 'You have a limited well of stamina that you can draw on to protect yourself from harm. On your turn, you can use a bonus action to regain hit points equal to 1d10 + your fighter level. Once you use this feature, you must finish a short or long rest before you can use it again.' },
-      { level: 2, name: 'Action Surge', description: 'You can push yourself beyond your normal limits for a moment. On your turn, you can take one additional action. Once you use this feature, you must finish a short or long rest before you can use it again (twice at level 17).' },
-      { level: 3, name: 'Martial Archetype', description: 'You choose an archetype that you strive to emulate in your combat styles and techniques (Champion, Battle Master, or Eldritch Knight). The archetype you choose grants you features at 3rd, 7th, 10th, 15th, and 18th level.' },
+      { level: 2, name: 'Action Surge', description: 'You can push yourself beyond your normal limits for a moment. On your turn, you can take one additional action on top of your regular action and bonus action. Once you use this feature, you must finish a short or long rest before you can use it again.' },
+      { level: 3, name: 'Martial Archetype', description: 'At 3rd level, you choose an archetype that you strive to emulate in your combat styles and techniques. Choose Champion, Battle Master, or Eldritch Knight, all detailed at the end of the class description. The archetype you choose grants you features at 3rd level and again at 7th, 10th, 15th, and 18th level.' },
       { level: 4, name: 'Ability Score Improvement', description: 'You can increase one ability score by 2, or two ability scores by 1 each. Also at levels 6, 8, 12, 14, 16, and 19.' },
-      { level: 5, name: 'Extra Attack', description: 'You can attack twice, instead of once, whenever you take the Attack action on your turn. The number of attacks increases to three at 11th level and to four at 20th level.' },
-      { level: 9, name: 'Indomitable', description: 'You can reroll a saving throw that you fail. If you do so, you must use the new roll, and you can\'t use this feature again until you finish a long rest (two uses at L13, three at L17).' },
+      { level: 5, name: 'Extra Attack', description: 'You can attack twice, instead of once, whenever you take the Attack action on your turn.' },
+      { level: 9, name: 'Indomitable', description: "You can reroll a saving throw that you fail. If you do so, you must use the new roll, and you can't use this feature again until you finish a long rest." },
+      { level: 11, name: 'Extra Attack (2)', description: 'You can attack three times, instead of once, whenever you take the Attack action on your turn.' },
+      { level: 13, name: 'Indomitable (2 uses)', description: "You can reroll a saving throw that you fail. If you do so, you must use the new roll. You can use this feature twice between long rests." },
+      { level: 17, name: 'Action Surge (2 uses)', description: 'You can use Action Surge twice before a rest, but only once on the same turn.' },
+      { level: 17, name: 'Indomitable (3 uses)', description: "You can reroll a saving throw that you fail. If you do so, you must use the new roll. You can use this feature three times between long rests." },
+      { level: 20, name: 'Extra Attack (3)', description: 'You can attack four times, instead of once, whenever you take the Attack action on your turn.' },
     ],
   },
   {
@@ -1038,6 +1181,7 @@ export function getClassFeatureTimeline(
     bardCollege?: string;
     clericDomain?: string;
     druidCircle?: string;
+    fighterArchetype?: string;
     paladinOath?: string;
   }
 ): ClassFeature[] {
@@ -1068,6 +1212,8 @@ export function getClassFeatureTimeline(
       ? CLERIC_DOMAINS.find(domain => domain.name === options.clericDomain)?.features ?? []
       : className === 'Druid' && options?.druidCircle
       ? DRUID_CIRCLES.find(circle => circle.name === options.druidCircle)?.features ?? []
+      : className === 'Fighter' && options?.fighterArchetype
+      ? FIGHTER_ARCHETYPES.find(archetype => archetype.name === options.fighterArchetype)?.features ?? []
       : className === 'Paladin' && options?.paladinOath
       ? PALADIN_OATHS.find(oath => oath.name === options.paladinOath)?.features ?? []
       : [];
@@ -1089,6 +1235,7 @@ export function getFeaturesUpToLevel(
     bardCollege?: string;
     clericDomain?: string;
     druidCircle?: string;
+    fighterArchetype?: string;
     paladinOath?: string;
   }
 ): ClassFeature[] {
@@ -1124,6 +1271,22 @@ export function getSubclassAutoPreparedSpells(
   return bonusSpells
     .filter(entry => entry.level <= level)
     .flatMap(entry => entry.spells);
+}
+
+export function getEffectiveSpellcasting(
+  className: string,
+  options?: {
+    fighterArchetype?: string;
+  }
+): SpellcastingInfo | undefined {
+  const base = CLASS_DATA.find(c => c.name === className)?.spellcasting;
+  if (base) return base;
+
+  if (className === 'Fighter' && options?.fighterArchetype) {
+    return FIGHTER_ARCHETYPES.find(archetype => archetype.name === options.fighterArchetype)?.spellcasting;
+  }
+
+  return undefined;
 }
 
 export function getSlotsAtLevel(spellcasting: SpellcastingInfo, charLevel: number): number[] {

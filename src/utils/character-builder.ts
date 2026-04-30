@@ -7,6 +7,8 @@ import {
   CLERIC_DOMAINS,
   CLASS_DATA,
   DRUID_CIRCLES,
+  FIGHTER_ARCHETYPES,
+  getEffectiveSpellcasting,
   getFeaturesUpToLevel,
   getSlotsAtLevel,
   getSubclassAutoPreparedSpells,
@@ -178,6 +180,7 @@ export function getAllOtherProficiencies(state: WizardState): string[] {
     ...(state.className === 'Cleric' && (clericDomain?.name === 'Tempest Domain' || clericDomain?.name === 'War Domain')
       ? ['Heavy Armor', 'Martial Weapons']
       : []),
+    ...(state.className === 'Fighter' && state.fighterStudentOfWarTool ? [state.fighterStudentOfWarTool] : []),
   ]);
 }
 
@@ -209,6 +212,7 @@ export function getTraitEntries(state: WizardState): string[] {
         bardCollege: state.bardCollege,
         clericDomain: state.clericDomain,
         druidCircle: state.druidCircle,
+        fighterArchetype: state.fighterArchetype,
         paladinOath: state.paladinOath,
       })
     : [];
@@ -272,6 +276,19 @@ export function getTraitEntries(state: WizardState): string[] {
     const circle = DRUID_CIRCLES.find(option => option.name === state.druidCircle);
     if (circle) entries.push(`Druid Circle: You chose ${circle.name}.`);
   }
+  if (state.fighterArchetype) {
+    const archetype = FIGHTER_ARCHETYPES.find(option => option.name === state.fighterArchetype);
+    if (archetype) entries.push(`Martial Archetype: You chose ${archetype.name}.`);
+  }
+  if (state.className === 'Fighter' && state.fighterFightingStyles.length) {
+    entries.push(`Fighting Styles: You chose ${state.fighterFightingStyles.join(' and ')}.`);
+  }
+  if (state.className === 'Fighter' && state.fighterStudentOfWarTool) {
+    entries.push(`Student of War: You chose ${state.fighterStudentOfWarTool}.`);
+  }
+  if (state.className === 'Fighter' && state.fighterManeuverChoices.length) {
+    entries.push(`Combat Superiority Maneuvers: You chose ${state.fighterManeuverChoices.join(', ')}.`);
+  }
   if (state.druidLandTerrain) {
     entries.push(`Circle of the Land Terrain: You chose ${state.druidLandTerrain}.`);
   }
@@ -297,6 +314,7 @@ export function getFutureClassFeatures(state: WizardState): ClassFeature[] {
     bardCollege: state.bardCollege,
     clericDomain: state.clericDomain,
     druidCircle: state.druidCircle,
+    fighterArchetype: state.fighterArchetype,
     paladinOath: state.paladinOath,
   })
     .filter(feature => feature.level > state.level)
@@ -370,7 +388,7 @@ function getSpellSlotsRecord(state: WizardState): Record<number, SpellSlots> {
     Array.from({ length: 9 }, (_, index) => [index + 1, { total: 0, used: 0 }])
   ) as Record<number, SpellSlots>;
   const cls = getSelectedClass(state);
-  const spellcasting = cls?.spellcasting;
+  const spellcasting = cls ? getEffectiveSpellcasting(cls.name, { fighterArchetype: state.fighterArchetype }) : undefined;
 
   if (!spellcasting) return result;
 
@@ -477,6 +495,7 @@ function getResolvedClassEquipment(state: WizardState, className: string): strin
 export function createCharacterFromWizard(state: WizardState): Character {
   const character = createBlankCharacter();
   const cls = getSelectedClass(state);
+  const spellcasting = cls ? getEffectiveSpellcasting(cls.name, { fighterArchetype: state.fighterArchetype }) : undefined;
   const background = getSelectedBackground(state);
   const abilityScores = getFinalAbilityScores(state);
   const proficiencyBonus = profBonusFromLevel(state.level);
@@ -540,8 +559,8 @@ export function createCharacterFromWizard(state: WizardState): Character {
     featuresAndTraits: traitEntries.join('\n\n'),
     otherProficiencies: unique(otherProficiencies).join(', '),
     languages: getLanguages(state),
-    spellcastingClass: cls?.spellcasting ? state.className : '',
-    spellcastingAbility: cls?.spellcasting?.ability ?? '',
+    spellcastingClass: spellcasting ? state.className : '',
+    spellcastingAbility: spellcasting?.ability ?? '',
     spellSlots: getSpellSlotsRecord(state),
     spells,
     backstory: state.backstory,
