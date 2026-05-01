@@ -54,6 +54,12 @@ export interface NamedDescriptionOption {
   description: string;
 }
 
+export interface MonkElementalDisciplineOption extends NamedDescriptionOption {
+  levelRequired: number;
+  kiCost: number;
+  spellName?: string;
+}
+
 // Spell slot tables: index = char level - 1, value = [L1,L2,L3,L4,L5,L6,L7,L8,L9]
 const FULL_CASTER_SLOTS: number[][] = [
   [2,0,0,0,0,0,0,0,0], // 1
@@ -77,6 +83,9 @@ const FULL_CASTER_SLOTS: number[][] = [
   [4,3,3,3,3,2,1,1,1], // 19
   [4,3,3,3,3,2,2,1,1], // 20
 ];
+
+const MONK_MARTIAL_ARTS_DESCRIPTION =
+  "Your practice of martial arts gives you mastery of combat styles that use unarmed strikes and monk weapons, which are shortswords and any simple melee weapons that don't have the two-handed or heavy property.\nYou gain the following benefits while you are unarmed or wielding only monk weapons and you aren't wearing armor or wielding a shield:\n• You can use Dexterity instead of Strength for the attack and damage rolls of your unarmed strikes and monk weapons.\n• You can roll a d4 in place of the normal damage of your unarmed strike or monk weapon. This die changes as you gain monk levels.\n• When you use the Attack action with an unarmed strike or a monk weapon on your turn, you can make one unarmed strike as a bonus action. For example, if you take the Attack action and attack with a quarter-staff, you can also make an unarmed strike as a bonus action, assuming you haven't already taken a bonus action this turn.\nCertain monasteries use specialized forms of the monk weapons. For example, you might use a club that is two lengths of wood connected by a short chain (called a nunchaku) or a sickle with a shorter, straighter blade (called a kama).";
 
 const HALF_CASTER_SLOTS: number[][] = [
   [0,0,0,0,0,0,0,0,0], // 1
@@ -584,6 +593,224 @@ export const FIGHTER_ARCHETYPES: ClassSubclassOption[] = [
   },
 ];
 
+export const MONK_TRADITIONS: ClassSubclassOption[] = [
+  {
+    name: 'Way of the Open Hand',
+    description:
+      'Monks of the Way of the Open Hand are the ultimate masters of martial arts combat, whether armed or unarmed. They learn techniques to push and trip their opponents, manipulate ki to heal damage to their bodies, and practice advanced meditation that can protect them from harm.',
+    features: [
+      {
+        level: 3,
+        name: 'Open Hand Technique',
+        description:
+          'Starting when you choose this tradition at 3rd level, you can manipulate your enemy’s ki when you harness your own. Whenever you hit a creature with one of the attacks granted by your Flurry of Blows, you can impose one of the following effects on that target:\n• It must succeed on a Dexterity saving throw or be knocked prone.\n• It must make a Strength saving throw. If it fails, you can push it up to 15 feet away from you.\n• It can’t take reactions until the end of your next turn.',
+      },
+      {
+        level: 6,
+        name: 'Wholeness of Body',
+        description:
+          'You gain the ability to heal yourself. As an action, you can regain hit points equal to three times your monk level. You must finish a long rest before you can use this feature again.',
+      },
+      {
+        level: 11,
+        name: 'Tranquility',
+        description:
+          'You can enter a special meditation that surrounds you with an aura of peace. At the end of a long rest, you gain the effect of a sanctuary spell that lasts until the start of your next long rest, until you make an attack, cast a spell, or force a creature to make a saving throw.',
+      },
+      {
+        level: 17,
+        name: 'Quivering Palm',
+        description:
+          'You gain the ability to set up lethal vibrations in someone’s body. When you hit a creature with an unarmed strike, you can spend 3 ki points to start these imperceptible vibrations, which last for a number of days equal to your monk level. The vibrations are harmless unless you use your action to end them.\nTo do so, you and the target must be on the same plane of existence. When you use this action, the creature must make a Constitution saving throw. If it fails, it is reduced to 0 hit points. If it succeeds, it takes 10d10 necrotic damage. You can have only one creature under the effect of this feature at a time. You can choose to end the vibrations harmlessly without using an action.',
+      },
+    ],
+  },
+  {
+    name: 'Way of Shadow',
+    description:
+      'Monks of the Way of Shadow follow a tradition that values stealth and subterfuge. These monks might be called ninjas or shadowdancers, and they serve as spies and assassins. Sometimes the members of a ninja monastery are family members, forming a clan sworn to secrecy about their arts and missions. Other monasteries are more like thieves’ guilds, hiring out their services to nobles, rich merchants, or anyone else who can pay their fees. Regardless of their methods, the heads of these monasteries expect the unquestioning obedience of their students.',
+    features: [
+      {
+        level: 3,
+        name: 'Shadow Arts',
+        description:
+          'You can use your ki to duplicate the effects of certain spells. As an action, you can spend 2 ki points to cast darkness, darkvision, pass without trace, or silence, without providing material components. Additionally, you gain the minor illusion cantrip if you don’t already know it.',
+      },
+      {
+        level: 6,
+        name: 'Shadow Step',
+        description:
+          'You gain the ability to step from one shadow into another. When you are in dim light or darkness, as a bonus action you can teleport up to 60 feet to an unoccupied space you can see that is also in dim light or darkness. You then have advantage on the first melee attack you make before the end of the turn.',
+      },
+      {
+        level: 11,
+        name: 'Cloak of Shadows',
+        description:
+          'You have learned to become one with the shadows. When you are in an area of dim light or darkness, you can use your action to become invisible. You remain invisible until you make an attack, cast a spell, or are in an area of bright light.',
+      },
+      {
+        level: 17,
+        name: 'Opportunist',
+        description:
+          'You can exploit a creature’s momentary distraction when it is hit by an attack. Whenever a creature within 5 feet of you is hit by an attack made by a creature other than you, you can use your reaction to make a melee attack against that creature.',
+      },
+    ],
+  },
+  {
+    name: 'Way of the Four Elements',
+    description:
+      'You follow a monastic tradition that teaches you to harness the elements. When you focus your ki, you can align yourself with the forces of creation and bend the four elements to your will, using them as an extension of your body. Some members of this tradition dedicate themselves to a single element, but others weave the elements together. Many monks of this tradition tattoo their bodies with representations of their ki powers, commonly imagined as coiling dragons, but also as phoenixes, fish, plants, mountains, and cresting waves.',
+    features: [
+      {
+        level: 3,
+        name: 'Disciple of the Elements',
+        description:
+          'When you choose this tradition at 3rd level, you learn magical disciplines that harness the power of the four elements. A discipline requires you to spend ki points each time you use it.\nYou know the Elemental Attunement discipline and one other elemental discipline of your choice, which are detailed in the “Elemental Disciplines” section below. You learn one additional elemental discipline of your choice at 6th, 11th, and 17th level.\nWhenever you learn a new elemental discipline, you can also replace one elemental discipline that you already know with a different discipline.\nCasting Elemental Spells. Some elemental disciplines allow you to cast spells. To cast one of these spells, you use its casting time and other rules, but you don’t need to provide material components for it.\nOnce you reach 5th level in this class, you can spend additional ki points to increase the level of an elemental discipline spell that you cast, provided that the spell has an enhanced effect at a higher level, as burning hands does. The spell’s level increases by 1 for each additional ki point you spend. For example, if you are a 5th-level monk and use Sweeping Cinder Strike to cast burning hands, you can spend 3 ki points to cast it as a 2nd-level spell (the discipline’s base cost of 2 ki points plus 1).\nThe maximum number of ki points you can spend to cast a spell in this way (including its base ki point cost and any additional ki points you spend to increase its level) is determined by your monk level, as shown in the Spells and Ki Points table.',
+      },
+      {
+        level: 6,
+        name: 'Additional Elemental Discipline',
+        description:
+          'You learn one additional elemental discipline of your choice.',
+      },
+      {
+        level: 11,
+        name: 'Additional Elemental Discipline',
+        description:
+          'You learn one additional elemental discipline of your choice.',
+      },
+      {
+        level: 17,
+        name: 'Additional Elemental Discipline',
+        description:
+          'You learn one additional elemental discipline of your choice.',
+      },
+    ],
+  },
+];
+
+export const MONK_ELEMENTAL_DISCIPLINES: MonkElementalDisciplineOption[] = [
+  {
+    name: 'Elemental Attunement',
+    levelRequired: 3,
+    kiCost: 0,
+    description:
+      'You can use your action to briefly control elemental forces nearby, causing one of the following effects of your choice:\n• Create a harmless, instantaneous sensory effect related to air, earth, fire, or water, such as a shower of sparks, a puff of wind, a spray of light mist, or a gentle rumbling of stone.\n• Instantly light or snuff out a candle, a torch, or a small campfire.\n• Chill or warm up to 1 pound of nonliving material for up to 1 hour.\n• Cause earth, fire, water, or mist that can fit within a 1-foot cube to shape itself into a crude form you designate for 1 minute.',
+  },
+  {
+    name: 'Clench of the North Wind',
+    levelRequired: 6,
+    kiCost: 3,
+    spellName: 'Hold Person',
+    description: 'You can spend 3 ki points to cast hold person.',
+  },
+  {
+    name: 'Fangs of the Fire Snake',
+    levelRequired: 3,
+    kiCost: 1,
+    description:
+      'When you use the Attack action on your turn, you can spend 1 ki point to cause tendrils of flame to stretch out from your fists and feet. Your reach with your unarmed strikes increases by 10 feet for that action, as well as the rest of the turn. A hit with such an attack deals fire damage instead of bludgeoning damage, and if you spend 1 ki point when the attack hits, it also deals an extra 1d10 fire damage.',
+  },
+  {
+    name: 'Fist of Four Thunders',
+    levelRequired: 3,
+    kiCost: 2,
+    spellName: 'Thunderwave',
+    description: 'You can spend 2 ki points to cast thunderwave.',
+  },
+  {
+    name: 'Fist of Unbroken Air',
+    levelRequired: 3,
+    kiCost: 2,
+    description:
+      'You can create a blast of compressed air that strikes like a mighty fist. As an action, you can spend 2 ki points and choose a creature within 30 feet of you. That creature must make a Strength saving throw. On a failed save, the creature takes 3d10 bludgeoning damage, plus an extra 1d10 bludgeoning damage for each additional ki point you spend, and you can push the creature up to 20 feet away from you and knock it prone. On a successful save, the creature takes half as much damage, and you don’t push it or knock it prone.',
+  },
+  {
+    name: 'Rush of the Gale Spirits',
+    levelRequired: 3,
+    kiCost: 2,
+    spellName: 'Gust of Wind',
+    description: 'You can spend 2 ki points to cast gust of wind.',
+  },
+  {
+    name: 'Shape the Flowing River',
+    levelRequired: 3,
+    kiCost: 1,
+    description:
+      'As an action, you can spend 1 ki point to choose an area of ice or water no larger than 30 feet on a side within 120 feet of you. You can change water to ice within the area and vice versa, and you can reshape ice in the area in any manner you choose. You can raise or lower the ice’s elevation, create or fill in a trench, erect or flatten a wall, or form a pillar. The extent of any such changes can’t exceed half the area’s largest dimension. For example, if you affect a 30-foot square, you can create a pillar up to 15 feet high, raise or lower the square’s elevation by up to 15 feet, dig a trench up to 15 feet deep, and so on. You can’t shape the ice to trap or injure a creature in the area.',
+  },
+  {
+    name: 'Sweeping Cinder Strike',
+    levelRequired: 3,
+    kiCost: 2,
+    spellName: 'Burning Hands',
+    description: 'You can spend 2 ki points to cast burning hands.',
+  },
+  {
+    name: 'Water Whip',
+    levelRequired: 3,
+    kiCost: 2,
+    description:
+      'You can spend 2 ki points as a bonus action to create a whip of water that shoves and pulls a creature to unbalance it. A creature that you can see within 30 feet of you must make a Dexterity saving throw. On a failed save, the creature takes 3d10 bludgeoning damage, plus an extra 1d10 bludgeoning damage for each additional ki point you spend, and you can either knock it prone or pull it up to 25 feet closer to you. On a successful save, the creature takes half as much damage, and you don’t pull it or knock it prone.',
+  },
+  {
+    name: 'Gong of the Summit',
+    levelRequired: 6,
+    kiCost: 3,
+    spellName: 'Shatter',
+    description: 'You can spend 3 ki points to cast shatter.',
+  },
+  {
+    name: 'Flames of the Phoenix',
+    levelRequired: 11,
+    kiCost: 4,
+    spellName: 'Fireball',
+    description: 'You can spend 4 ki points to cast fireball.',
+  },
+  {
+    name: 'Mist Stance',
+    levelRequired: 11,
+    kiCost: 4,
+    spellName: 'Gaseous Form',
+    description: 'You can spend 4 ki points to cast gaseous form, targeting yourself.',
+  },
+  {
+    name: 'Ride the Wind',
+    levelRequired: 11,
+    kiCost: 4,
+    spellName: 'Fly',
+    description: 'You can spend 4 ki points to cast fly, targeting yourself.',
+  },
+  {
+    name: 'Eternal Mountain Defense',
+    levelRequired: 11,
+    kiCost: 5,
+    spellName: 'Stoneskin',
+    description: 'You can spend 5 ki points to cast stoneskin, targeting yourself.',
+  },
+  {
+    name: 'Breath of Winter',
+    levelRequired: 17,
+    kiCost: 6,
+    spellName: 'Cone of Cold',
+    description: 'You can spend 6 ki points to cast cone of cold.',
+  },
+  {
+    name: 'River of Hungry Flame',
+    levelRequired: 17,
+    kiCost: 5,
+    spellName: 'Wall of Fire',
+    description: 'You can spend 5 ki points to cast wall of fire.',
+  },
+  {
+    name: 'Wave of Rolling Earth',
+    levelRequired: 17,
+    kiCost: 6,
+    spellName: 'Wall of Stone',
+    description: 'You can spend 6 ki points to cast wall of stone.',
+  },
+];
+
 export const PALADIN_OATHS: ClassSubclassOption[] = [
   {
     name: 'Oath of Devotion',
@@ -802,20 +1029,40 @@ export const CLASS_DATA: ClassData[] = [
     flavorText: 'A master of martial arts, harnessing the power of the body in pursuit of physical and spiritual perfection. Monks channel ki — an energy that flows through living bodies.',
     features: [
       { level: 1, name: 'Unarmored Defense', description: 'While you are wearing no armor and not wielding a shield, your AC equals 10 + your Dexterity modifier + your Wisdom modifier.' },
-      { level: 1, name: 'Martial Arts', description: 'Your practice of martial arts gives you mastery of combat styles that use unarmed strikes and monk weapons. You can use DEX instead of STR, use d4 unarmed damage (increases: d6 at 5, d8 at 11, d10 at 17), and make an unarmed strike as a bonus action when you attack with a monk weapon.' },
-      { level: 2, name: 'Ki', description: 'Your training allows you to harness the mystic energy of ki. You have ki points equal to your monk level. You regain spent ki on a short or long rest. Flurry of Blows: spend 1 ki after Attack action to make 2 unarmed strikes as bonus action. Patient Defense: spend 1 ki to Dodge as bonus action. Step of the Wind: spend 1 ki to Dash or Disengage as bonus action.' },
-      { level: 2, name: 'Unarmored Movement', description: 'Your speed increases by 10 feet while you aren\'t wearing armor or wielding a shield. This increases by 5 feet at 6th, 10th, 14th, and 18th level.' },
-      { level: 3, name: 'Monastic Tradition', description: 'You commit yourself to a monastic tradition (Way of the Open Hand, Way of Shadow, or Way of the Four Elements). Your tradition grants you features at 3rd, 6th, 11th, and 17th level.' },
-      { level: 3, name: 'Deflect Missiles', description: 'You can use your reaction to deflect or catch the missile when you are hit by a ranged weapon attack. The damage is reduced by 1d10 + your DEX modifier + your monk level. If you reduce it to 0, you can spend 1 ki to throw the missile back.' },
+      { level: 1, name: 'Martial Arts', description: MONK_MARTIAL_ARTS_DESCRIPTION },
+      {
+        level: 2,
+        name: 'Ki',
+        description: [
+          'Your training allows you to harness the mystic energy of ki. Your access to this energy is represented by a number of ki points. Your monk level determines the number of points you have.',
+          'You can spend these points to fuel various ki features.',
+          'You start knowing three such features: Flurry of Blows, Patient Defense, and Step of the Wind. You learn more ki features as you gain levels in this class.',
+          'When you spend a ki point, it is unavailable until you finish a short or long rest, at the end of which you draw all of your expended ki back into yourself. You must spend at least 30 minutes of the rest meditating to regain your ki points.',
+          'Some of your ki features require your target to make a saving throw to resist the feature\'s effects. The saving throw DC is calculated as follows:',
+          'Ki save DC = 8 + your proficiency bonus + your Wisdom modifier',
+          'FLURRY OF BLOWS',
+          'Immediately after you take the Attack action on your turn, you can spend 1 ki point to make two unarmed strikes as a bonus action.',
+          'PATIENT DEFENSE',
+          'You can spend 1 ki point to take the Dodge action as a bonus action on your turn.',
+          'STEP OF THE WIND',
+          'You can spend 1 ki point to take the Disengage or Dash action as a bonus action on your turn, and your jump distance is doubled for the turn.',
+        ].join('\n'),
+      },
+      { level: 2, name: 'Unarmored Movement', description: 'Your speed increases by 10 feet while you are not wearing armor or wielding a shield. This bonus increases when you reach certain monk levels, as shown in the Monk table. At 9th level, you gain the ability to move along vertical surfaces and across liquids on your turn without falling during the move.' },
+      { level: 3, name: 'Monastic Tradition', description: 'You commit yourself to a monastic tradition: the Way of the Open Hand, the Way of Shadow, or the Way of the Four Elements, all detailed at the end of the class description. Your tradition grants you features at 3rd level and again at 6th, 11th, and 17th level.' },
+      { level: 3, name: 'Deflect Missiles', description: 'You can use your reaction to deflect or catch the missile when you are hit by a ranged weapon attack. When you do so, the damage you take from the attack is reduced by 1d10 + your Dexterity modifier + your monk level. If you reduce the damage to 0, you can catch the missile if it is small enough for you to hold in one hand and you have at least one hand free. If you catch a missile in this way, you can spend 1 ki point to make a ranged attack with the weapon or piece of ammunition you just caught, as part of the same reaction. You make this attack with proficiency, regardless of your weapon proficiencies, and the missile counts as a monk weapon for the attack.' },
       { level: 4, name: 'Ability Score Improvement', description: 'You can increase one ability score by 2, or two ability scores by 1 each. Also at levels 8, 12, 16, and 19.' },
       { level: 4, name: 'Slow Fall', description: 'You can use your reaction when you fall to reduce any falling damage you take by an amount equal to five times your monk level.' },
       { level: 5, name: 'Extra Attack', description: 'You can attack twice, instead of once, whenever you take the Attack action on your turn.' },
-      { level: 5, name: 'Stunning Strike', description: 'You can interfere with the flow of ki in an opponent\'s body. When you hit with a melee weapon attack, spend 1 ki to attempt a stunning strike. The target must succeed on a CON saving throw or be stunned until the end of your next turn.' },
+      { level: 5, name: 'Stunning Strike', description: "You can interfere with the flow of ki in an opponent's body. When you hit another creature with a melee weapon attack, you can spend 1 ki point to attempt a stunning strike. The target must succeed on a Constitution saving throw or be stunned until the end of your next turn." },
       { level: 6, name: 'Ki-Empowered Strikes', description: 'Your unarmed strikes count as magical for the purpose of overcoming resistance and immunity to nonmagical attacks and damage.' },
-      { level: 7, name: 'Evasion', description: 'Your instinctive agility lets you dodge out of the way of certain area effects. When subjected to an effect that allows a DEX saving throw to take half damage, you instead take no damage if you succeed, or only half on a fail.' },
+      { level: 7, name: 'Evasion', description: "Your instinctive agility lets you dodge out of the way of certain area effects, such as a blue dragon's lightning breath or a fireball spell. When you are subjected to an effect that allows you to make a Dexterity saving throw to take only half damage, you instead take no damage if you succeed on the saving throw, and only half damage if you fail." },
+      { level: 7, name: 'Stillness of Mind', description: 'You can use your action to end one effect on yourself that is causing you to be charmed or frightened.' },
       { level: 10, name: 'Purity of Body', description: 'Your mastery of the ki flowing through you makes you immune to disease and poison.' },
-      { level: 13, name: 'Tongue of the Sun and Moon', description: 'You learn to touch the ki of other minds so that you understand all spoken languages and every creature that can understand a language can understand you.' },
+      { level: 13, name: 'Tongue of the Sun and Moon', description: 'You learn to touch the ki of other minds so that you understand all spoken languages. Moreover, any creature that can understand a language can understand what you say.' },
       { level: 14, name: 'Diamond Soul', description: 'Your mastery of ki grants you proficiency in all saving throws. Additionally, whenever you make a saving throw and fail, you can spend 1 ki point to reroll it and take the second result.' },
+      { level: 15, name: 'Timeless Body', description: "Your ki sustains you so that you suffer none of the frailty of old age, and you can't be aged magically. You can still die of old age, however. In addition, you no longer need food or water." },
+      { level: 18, name: 'Empty Body', description: "You can use your action to spend 4 ki points to become invisible for 1 minute. During that time, you also have resistance to all damage but force damage. Additionally, you can spend 8 ki points to cast the astral projection spell, without needing material components. When you do so, you can't take any other creatures with you." },
       { level: 20, name: 'Perfect Self', description: 'When you roll for initiative and have no ki points remaining, you regain 4 ki points.' },
     ],
   },
@@ -1115,6 +1362,47 @@ function expandFeature(feature: ClassFeature): ClassFeature[] {
     ];
   }
 
+  if (feature.name === 'Unarmored Movement') {
+    return [
+      {
+        level: 2,
+        name: 'Unarmored Movement (+10 ft)',
+        description:
+          'Your speed increases by 10 feet while you are not wearing armor or wielding a shield.',
+      },
+      {
+        level: 6,
+        name: 'Unarmored Movement (+15 ft)',
+        description:
+          'Your speed bonus while you are not wearing armor or wielding a shield increases to 15 feet.',
+      },
+      {
+        level: 9,
+        name: 'Unarmored Movement (Wall & Water Running)',
+        description:
+          'While you are not wearing armor or wielding a shield, you gain the ability to move along vertical surfaces and across liquids on your turn without falling during the move.',
+      },
+      {
+        level: 10,
+        name: 'Unarmored Movement (+20 ft)',
+        description:
+          'Your speed bonus while you are not wearing armor or wielding a shield increases to 20 feet.',
+      },
+      {
+        level: 14,
+        name: 'Unarmored Movement (+25 ft)',
+        description:
+          'Your speed bonus while you are not wearing armor or wielding a shield increases to 25 feet.',
+      },
+      {
+        level: 18,
+        name: 'Unarmored Movement (+30 ft)',
+        description:
+          'Your speed bonus while you are not wearing armor or wielding a shield increases to 30 feet.',
+      },
+    ];
+  }
+
   if (feature.name === 'Bardic Inspiration') {
     return [
       {
@@ -1182,6 +1470,7 @@ export function getClassFeatureTimeline(
     clericDomain?: string;
     druidCircle?: string;
     fighterArchetype?: string;
+    monkTradition?: string;
     paladinOath?: string;
   }
 ): ClassFeature[] {
@@ -1214,6 +1503,8 @@ export function getClassFeatureTimeline(
       ? DRUID_CIRCLES.find(circle => circle.name === options.druidCircle)?.features ?? []
       : className === 'Fighter' && options?.fighterArchetype
       ? FIGHTER_ARCHETYPES.find(archetype => archetype.name === options.fighterArchetype)?.features ?? []
+      : className === 'Monk' && options?.monkTradition
+      ? MONK_TRADITIONS.find(tradition => tradition.name === options.monkTradition)?.features ?? []
       : className === 'Paladin' && options?.paladinOath
       ? PALADIN_OATHS.find(oath => oath.name === options.paladinOath)?.features ?? []
       : [];
@@ -1236,6 +1527,7 @@ export function getFeaturesUpToLevel(
     clericDomain?: string;
     druidCircle?: string;
     fighterArchetype?: string;
+    monkTradition?: string;
     paladinOath?: string;
   }
 ): ClassFeature[] {

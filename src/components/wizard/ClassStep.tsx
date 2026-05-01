@@ -14,6 +14,8 @@ import {
   DRUID_LAND_TERRAINS,
   FIGHTER_ARCHETYPES,
   FIGHTING_STYLE_OPTIONS,
+  MONK_TRADITIONS,
+  MONK_ELEMENTAL_DISCIPLINES,
   PALADIN_OATHS,
   type ClassFeature,
   getCantripsKnown,
@@ -90,7 +92,25 @@ const CLERIC_NATURE_CANTRIP_OPTIONS = SPELL_LIST
   .filter(spell => spell.level === 0 && spell.classes.includes('Druid'))
   .sort((a, b) => a.name.localeCompare(b.name));
 
+const MONK_SHADOW_ARTS_SPELLS = ['Minor Illusion', 'Darkness', 'Darkvision', 'Pass without Trace', 'Silence'];
+
 const CLASS_FEATURE_SPELLS: Record<string, SpellDetail[]> = {
+  'Shadow Arts': MONK_SHADOW_ARTS_SPELLS.map(spellName => {
+    const spell = SPELL_LIST.find(option => option.name === spellName);
+    return {
+      name: spellName,
+      levelLabel:
+        spellName === 'Minor Illusion'
+          ? 'Cantrip'
+          : spell
+          ? `${spell.level}${spell.level === 1 ? 'st' : spell.level === 2 ? 'nd' : spell.level === 3 ? 'rd' : 'th'}-level spell`
+          : 'Spell',
+      description:
+        spell?.description ??
+        'A shadow art granted by your monastic tradition.',
+      ritual: false,
+    };
+  }),
   'Spirit Seeker': [
     {
       name: 'Beast Sense',
@@ -144,6 +164,38 @@ function getBarbarianRageCount(level: number): string {
 
 function getBarbarianRageDamage(level: number): string {
   return `+${BARBARIAN_RAGE_DAMAGE_BY_LEVEL[level - 1] ?? 2}`;
+}
+
+function getMonkMartialArtsDie(level: number): string {
+  if (level >= 17) return 'd10';
+  if (level >= 11) return 'd8';
+  if (level >= 5) return 'd6';
+  return 'd4';
+}
+
+function getMonkKiPoints(level: number): number {
+  return level >= 2 ? level : 0;
+}
+
+function getMonkUnarmoredMovementBonus(level: number): number {
+  if (level >= 18) return 30;
+  if (level >= 14) return 25;
+  if (level >= 10) return 20;
+  if (level >= 6) return 15;
+  if (level >= 2) return 10;
+  return 0;
+}
+
+function getMonkElementalDisciplineLimit(level: number): number {
+  if (level >= 17) return 4;
+  if (level >= 11) return 3;
+  if (level >= 6) return 2;
+  if (level >= 3) return 1;
+  return 0;
+}
+
+function getAbilityModifier(score: number): number {
+  return Math.floor((score - 10) / 2);
 }
 
 function splitEquipmentList(text: string): string[] {
@@ -234,7 +286,7 @@ function getCombinedFeatureEffects(
   className: string,
   features: ClassFeature[]
 ): { resistances: EffectSummary[]; advantages: EffectSummary[] } {
-  if (className !== 'Barbarian' && className !== 'Cleric' && className !== 'Druid') {
+  if (className !== 'Barbarian' && className !== 'Cleric' && className !== 'Druid' && className !== 'Monk') {
     return { resistances: [], advantages: [] };
   }
 
@@ -346,6 +398,19 @@ function getCombinedFeatureEffects(
         label: "You can't be charmed or frightened by elementals or fey",
       });
     }
+
+    if (feature.name === 'Purity of Body') {
+      resistances.push({
+        label: 'Disease and poison',
+      });
+    }
+
+    if (feature.name === 'Empty Body') {
+      resistances.push({
+        label: 'All damage except force',
+        condition: 'While Empty Body is active',
+      });
+    }
   });
 
   return { resistances, advantages };
@@ -408,6 +473,12 @@ function isFighterArchetypeFeature(feature: ClassFeature): boolean {
   );
 }
 
+function isMonkTraditionFeature(feature: ClassFeature): boolean {
+  return MONK_TRADITIONS.some(tradition =>
+    tradition.features.some(traditionFeature => traditionFeature.level === feature.level && traditionFeature.name === feature.name)
+  );
+}
+
 export default function ClassStep({ state, onChange }: Props) {
   const [magicalSecretsSource, setMagicalSecretsSource] = useState<MagicalSecretsSource>('All');
   const [collapsedSpellGroups, setCollapsedSpellGroups] = useState<Record<string, boolean>>({});
@@ -435,6 +506,9 @@ export default function ClassStep({ state, onChange }: Props) {
       fighterFightingStyles: [],
       fighterStudentOfWarTool: '',
       fighterManeuverChoices: [],
+      monkTradition: '',
+      monkToolProficiency: '',
+      monkElementalDisciplines: [],
       paladinOath: '',
       clericKnowledgeSkillChoices: [],
       clericKnowledgeLanguageChoices: [],
@@ -485,6 +559,19 @@ export default function ClassStep({ state, onChange }: Props) {
     const nextAdditionalMagicalSecretChoices =
       state.bardAdditionalMagicalSecretChoices.slice(0, nextAdditionalMagicalSecrets);
     const nextNormalSpellLimit = Math.max(0, nextBaseSpellsKnown - nextMagicalSecrets);
+    const nextMonkDisciplineLimit =
+      state.className === 'Monk' && state.monkTradition === 'Way of the Four Elements'
+        ? getMonkElementalDisciplineLimit(nextLevel)
+        : 0;
+    const nextMonkElementalDisciplines =
+      state.className === 'Monk' && state.monkTradition === 'Way of the Four Elements'
+        ? state.monkElementalDisciplines
+            .filter(name => {
+              const discipline = MONK_ELEMENTAL_DISCIPLINES.find(option => option.name === name);
+              return discipline && discipline.levelRequired <= nextLevel && discipline.name !== 'Elemental Attunement';
+            })
+            .slice(0, nextMonkDisciplineLimit)
+        : [];
 
     onChange({
       level: nextLevel,
@@ -524,6 +611,7 @@ export default function ClassStep({ state, onChange }: Props) {
               nextLevel >= 15 ? 9 : nextLevel >= 10 ? 7 : nextLevel >= 7 ? 5 : nextLevel >= 3 ? 3 : 0
             )
           : [],
+      monkElementalDisciplines: nextMonkElementalDisciplines,
       ...(nextLevel < 3
         ? {
             barbarianPath: '',
@@ -535,6 +623,8 @@ export default function ClassStep({ state, onChange }: Props) {
             fighterArchetype: '',
             fighterStudentOfWarTool: '',
             fighterManeuverChoices: [],
+            monkTradition: '',
+            monkElementalDisciplines: [],
             paladinOath: '',
           }
         : nextLevel < 1
@@ -648,6 +738,17 @@ export default function ClassStep({ state, onChange }: Props) {
     }
   };
 
+  const toggleMonkElementalDiscipline = (name: string) => {
+    if (state.className !== 'Monk' || state.monkTradition !== 'Way of the Four Elements') return;
+    const current = state.monkElementalDisciplines;
+    const limit = getMonkElementalDisciplineLimit(level);
+    if (current.includes(name)) {
+      onChange({ monkElementalDisciplines: current.filter(item => item !== name) });
+    } else if (current.length < limit) {
+      onChange({ monkElementalDisciplines: [...current, name] });
+    }
+  };
+
   const clearCantripsInGroup = (spellNames: string[]) => {
     onChange({ selectedCantrips: state.selectedCantrips.filter(name => !spellNames.includes(name)) });
   };
@@ -750,6 +851,7 @@ export default function ClassStep({ state, onChange }: Props) {
         clericDomain: state.clericDomain,
         druidCircle: state.druidCircle,
         fighterArchetype: state.fighterArchetype,
+        monkTradition: state.monkTradition,
         paladinOath: state.paladinOath,
       })
     : [];
@@ -759,7 +861,8 @@ export default function ClassStep({ state, onChange }: Props) {
       !isBardCollegeFeature(feature) &&
       !isClericDomainFeature(feature) &&
       !isDruidCircleFeature(feature) &&
-      !isFighterArchetypeFeature(feature)
+      !isFighterArchetypeFeature(feature) &&
+      !isMonkTraditionFeature(feature)
   );
   const unlockedFeatures = features.filter(feature => feature.level <= level);
   const selectedPrimalPath = BARBARIAN_PRIMAL_PATHS.find(path => path.name === state.barbarianPath);
@@ -767,6 +870,7 @@ export default function ClassStep({ state, onChange }: Props) {
   const selectedClericDomain = CLERIC_DOMAINS.find(domain => domain.name === state.clericDomain);
   const selectedDruidCircle = DRUID_CIRCLES.find(circle => circle.name === state.druidCircle);
   const selectedFighterArchetype = FIGHTER_ARCHETYPES.find(archetype => archetype.name === state.fighterArchetype);
+  const selectedMonkTradition = MONK_TRADITIONS.find(tradition => tradition.name === state.monkTradition);
   const selectedPaladinOath = PALADIN_OATHS.find(oath => oath.name === state.paladinOath);
   const selectedTotemSpirit = getTotemSpiritOption(3, state.barbarianTotemSpirit);
   const selectedAspectSpirit = getTotemSpiritOption(6, state.barbarianAspectSpirit);
@@ -792,6 +896,18 @@ export default function ClassStep({ state, onChange }: Props) {
   const clericDomainFeatures = selectedClericDomain?.features ?? [];
   const druidCircleFeatures = selectedDruidCircle?.features ?? [];
   const fighterArchetypeFeatures = selectedFighterArchetype?.features ?? [];
+  const monkTraditionFeatures = selectedMonkTradition?.features ?? [];
+  const monkElementalDisciplineLimit =
+    state.className === 'Monk' && state.monkTradition === 'Way of the Four Elements'
+      ? getMonkElementalDisciplineLimit(level)
+      : 0;
+  const availableMonkElementalDisciplines = MONK_ELEMENTAL_DISCIPLINES.filter(
+    discipline => discipline.name !== 'Elemental Attunement'
+  ).sort((a, b) => a.name.localeCompare(b.name));
+  const selectedMonkElementalDisciplineDetails = state.monkElementalDisciplines
+    .map(name => MONK_ELEMENTAL_DISCIPLINES.find(option => option.name === name))
+    .filter((discipline): discipline is (typeof MONK_ELEMENTAL_DISCIPLINES)[number] => Boolean(discipline))
+    .sort((a, b) => a.levelRequired - b.levelRequired || a.name.localeCompare(b.name));
   const paladinOathFeatures = selectedPaladinOath?.features ?? [];
   const fightingStyleOptions = previewClass ? FIGHTING_STYLE_OPTIONS[previewClass.name] ?? [] : [];
   const fighterFightingStyleLimit =
@@ -838,18 +954,24 @@ export default function ClassStep({ state, onChange }: Props) {
   const clericHasMartialWeapons =
     previewClass?.name === 'Cleric' &&
     Boolean(selectedClericDomain && ['Tempest Domain', 'War Domain'].includes(selectedClericDomain.name));
+  const clericDomainAdditionalProficiencies =
+    previewClass?.name === 'Cleric'
+      ? [
+          ...(clericHasHeavyArmor ? ['Heavy Armor'] : []),
+          ...(clericHasMartialWeapons ? ['Martial Weapons'] : []),
+        ]
+      : [];
   const armorWeaponProficiencies = previewClass
     ? [
         ...previewClass.armorProf,
         ...previewClass.weaponProf,
-        ...(previewClass.name === 'Cleric' && clericHasHeavyArmor ? ['Heavy Armor'] : []),
-        ...(previewClass.name === 'Cleric' && clericHasMartialWeapons ? ['Martial Weapons'] : []),
       ]
     : [];
   const toolProficiencies = previewClass
     ? [
-        ...((previewClass.toolProf ?? []).filter(item => item !== 'Three musical instruments of your choice')),
+        ...((previewClass.toolProf ?? []).filter(item => item !== 'Three musical instruments of your choice' && item !== "One type of artisan's tools or one musical instrument")),
         ...(previewClass.name === 'Bard' ? state.bardInstrumentChoices : []),
+        ...(previewClass.name === 'Monk' && state.monkToolProficiency ? [state.monkToolProficiency] : []),
         ...(previewClass.name === 'Fighter' && state.fighterStudentOfWarTool ? [state.fighterStudentOfWarTool] : []),
       ]
     : [];
@@ -865,6 +987,8 @@ export default function ClassStep({ state, onChange }: Props) {
   const bardAdditionalMagicalSecretsAllowed =
     state.className === 'Bard' && state.bardCollege === 'College of Lore' && level >= 6 ? 2 : 0;
   const finalScores = getFinalAbilityScores(state);
+  const monkKiSaveDC =
+    previewClass?.name === 'Monk' && level >= 2 ? 8 + profBonus + getAbilityModifier(finalScores.wis) : 0;
   const spellcasting = previewClass
     ? getEffectiveSpellcasting(previewClass.name, {
         fighterArchetype: state.fighterArchetype,
@@ -917,6 +1041,12 @@ export default function ClassStep({ state, onChange }: Props) {
     selectedDruidCircle?.name === 'Circle of the Land' &&
     state.druidLandCantrip
       ? SPELL_LIST.filter(spell => spell.name === state.druidLandCantrip)
+      : [];
+  const shadowArtsSpellDetails =
+    selectedMonkTradition?.name === 'Way of Shadow'
+      ? SPELL_LIST.filter(spell => MONK_SHADOW_ARTS_SPELLS.includes(spell.name)).sort(
+          (a, b) => a.level - b.level || a.name.localeCompare(b.name)
+        )
       : [];
   const classCantripOptions = classSpellOptions.filter(spell => spell.level === 0);
   const availableDruidLandCantrips =
@@ -1000,6 +1130,135 @@ export default function ClassStep({ state, onChange }: Props) {
   };
 
   const renderFeatureDescription = (feature: ClassFeature, unlocked: boolean) => {
+    if (feature.name === 'Martial Arts') {
+      const paragraphs = normalizeFeatureParagraphs(feature.description);
+      const intro = paragraphs[0] ?? '';
+      const benefits = paragraphs.slice(1, 4);
+      const ending = paragraphs[4] ?? '';
+
+      return (
+        <div className={`mt-2 rounded border border-[var(--color-border-strong)] bg-[var(--color-surface-pop)] p-4 ${unlocked ? '' : 'opacity-70'}`}>
+          <div className="border-b border-[var(--color-border-strong)] pb-2 text-lg font-bold uppercase tracking-[0.22em] text-[var(--color-text-strong)]">
+            Martial Arts
+          </div>
+          <div className="mt-3 space-y-3 text-[0.98rem] leading-8 text-[var(--color-text-soft)]">
+            <p>{intro}</p>
+            <div>
+              <p className="mb-2">You gain the following benefits while you are unarmed or wielding only monk weapons and you aren&apos;t wearing armor or wielding a shield:</p>
+              <ul className="list-disc space-y-2 pl-6">
+                {benefits.map((benefit, index) => (
+                  <li key={`martial-arts-${index}`}>{benefit.replace(/^•\s*/, '')}</li>
+                ))}
+              </ul>
+            </div>
+            {ending && <p>{ending}</p>}
+          </div>
+        </div>
+      );
+    }
+
+    if (feature.name === 'Ki') {
+      const paragraphs = normalizeFeatureParagraphs(feature.description);
+      const [intro, spend, startKnowing, regain, saveDcIntro, saveDcFormula] = paragraphs;
+      const sections = [
+        { title: 'FLURRY OF BLOWS', body: paragraphs[7] ?? '' },
+        { title: 'PATIENT DEFENSE', body: paragraphs[9] ?? '' },
+        { title: 'STEP OF THE WIND', body: paragraphs[11] ?? '' },
+      ];
+
+      return (
+        <div className={`mt-2 rounded border border-[var(--color-border-strong)] bg-[var(--color-surface-pop)] p-4 ${unlocked ? '' : 'opacity-70'}`}>
+          <div className="border-b border-[var(--color-border-strong)] pb-2 text-lg font-bold uppercase tracking-[0.22em] text-[var(--color-text-strong)]">
+            Ki
+          </div>
+          <div className="mt-3 space-y-4 text-[0.98rem] leading-8 text-[var(--color-text-soft)]">
+            <p>{intro}</p>
+            <p>{spend}</p>
+            <p>{startKnowing}</p>
+            <p>{regain}</p>
+            <div>
+              <p>{saveDcIntro}</p>
+              <div className="mt-2 rounded border border-[var(--color-border-muted)] bg-[var(--color-surface-accent)] px-3 py-2 text-sm font-bold text-[var(--color-text-strong)]">
+                {saveDcFormula}
+              </div>
+            </div>
+            {sections.map(section => (
+              <div key={section.title}>
+                <div className="text-lg font-bold uppercase tracking-[0.14em] text-[var(--color-text-strong)]">{section.title}</div>
+                <p className="mt-1">{section.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    if (feature.name === 'Open Hand Technique') {
+      const paragraphs = normalizeFeatureParagraphs(feature.description);
+      const intro = paragraphs[0] ?? '';
+      const bullets = paragraphs.slice(1);
+
+      return (
+        <div className={`mt-2 rounded border border-[var(--color-border-strong)] bg-[var(--color-surface-pop)] p-4 ${unlocked ? '' : 'opacity-70'}`}>
+          <div className="border-b border-[var(--color-border-strong)] pb-2 text-lg font-bold uppercase tracking-[0.22em] text-[var(--color-text-strong)]">
+            Open Hand Technique
+          </div>
+          <div className="mt-3 space-y-3 text-[0.98rem] leading-8 text-[var(--color-text-soft)]">
+            <p>{intro}</p>
+            <ul className="list-disc space-y-2 pl-6">
+              {bullets.map((bullet, index) => (
+                <li key={`open-hand-technique-${index}`}>{bullet.replace(/^•\s*/, '')}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      );
+    }
+
+    if (feature.name === 'Disciple of the Elements') {
+      const paragraphs = normalizeFeatureParagraphs(feature.description);
+      const maxKiRows = [
+        { levels: '5th–8th', max: '3' },
+        { levels: '9th–12th', max: '4' },
+        { levels: '13th–16th', max: '5' },
+        { levels: '17th–20th', max: '6' },
+      ];
+
+      return (
+        <div className={`mt-2 rounded border border-[var(--color-border-strong)] bg-[var(--color-surface-pop)] p-4 ${unlocked ? '' : 'opacity-70'}`}>
+          <div className="border-b border-[var(--color-border-strong)] pb-2 text-lg font-bold uppercase tracking-[0.22em] text-[var(--color-text-strong)]">
+            Disciple of the Elements
+          </div>
+          <div className="mt-3 space-y-4 text-[0.98rem] leading-8 text-[var(--color-text-soft)]">
+            <p>{paragraphs[0]}</p>
+            <p>{paragraphs[1]}</p>
+            <p>{paragraphs[2]}</p>
+            <div>
+              <div className="text-lg font-bold italic text-[var(--color-text-strong)]">Casting Elemental Spells.</div>
+              <p className="mt-1">{paragraphs[3]}</p>
+              <p className="mt-3">{paragraphs[4]}</p>
+              <p className="mt-3">{paragraphs[5]}</p>
+            </div>
+            <div className="rounded border border-[var(--color-border-strong)] bg-[var(--color-surface-accent)] p-3">
+              <div className="mb-3 text-sm font-bold uppercase tracking-[0.18em] text-[var(--color-accent)]">
+                Spells and Ki Points
+              </div>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm text-[var(--color-text-soft)]">
+                <div className="font-bold text-[var(--color-text-strong)]">Monk Levels</div>
+                <div className="font-bold text-[var(--color-text-strong)]">Maximum Ki Points for a Spell</div>
+                {maxKiRows.map(row => (
+                  <div key={`monk-ki-table-${row.levels}`} className="contents">
+                    <div>{row.levels}</div>
+                    <div>{row.max}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     if (feature.name === 'Fighting Style') {
       const styleOptions = fightingStyleOptions;
 
@@ -1284,6 +1543,109 @@ export default function ClassStep({ state, onChange }: Props) {
     );
   };
 
+  const renderMonkDisciplineCards = () => {
+    if (selectedMonkTradition?.name !== 'Way of the Four Elements') return null;
+
+    return (
+      <div className="mt-4 space-y-4">
+        <div>
+          <div className="section-title">Elemental Disciplines</div>
+          <div className="mb-2 text-sm leading-6 text-[var(--color-text-soft)]">
+            You automatically know <span className="font-bold text-[var(--color-text-strong)]">Elemental Attunement</span>. Choose additional disciplines here. ({state.monkElementalDisciplines.length}/{monkElementalDisciplineLimit})
+          </div>
+          <div className="rounded border border-[var(--color-border-muted)] bg-[var(--color-surface-accent)] p-3">
+            <div className="text-sm font-bold text-[var(--color-text-strong)]">Elemental Attunement</div>
+            <p className="mt-2 text-sm leading-6 text-[var(--color-text-soft)]">
+              {MONK_ELEMENTAL_DISCIPLINES.find(discipline => discipline.name === 'Elemental Attunement')?.description}
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
+          {availableMonkElementalDisciplines.map(discipline => {
+            const selected = state.monkElementalDisciplines.includes(discipline.name);
+            const unlockedByLevel = level >= discipline.levelRequired;
+            const canAdd = state.monkElementalDisciplines.length < monkElementalDisciplineLimit;
+            return (
+              <button
+                key={`monk-discipline-${discipline.name}`}
+                onClick={() => toggleMonkElementalDiscipline(discipline.name)}
+                disabled={!unlockedByLevel || (!selected && !canAdd)}
+                className={`rounded border p-3 text-left transition-all ${
+                  selected
+                    ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)]'
+                    : !unlockedByLevel || !canAdd
+                    ? 'cursor-not-allowed border-[var(--color-border-subtle)] bg-[var(--color-surface-accent)] text-[var(--color-text-dim)]'
+                    : 'border-[var(--color-accent)] bg-[var(--color-surface-3)] hover:bg-[var(--color-hover)]'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="text-sm font-bold text-[var(--color-text-strong)]">{discipline.name}</div>
+                  <div className="text-[0.68rem] uppercase tracking-wide text-[var(--color-text-dim)]">
+                    {discipline.levelRequired > 3 ? `Level ${discipline.levelRequired}` : 'Level 3'}
+                  </div>
+                </div>
+                <div className="mt-1 text-[0.68rem] uppercase tracking-wide text-[var(--color-accent)]">
+                  {discipline.kiCost > 0 ? `${discipline.kiCost} ki point${discipline.kiCost === 1 ? '' : 's'}` : 'At-will discipline'}
+                </div>
+                <div className="mt-2 text-sm leading-6 text-[var(--color-text-soft)]">{discipline.description}</div>
+                {!unlockedByLevel && (
+                  <div className="mt-2 text-xs leading-5 text-[var(--color-text-dim)]">
+                    Unlocks at monk level {discipline.levelRequired}.
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {selectedMonkElementalDisciplineDetails.length > 0 && (
+          <div>
+            <div className="section-title">Chosen Disciplines</div>
+            <div className="grid gap-3 xl:grid-cols-2">
+              {selectedMonkElementalDisciplineDetails.map(discipline => {
+                const spell = discipline.spellName
+                  ? SPELL_LIST.find(option => option.name === discipline.spellName)
+                  : undefined;
+                return (
+                  <div
+                    key={`chosen-monk-discipline-${discipline.name}`}
+                    className="rounded border border-[var(--color-border-strong)] bg-[var(--color-surface-pop)] p-3"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="text-sm font-bold text-[var(--color-text-strong)]">{discipline.name}</div>
+                      <div className="text-[0.68rem] uppercase tracking-wide text-[var(--color-accent)]">
+                        {discipline.kiCost} ki point{discipline.kiCost === 1 ? '' : 's'}
+                      </div>
+                    </div>
+                    <p className="mt-2 text-sm leading-6 text-[var(--color-text-soft)]">{discipline.description}</p>
+                    {spell && (
+                      <div className="mt-3 rounded border border-[var(--color-border-muted)] bg-[var(--color-surface-accent)] p-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="text-sm font-bold text-[var(--color-text-strong)]">{spell.name}</div>
+                          <div className="text-[0.68rem] uppercase tracking-wide text-[var(--color-accent)]">
+                            Level {spell.level}
+                          </div>
+                        </div>
+                        <div className="mt-1 text-[0.68rem] uppercase tracking-wide text-[var(--color-text-dim)]">
+                          {spell.school} · {spell.castingTime} · {spell.range}
+                        </div>
+                        <p className="mt-2 text-sm leading-6 text-[var(--color-text-soft)]">{spell.description}</p>
+                        {spell.upcast && (
+                          <p className="mt-2 text-xs leading-5 text-[var(--color-spell-strong)]">{spell.upcast}</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const renderGroupedSpellPicker = (
     groupPrefix: string,
     spells: typeof SPELL_LIST,
@@ -1552,6 +1914,27 @@ export default function ClassStep({ state, onChange }: Props) {
                   <div className="field-label">Prof Bonus</div>
                 </div>
               </div>
+
+              {previewClass.name === 'Monk' && (
+                <div className="mx-auto grid w-full max-w-4xl grid-cols-1 gap-2 md:grid-cols-4">
+                  <div className="stat-box">
+                    <div className="text-base font-bold">{getMonkMartialArtsDie(level)}</div>
+                    <div className="field-label">Martial Arts Die</div>
+                  </div>
+                  <div className="stat-box">
+                    <div className="text-base font-bold">{getMonkKiPoints(level)}</div>
+                    <div className="field-label">Ki Points</div>
+                  </div>
+                  <div className="stat-box">
+                    <div className="text-base font-bold">{level >= 2 ? monkKiSaveDC : '—'}</div>
+                    <div className="field-label">Ki Save DC</div>
+                  </div>
+                  <div className="stat-box">
+                    <div className="text-base font-bold">{getMonkUnarmoredMovementBonus(level) > 0 ? `+${getMonkUnarmoredMovementBonus(level)} ft` : '—'}</div>
+                    <div className="field-label">Unarmored Movement</div>
+                  </div>
+                </div>
+              )}
 
               {previewClass.name === 'Barbarian' && (
                 <div className="mx-auto grid w-full max-w-xl grid-cols-2 gap-2">
@@ -1959,6 +2342,30 @@ export default function ClassStep({ state, onChange }: Props) {
                 </div>
               )}
 
+              {previewClass.name === 'Monk' && state.className === 'Monk' && (
+                <div>
+                  <div className="mb-1 field-label">Choose Tool Proficiency (1/1)</div>
+                  <div className="flex flex-wrap gap-2">
+                    {[...ARTISAN_TOOL_OPTIONS, ...MUSICAL_INSTRUMENTS].map(option => {
+                      const selected = state.monkToolProficiency === option;
+                      return (
+                        <button
+                          key={`monk-tool-${option}`}
+                          onClick={() => onChange({ monkToolProficiency: selected ? '' : option })}
+                          className={`rounded border px-3 py-1 text-xs transition-all ${
+                            selected
+                              ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)] text-[var(--color-text-strong)]'
+                              : 'border-[var(--color-accent)] text-[var(--color-accent)] hover:bg-[var(--color-hover)]'
+                          }`}
+                        >
+                          {option}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               <div>
                 <div className="mb-2 field-label">Class Features</div>
                 <div className="flex flex-col gap-2">
@@ -2358,6 +2765,15 @@ export default function ClassStep({ state, onChange }: Props) {
                           </div>
                         </div>
                       )}
+
+                      {clericDomainAdditionalProficiencies.length > 0 && (
+                        <div className="mt-4">
+                          <div className="section-title">Additional Proficiencies</div>
+                          <div className="text-sm leading-6 text-[var(--color-text)]">
+                            {clericDomainAdditionalProficiencies.join(' · ')}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -2558,6 +2974,87 @@ export default function ClassStep({ state, onChange }: Props) {
                             </div>
                           )}
                         </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {previewClass.name === 'Monk' && (
+                <div className="section-box border-[var(--color-border-muted)] bg-[var(--color-surface-3)]">
+                  <div className="section-title">Choose Monastic Tradition</div>
+                  {level < 3 && (
+                    <div className="mb-3 text-sm leading-6 text-[var(--color-text-soft)]">
+                      Monastic Tradition unlocks at level 3. You can choose one now to preview its future features.
+                    </div>
+                  )}
+                  <div className="grid grid-cols-1 gap-2 lg:grid-cols-3">
+                    {MONK_TRADITIONS.map(tradition => {
+                      const selected = state.monkTradition === tradition.name;
+                      return (
+                        <button
+                          key={tradition.name}
+                          onClick={() =>
+                            onChange({
+                              monkTradition: tradition.name,
+                              monkElementalDisciplines:
+                                tradition.name === 'Way of the Four Elements'
+                                  ? state.monkElementalDisciplines.filter(name => {
+                                      const discipline = MONK_ELEMENTAL_DISCIPLINES.find(option => option.name === name);
+                                      return Boolean(discipline && discipline.levelRequired <= level);
+                                    })
+                                  : [],
+                            })
+                          }
+                          className={`rounded border p-3 text-left transition-all ${
+                            selected
+                              ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)]'
+                              : 'border-[var(--color-accent)] bg-[var(--color-surface-3)] hover:bg-[var(--color-hover)]'
+                          }`}
+                        >
+                          <div className="text-sm font-bold text-[var(--color-text-strong)]">{tradition.name}</div>
+                          <div className="mt-2 text-sm leading-6 text-[var(--color-text-soft)]">{tradition.description}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {selectedMonkTradition && (
+                    <div className="mt-4">
+                      <div className="section-title">Monastic Tradition Features</div>
+                      <div className="flex flex-col gap-2">
+                        {monkTraditionFeatures.map((feature, i) => {
+                          const unlocked = feature.level <= level;
+                          return (
+                            <div
+                              key={`${feature.level}-${feature.name}-monk-tradition-${i}`}
+                              className={`border-l-2 pl-3 ${unlocked ? 'border-[var(--color-accent)]' : 'border-[var(--color-border-faint)]'}`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <span className={`rounded border px-2 py-0.5 text-[0.8rem] font-bold ${unlocked ? 'border-[var(--color-accent)] text-[var(--color-text-strong)]' : 'border-[var(--color-border-faint)] text-[var(--color-text-dim)]'}`}>
+                                  Level {feature.level}
+                                </span>
+                                <span className={`text-base font-bold ${unlocked ? 'text-[var(--color-text-strong)]' : 'text-[var(--color-text-muted)]'}`}>{feature.name}</span>
+                              </div>
+                              {renderFeatureDescription(feature, unlocked)}
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {selectedMonkTradition.name === 'Way of Shadow' && level >= 3 && shadowArtsSpellDetails.length > 0 && (
+                        <div className="mt-4">
+                          {renderCollapsibleSpellDetails(
+                            'shadow-arts',
+                            shadowArtsSpellDetails,
+                            'Shadow Arts Spellcasting',
+                            'Minor illusion is granted by your tradition, and you can spend 2 ki points to cast darkness, darkvision, pass without trace, or silence without material components.'
+                          )}
+                        </div>
+                      )}
+
+                      {selectedMonkTradition.name === 'Way of the Four Elements' && level >= 3 && (
+                        <div className="mt-4">{renderMonkDisciplineCards()}</div>
                       )}
                     </div>
                   )}

@@ -26,6 +26,9 @@ export interface WizardState {
   fighterFightingStyles: string[];
   fighterStudentOfWarTool: string;
   fighterManeuverChoices: string[];
+  monkTradition: string;
+  monkToolProficiency: string;
+  monkElementalDisciplines: string[];
   paladinOath: string;
   clericKnowledgeSkillChoices: string[];
   clericKnowledgeLanguageChoices: string[];
@@ -91,6 +94,9 @@ export const WIZARD_INITIAL_STATE: WizardState = {
   fighterFightingStyles: [],
   fighterStudentOfWarTool: '',
   fighterManeuverChoices: [],
+  monkTradition: '',
+  monkToolProficiency: '',
+  monkElementalDisciplines: [],
   paladinOath: '',
   clericKnowledgeSkillChoices: [],
   clericKnowledgeLanguageChoices: [],

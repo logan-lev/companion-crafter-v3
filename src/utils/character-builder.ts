@@ -172,8 +172,9 @@ export function getAllOtherProficiencies(state: WizardState): string[] {
     ...getResolvedBackgroundToolProficiencies(state),
     ...(cls?.armorProf ?? []),
     ...(cls?.weaponProf ?? []),
-    ...((cls?.toolProf ?? []).filter(item => item !== 'Three musical instruments of your choice')),
+    ...((cls?.toolProf ?? []).filter(item => item !== 'Three musical instruments of your choice' && item !== "One type of artisan's tools or one musical instrument")),
     ...(state.bardInstrumentChoices ?? []),
+    ...(state.className === 'Monk' && state.monkToolProficiency ? [state.monkToolProficiency] : []),
     ...(state.bardCollege === 'College of Valor' ? ['Medium Armor', 'Shields', 'Martial Weapons'] : []),
     ...(state.className === 'Cleric' && clericDomain?.name === 'Life Domain' ? ['Heavy Armor'] : []),
     ...(state.className === 'Cleric' && clericDomain?.name === 'Nature Domain' ? ['Heavy Armor'] : []),
@@ -213,6 +214,7 @@ export function getTraitEntries(state: WizardState): string[] {
         clericDomain: state.clericDomain,
         druidCircle: state.druidCircle,
         fighterArchetype: state.fighterArchetype,
+        monkTradition: state.monkTradition,
         paladinOath: state.paladinOath,
       })
     : [];
@@ -280,6 +282,15 @@ export function getTraitEntries(state: WizardState): string[] {
     const archetype = FIGHTER_ARCHETYPES.find(option => option.name === state.fighterArchetype);
     if (archetype) entries.push(`Martial Archetype: You chose ${archetype.name}.`);
   }
+  if (state.className === 'Monk' && state.monkToolProficiency) {
+    entries.push(`Monk Tool Proficiency: You chose ${state.monkToolProficiency}.`);
+  }
+  if (state.monkTradition) {
+    entries.push(`Monastic Tradition: You chose ${state.monkTradition}.`);
+  }
+  if (state.monkElementalDisciplines.length) {
+    entries.push(`Elemental Disciplines: You chose ${state.monkElementalDisciplines.join(', ')}.`);
+  }
   if (state.className === 'Fighter' && state.fighterFightingStyles.length) {
     entries.push(`Fighting Styles: You chose ${state.fighterFightingStyles.join(' and ')}.`);
   }
@@ -315,6 +326,7 @@ export function getFutureClassFeatures(state: WizardState): ClassFeature[] {
     clericDomain: state.clericDomain,
     druidCircle: state.druidCircle,
     fighterArchetype: state.fighterArchetype,
+    monkTradition: state.monkTradition,
     paladinOath: state.paladinOath,
   })
     .filter(feature => feature.level > state.level)
