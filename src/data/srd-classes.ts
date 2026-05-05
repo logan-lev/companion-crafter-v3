@@ -40,6 +40,7 @@ export interface ClassSubclassOption {
   features: ClassFeature[];
   bonusSpells?: { level: number; spells: string[] }[];
   spellcasting?: SpellcastingInfo;
+  tenets?: string[];
 }
 
 export interface TotemSpiritOption {
@@ -814,7 +815,15 @@ export const MONK_ELEMENTAL_DISCIPLINES: MonkElementalDisciplineOption[] = [
 export const PALADIN_OATHS: ClassSubclassOption[] = [
   {
     name: 'Oath of Devotion',
-    description: 'Devotion paladins embody honesty, courage, compassion, honor, and duty as shining champions of justice.',
+    description: "The Oath of Devotion binds a paladin to the loftiest ideals of justice, virtue, and order. Sometimes called cavaliers, white knights, or holy warriors, these paladins meet the ideal of the knight in shining armor, acting with honor in pursuit of justice and the greater good. They hold themselves to the highest standards of conduct, and some, for better or worse, hold the rest of the world to the same standards. Many who swear this oath are devoted to gods of law and good and use their gods' tenets as the measure of their devotion. They hold angels-the perfect servants of good-as their ideals, and incorporate images of angelic wings into their helmets or coats of arms.",
+    tenets: [
+      "Though the exact words and strictures of the Oath of Devotion vary, paladins of this oath share these tenets.",
+      "Honesty. Don't lie or cheat. Let your word be your promise.",
+      'Courage. Never fear to act, though caution is wise.',
+      'Compassion. Aid others, protect the weak, and punish those who threaten them. Show mercy to your foes, but temper it with wisdom.',
+      'Honor. Treat others with fairness, and let your honorable deeds be an example to them. Do as much good as possible while causing the least amount of harm.',
+      'Duty. Be responsible for your actions and their consequences, protect those entrusted to your care, and obey those who have just authority over you.',
+    ],
     bonusSpells: [
       { level: 3, spells: ['Protection from Evil and Good', 'Sanctuary'] },
       { level: 5, spells: ['Lesser Restoration', 'Zone of Truth'] },
@@ -823,16 +832,23 @@ export const PALADIN_OATHS: ClassSubclassOption[] = [
       { level: 17, spells: ['Commune', 'Flame Strike'] },
     ],
     features: [
-      { level: 3, name: 'Channel Divinity: Sacred Weapon', description: 'As an action, you can imbue one weapon that you are holding with positive energy, adding your Charisma modifier to attack rolls made with it for 1 minute.' },
-      { level: 3, name: 'Channel Divinity: Turn the Unholy', description: 'As an action, each fiend or undead within 30 feet that can see or hear you must make a Wisdom saving throw or be turned for 1 minute.' },
-      { level: 7, name: 'Aura of Devotion', description: 'You and friendly creatures within 10 feet of you can’t be charmed while you are conscious. At 18th level, the range increases to 30 feet.' },
+      { level: 3, name: 'Channel Divinity: Sacred Weapon', description: 'As an action, you can imbue one weapon that you are holding with positive energy, using your Channel Divinity. For 1 minute, you add your Charisma modifier to attack rolls made with that weapon (with a minimum bonus of +1). The weapon also emits bright light in a 20-foot radius and dim light 20 feet beyond that. If the weapon is not already magical, it becomes magical for the duration. You can end this effect on your turn as part of any other action. If you are no longer holding or carrying this weapon, or if you fall unconscious, this effect ends.' },
+      { level: 3, name: 'Channel Divinity: Turn the Unholy', description: "As an action, you present your holy symbol and speak a prayer censuring fiends and undead, using your Channel Divinity. Each fiend or undead that can see or hear you within 30 feet of you must make a Wisdom saving throw. If the creature fails its saving throw, it is turned for 1 minute or until it takes damage. A turned creature must spend its turns trying to move as far away from you as it can, and it can't willingly move to a space within 30 feet of you. It also can't take reactions. For its action, it can use only the Dash action or try to escape from an effect that prevents it from moving. If there's nowhere to move, the creature can use the Dodge action." },
+      { level: 7, name: 'Aura of Devotion', description: "You and friendly creatures within 10 feet of you can't be charmed while you are conscious. At 18th level, the range of this aura increases to 30 feet." },
       { level: 15, name: 'Purity of Spirit', description: 'You are always under the effects of a protection from evil and good spell.' },
-      { level: 20, name: 'Holy Nimbus', description: 'As an action, you emanate bright sunlight in a 30-foot radius for 1 minute and deal radiant damage to enemies that start their turns there.' },
+      { level: 20, name: 'Holy Nimbus', description: "As an action, you can emanate an aura of sunlight. For 1 minute, bright light shines from you in a 30-foot radius, and dim light shines 30 feet beyond that. Whenever an enemy creature starts its turn in the bright light, the creature takes 10 radiant damage. In addition, for the duration, you have advantage on saving throws against spells cast by fiends or undead. Once you use this feature, you can't use it again until you finish a long rest." },
     ],
   },
   {
     name: 'Oath of the Ancients',
-    description: 'Ancients paladins preserve hope, beauty, and life, standing as radiant defenders against darkness and despair.',
+    description: "The Oath of the Ancients is as old as the race of elves and the rituals of the druids. Sometimes called fey knights, green knights, or horned knights, paladins who swear this oath cast their lot with the side of the light in the cosmic struggle against darkness because they love the beautiful and life-giving things of the world, not necessarily because they believe in principles of honor, courage, and justice. They adorn their armor and clothing with images of growing things - leaves, antlers, or flowers - to reflect their commitment to preserving life and light in the world.",
+    tenets: [
+      'The tenets of the Oath of the Ancients have been preserved for uncounted centuries. This oath emphasizes the principles of good above any concerns of law or chaos. Its four central principles are simple.',
+      'Kindle the Light. Through your acts of mercy, kindness, and forgiveness, kindle the light of hope in the world, beating back despair.',
+      'Shelter the Light. Where there is good, beauty, love, and laughter in the world, stand against the wickedness that would swallow it. Where life flourishes, stand against the forces that would render it barren.',
+      "Preserve Your Own Light. Delight in song and laughter, in beauty and art. If you allow the light to die in your own heart, you can't preserve it in the world.",
+      'Be the Light. Be a glorious beacon for all who live in despair. Let the light of your joy and courage shine forth in all your deeds.',
+    ],
     bonusSpells: [
       { level: 3, spells: ['Ensnaring Strike', 'Speak with Animals'] },
       { level: 5, spells: ['Moonbeam', 'Misty Step'] },
@@ -841,16 +857,23 @@ export const PALADIN_OATHS: ClassSubclassOption[] = [
       { level: 17, spells: ['Commune with Nature', 'Tree Stride'] },
     ],
     features: [
-      { level: 3, name: 'Channel Divinity: Nature’s Wrath', description: 'As an action, you can cause spectral vines to spring up and reach for a creature within 10 feet. It must succeed on a Strength or Dexterity saving throw or be restrained.' },
-      { level: 3, name: 'Channel Divinity: Turn the Faithless', description: 'As an action, fey and fiends within 30 feet that can see or hear you must make a Wisdom saving throw or be turned for 1 minute.' },
-      { level: 7, name: 'Aura of Warding', description: 'You and friendly creatures within 10 feet of you have resistance to damage from spells. At 18th level, the range increases to 30 feet.' },
-      { level: 15, name: 'Undying Sentinel', description: 'When you are reduced to 0 hit points and not killed outright, you can drop to 1 hit point instead once per long rest. You also suffer none of the drawbacks of old age.' },
-      { level: 20, name: 'Elder Champion', description: 'As an action, you can transform for 1 minute, regaining 10 hit points at the start of each of your turns and gaining other nature-infused benefits.' },
+      { level: 3, name: 'Channel Divinity: Nature’s Wrath', description: 'You can use your Channel Divinity to invoke primeval forces to ensnare a foe. As an action, you can cause spectral vines to spring up and reach for a creature within 10 feet of you that you can see. The creature must succeed on a Strength or Dexterity saving throw (its choice) or be restrained. While restrained by the vines, the creature repeats the saving throw at the end of each of its turns. On a success, it frees itself and the vines vanish.' },
+      { level: 3, name: 'Channel Divinity: Turn the Faithless', description: "You can use your Channel Divinity to utter ancient words that are painful for fey and fiends to hear. As an action, you present your holy symbol, and each fey or fiend within 30 feet of you that can hear you must make a Wisdom saving throw. On a failed save, the creature is turned for 1 minute or until it takes damage. A turned creature must spend its turns trying to move as far away from you as it can, and it can't willingly move to a space within 30 feet of you. It also can't take reactions. For its action, it can use only the Dash action or try to escape from an effect that prevents it from moving. If there's nowhere to move, the creature can use the Dodge action. If the creature's true form is concealed by an illusion, shapeshifting, or other effect, that form is revealed while it is turned." },
+      { level: 7, name: 'Aura of Warding', description: 'Ancient magic lies so heavily upon you that it forms an eldritch ward. You and friendly creatures within 10 feet of you have resistance to damage from spells. At 18th level, the range of this aura increases to 30 feet.' },
+      { level: 15, name: 'Undying Sentinel', description: "When you are reduced to 0 hit points and are not killed outright, you can choose to drop to 1 hit point instead. Once you use this ability, you can't use it again until you finish a long rest.\nAdditionally, you suffer none of the drawbacks of old age, and you can't be aged magically." },
+      { level: 20, name: 'Elder Champion', description: 'At 20th level, you can assume the form of an ancient force of nature, taking on an appearance you choose. For example, your skin might turn green or take on a bark-like texture, your hair might become leafy or moss-like, or you might sprout antlers or a lion-like mane.\nUsing your action, you undergo a transformation. For 1 minute, you gain the following benefits:\n• At the start of each of your turns, you regain 10 hit points.\n• Whenever you cast a paladin spell that has a casting time of 1 action, you can cast it using a bonus action instead.\n• Enemy creatures within 10 feet of you have disadvantage on saving throws against your paladin spells and Channel Divinity options.\nOnce you use this feature, you can’t use it again until you finish a long rest.' },
     ],
   },
   {
     name: 'Oath of Vengeance',
-    description: 'Vengeance paladins hunt down the wicked with relentless focus, ruthless resolve, and divine pursuit.',
+    description: "The Oath of Vengeance is a solemn commitment to punish those who have committed a grievous sin. When evil forces slaughter helpless villagers, when an entire people turns against the will of the gods, when a thieves' guild grows too violent and powerful, when a dragon rampages through the countryside - at times like these, paladins arise and swear an Oath of Vengeance to set right that which has gone wrong. To these paladins - sometimes called avengers or dark knights - their own purity is not as important as delivering justice.",
+    tenets: [
+      'The tenets of the Oath of Vengeance vary by paladin, but all the tenets revolve around punishing wrongdoers by any means necessary. Paladins who uphold these tenets are willing to sacrifice even their own righteousness to mete out justice upon those who do evil, so the paladins are often neutral or lawful neutral in alignment. The core principles of the tenets are brutally simple.',
+      'Fight the Greater Evil. Faced with a choice of fighting my sworn foes or combating a lesser evil, I choose the greater evil.',
+      'No Mercy for the Wicked. Ordinary foes might win my mercy, but my sworn enemies do not.',
+      "By Any Means Necessary. My qualms can't get in the way of exterminating my foes.",
+      'Restitution. If my foes wreak ruin on the world, it is because I failed to stop them. I must help those harmed by their misdeeds.',
+    ],
     bonusSpells: [
       { level: 3, spells: ['Bane', "Hunter's Mark"] },
       { level: 5, spells: ['Hold Person', 'Misty Step'] },
@@ -859,11 +882,11 @@ export const PALADIN_OATHS: ClassSubclassOption[] = [
       { level: 17, spells: ['Hold Monster', 'Scrying'] },
     ],
     features: [
-      { level: 3, name: 'Channel Divinity: Abjure Enemy', description: 'As an action, choose one creature within 60 feet. It must make a Wisdom saving throw or be frightened and have its speed reduced to 0 for 1 minute.' },
-      { level: 3, name: 'Channel Divinity: Vow of Enmity', description: 'As a bonus action, you can utter a vow of enmity against a creature within 10 feet, gaining advantage on attack rolls against it for 1 minute.' },
-      { level: 7, name: 'Relentless Avenger', description: 'When you hit a creature with an opportunity attack, you can move up to half your speed immediately after the attack without provoking opportunity attacks.' },
-      { level: 15, name: 'Soul of Vengeance', description: 'When a creature under your Vow of Enmity makes an attack, you can use your reaction to make a melee weapon attack against it.' },
-      { level: 20, name: 'Avenging Angel', description: 'As an action, you can sprout wings and emanate an aura of menace for 1 hour, gaining a flying speed of 60 feet and frightening enemies.' },
+      { level: 3, name: 'Channel Divinity: Abjure Enemy', description: 'As an action, you present your holy symbol and speak a prayer of denunciation, using your Channel Divinity. Choose one creature within 60 feet of you that you can see. That creature must make a Wisdom saving throw, unless it is immune to being frightened. Fiends and undead have disadvantage on this saving throw. On a failed save, the creature is frightened for 1 minute or until it takes any damage. While frightened, the creature’s speed is 0, and it can’t benefit from any bonus to its speed. On a successful save, the creature’s speed is halved for 1 minute or until the creature takes any damage.' },
+      { level: 3, name: 'Channel Divinity: Vow of Enmity', description: 'As a bonus action, you can utter a vow of enmity against a creature you can see within 10 feet of you, using your Channel Divinity. You gain advantage on attack rolls against the creature for 1 minute or until it drops to 0 hit points or falls unconscious.' },
+      { level: 7, name: 'Relentless Avenger', description: 'Your supernatural focus helps you close off a foe’s retreat. When you hit a creature with an opportunity attack, you can move up to half your speed immediately after the attack and as part of the same reaction. This movement doesn’t provoke opportunity attacks.' },
+      { level: 15, name: 'Soul of Vengeance', description: 'The authority with which you speak your Vow of Enmity gives you greater power over your foe. When a creature under the effect of your Vow of Enmity makes an attack, you can use your reaction to make a melee weapon attack against that creature if it is within range.' },
+      { level: 20, name: 'Avenging Angel', description: 'At 20th level, you can assume the form of an angelic avenger. Using your action, you undergo a transformation. For 1 hour, you gain the following benefits:\n• Wings sprout from your back and grant you a flying speed of 60 feet.\n• You emanate an aura of menace in a 30-foot radius. The first time any enemy creature enters the aura or starts its turn there during a battle, the creature must succeed on a Wisdom saving throw or become frightened of you for 1 minute or until it takes any damage. Attack rolls against the frightened creature have advantage.\nOnce you use this feature, you can’t use it again until you finish a long rest.' },
     ],
   },
 ];
@@ -1086,19 +1109,19 @@ export const CLASS_DATA: ClassData[] = [
       slots: HALF_CASTER_SLOTS,
     },
     features: [
-      { level: 1, name: 'Divine Sense', description: 'The presence of strong evil registers on your senses like a noxious odor, and powerful good rings like heavenly music in your ears. As an action, you know the location of any celestial, fiend, or undead within 60 feet. Uses = 1 + CHA modifier per long rest.' },
-      { level: 1, name: 'Lay on Hands', description: 'Your blessed touch can heal wounds. You have a pool of healing power equal to 5 × your paladin level. As an action, touch a creature to restore HP from this pool, or spend 5 points to cure a disease or neutralize a poison.' },
+      { level: 1, name: 'Divine Sense', description: "The presence of strong evil registers on your senses like a noxious odor, and powerful good rings like heavenly music in your ears. As an action, you can open your awareness to detect such forces. Until the end of your next turn, you know the location of any celestial, fiend, or undead within 60 feet of you that is not behind total cover. You know the type (celestial, fiend, or undead) of any being whose presence you sense, but not its identity (the vampire Count Strahd von Zarovich, for instance).\nWithin the same radius, you also detect the presence of any place or object that has been consecrated or desecrated, as with the hallow spell. You can use this feature a number of times equal to 1 + your Charisma modifier. When you finish a long rest, you regain all expended uses." },
+      { level: 1, name: 'Lay on Hands', description: 'Your blessed touch can heal wounds. You have a pool of healing power that replenishes when you take a long rest. With that pool, you can restore a total number of hit points equal to your paladin level × 5. As an action, you can touch a creature and draw power from the pool to restore a number of hit points to that creature, up to the maximum amount remaining in your pool. Alternatively, you can expend 5 hit points from your pool of healing to cure the target of one disease or neutralize one poison affecting it. You can cure multiple diseases and neutralize multiple poisons with a single use of Lay on Hands, expending hit points separately for each one. This feature has no effect on undead and constructs.' },
       { level: 2, name: 'Fighting Style', description: 'You adopt a particular style of fighting as your specialty. Choose one: Defense, Dueling, Great Weapon Fighting, or Protection.' },
       { level: 2, name: 'Spellcasting', description: 'You have learned to draw on divine magic through meditation and prayer to cast paladin spells. You prepare CHA modifier + half paladin level spells.' },
-      { level: 2, name: 'Divine Smite', description: 'When you hit a creature with a melee weapon attack, you can expend one spell slot to deal extra radiant damage: 2d8 for a 1st-level slot + 1d8 per slot level above 1st. +1d8 vs undead or fiends. Max 5d8.' },
+      { level: 2, name: 'Divine Smite', description: 'Starting at 2nd level, when you hit a creature with a melee weapon attack, you can expend one paladin spell slot to deal radiant damage to the target, in addition to the weapon’s damage. The extra damage is 2d8 for a 1st-level spell slot, plus 1d8 for each spell level higher than 1st, to a maximum of 5d8. The damage increases by 1d8 if the target is an undead or a fiend.' },
       { level: 3, name: 'Divine Health', description: 'The divine magic flowing through you makes you immune to disease.' },
-      { level: 3, name: 'Sacred Oath', description: 'You swear the oath that binds you as a paladin forever (Oath of Devotion, Oath of the Ancients, or Oath of Vengeance). Your oath grants you features at 3rd, 7th, 15th, and 20th level, and a set of oath spells.' },
+      { level: 3, name: 'Sacred Oath', description: "You swear the oath that binds you as a paladin forever. Up to this time you have been in a preparatory stage, committed to the path but not yet sworn to it. Now you choose the Oath of Devotion, the Oath of the Ancients, or the Oath of Vengeance, all detailed at the end of the class description.\nYour choice grants you features at 3rd level and again at 7th, 15th, and 20th level. Those features include oath spells and the Channel Divinity feature.\n\nOATH SPELLS\n\nEach oath has a list of associated spells. You gain access to these spells at the levels specified in the oath description. Once you gain access to an oath spell, you always have it prepared. Oath spells don't count against the number of spells you can prepare each day. If you gain an oath spell that doesn't appear on the paladin spell list, the spell is nonetheless a paladin spell for you.\n\nCHANNEL DIVINITY\n\nYour oath allows you to channel divine energy to fuel magical effects. Each Channel Divinity option provided by your oath explains how to use it. When you use your Channel Divinity, you choose which option to use. You must then finish a short or long rest to use your Channel Divinity again. Some Channel Divinity effects require saving throws. When you use such an effect from this class, the DC equals your paladin spell save DC." },
       { level: 4, name: 'Ability Score Improvement', description: 'You can increase one ability score by 2, or two ability scores by 1 each. Also at levels 8, 12, 16, and 19.' },
       { level: 5, name: 'Extra Attack', description: 'You can attack twice, instead of once, whenever you take the Attack action on your turn.' },
-      { level: 6, name: 'Aura of Protection', description: 'Whenever you or a friendly creature within 10 feet of you must make a saving throw, the creature gains a bonus equal to your Charisma modifier (minimum +1). At 18th level, the range increases to 30 feet.' },
-      { level: 10, name: 'Aura of Courage', description: 'You and friendly creatures within 10 feet can\'t be frightened while you are conscious. At 18th level, the range increases to 30 feet.' },
-      { level: 11, name: 'Improved Divine Smite', description: 'You are so suffused with righteous might that all your melee weapon strikes carry divine power with them. Whenever you hit with a melee weapon, the creature takes an extra 1d8 radiant damage.' },
-      { level: 14, name: 'Cleansing Touch', description: 'You can use your action to end one spell on yourself or on one willing creature that you touch. Uses = CHA modifier per long rest.' },
+      { level: 6, name: 'Aura of Protection', description: 'Whenever you or a friendly creature within 10 feet of you must make a saving throw, the creature gains a bonus to the saving throw equal to your Charisma modifier (with a minimum bonus of +1). You must be conscious to grant this bonus. At 18th level, the range of this aura increases to 30 feet.' },
+      { level: 10, name: 'Aura of Courage', description: "You and friendly creatures within 10 feet of you can't be frightened while you are conscious. At 18th level, the range of this aura increases to 30 feet." },
+      { level: 11, name: 'Improved Divine Smite', description: 'You are so suffused with righteous might that all your melee weapon strikes carry divine power with them. Whenever you hit a creature with a melee weapon, the creature takes an extra 1d8 radiant damage. If you also use your Divine Smite with an attack, you add this damage to the extra damage of your Divine Smite.' },
+      { level: 14, name: 'Cleansing Touch', description: 'You can use your action to end one spell on yourself or on one willing creature that you touch. You can use this feature a number of times equal to your Charisma modifier (a minimum of once). You regain expended uses when you finish a long rest.' },
     ],
   },
   {
@@ -1456,6 +1479,74 @@ function expandFeature(feature: ClassFeature): ClassFeature[] {
     }));
   }
 
+  if (feature.name === 'Aura of Protection') {
+    return [
+      {
+        level: 6,
+        name: 'Aura of Protection (10 ft)',
+        description:
+          'Whenever you or a friendly creature within 10 feet of you must make a saving throw, the creature gains a bonus to the saving throw equal to your Charisma modifier (with a minimum bonus of +1). You must be conscious to grant this bonus.',
+      },
+      {
+        level: 18,
+        name: 'Aura of Protection (30 ft)',
+        description:
+          'The range of your Aura of Protection increases to 30 feet. Whenever you or a friendly creature within 30 feet of you must make a saving throw, the creature gains a bonus to the saving throw equal to your Charisma modifier (with a minimum bonus of +1). You must be conscious to grant this bonus.',
+      },
+    ];
+  }
+
+  if (feature.name === 'Aura of Courage') {
+    return [
+      {
+        level: 10,
+        name: 'Aura of Courage (10 ft)',
+        description:
+          "You and friendly creatures within 10 feet of you can't be frightened while you are conscious.",
+      },
+      {
+        level: 18,
+        name: 'Aura of Courage (30 ft)',
+        description:
+          "The range of your Aura of Courage increases to 30 feet. You and friendly creatures within 30 feet of you can't be frightened while you are conscious.",
+      },
+    ];
+  }
+
+  if (feature.name === 'Aura of Devotion') {
+    return [
+      {
+        level: 7,
+        name: 'Aura of Devotion (10 ft)',
+        description:
+          "You and friendly creatures within 10 feet of you can't be charmed while you are conscious.",
+      },
+      {
+        level: 18,
+        name: 'Aura of Devotion (30 ft)',
+        description:
+          "The range of your Aura of Devotion increases to 30 feet. You and friendly creatures within 30 feet of you can't be charmed while you are conscious.",
+      },
+    ];
+  }
+
+  if (feature.name === 'Aura of Warding') {
+    return [
+      {
+        level: 7,
+        name: 'Aura of Warding (10 ft)',
+        description:
+          'Ancient magic lies so heavily upon you that it forms an eldritch ward. You and friendly creatures within 10 feet of you have resistance to damage from spells.',
+      },
+      {
+        level: 18,
+        name: 'Aura of Warding (30 ft)',
+        description:
+          'The range of your Aura of Warding increases to 30 feet. Ancient magic lies so heavily upon you that it forms an eldritch ward. You and friendly creatures within 30 feet of you have resistance to damage from spells.',
+      },
+    ];
+  }
+
   return [feature];
 }
 
@@ -1509,7 +1600,9 @@ export function getClassFeatureTimeline(
       ? PALADIN_OATHS.find(oath => oath.name === options.paladinOath)?.features ?? []
       : [];
 
-  return [...expanded, ...subclassFeatures].sort((a, b) => {
+  const expandedSubclassFeatures = subclassFeatures.flatMap(expandFeature);
+
+  return [...expanded, ...expandedSubclassFeatures].sort((a, b) => {
     if (a.level !== b.level) return a.level - b.level;
     return a.name.localeCompare(b.name);
   });

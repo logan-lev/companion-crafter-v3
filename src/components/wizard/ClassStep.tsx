@@ -479,6 +479,16 @@ function isMonkTraditionFeature(feature: ClassFeature): boolean {
   );
 }
 
+function isPaladinOathFeature(feature: ClassFeature): boolean {
+  return PALADIN_OATHS.some(oath =>
+    oath.features.some(
+      oathFeature =>
+        oathFeature.name === feature.name ||
+        feature.name.startsWith(`${oathFeature.name} (`)
+    )
+  );
+}
+
 export default function ClassStep({ state, onChange }: Props) {
   const [magicalSecretsSource, setMagicalSecretsSource] = useState<MagicalSecretsSource>('All');
   const [collapsedSpellGroups, setCollapsedSpellGroups] = useState<Record<string, boolean>>({});
@@ -862,7 +872,8 @@ export default function ClassStep({ state, onChange }: Props) {
       !isClericDomainFeature(feature) &&
       !isDruidCircleFeature(feature) &&
       !isFighterArchetypeFeature(feature) &&
-      !isMonkTraditionFeature(feature)
+      !isMonkTraditionFeature(feature) &&
+      !isPaladinOathFeature(feature)
   );
   const unlockedFeatures = features.filter(feature => feature.level <= level);
   const selectedPrimalPath = BARBARIAN_PRIMAL_PATHS.find(path => path.name === state.barbarianPath);
@@ -908,7 +919,9 @@ export default function ClassStep({ state, onChange }: Props) {
     .map(name => MONK_ELEMENTAL_DISCIPLINES.find(option => option.name === name))
     .filter((discipline): discipline is (typeof MONK_ELEMENTAL_DISCIPLINES)[number] => Boolean(discipline))
     .sort((a, b) => a.levelRequired - b.levelRequired || a.name.localeCompare(b.name));
-  const paladinOathFeatures = selectedPaladinOath?.features ?? [];
+  const paladinOathFeatures = selectedPaladinOath
+    ? features.filter(feature => isPaladinOathFeature(feature))
+    : [];
   const fightingStyleOptions = previewClass ? FIGHTING_STYLE_OPTIONS[previewClass.name] ?? [] : [];
   const fighterFightingStyleLimit =
     previewClass?.name === 'Fighter' ? 1 + (state.fighterArchetype === 'Champion' && level >= 10 ? 1 : 0) : 0;
@@ -1361,6 +1374,111 @@ export default function ClassStep({ state, onChange }: Props) {
                 ))}
               </ul>
             )}
+          </div>
+        </div>
+      );
+    }
+
+    if (feature.name === 'Sacred Oath') {
+      const paragraphs = feature.description
+        .split('\n\n')
+        .map(part => part.trim())
+        .filter(Boolean);
+      const headingIndexes = paragraphs.reduce<Record<string, number>>((acc, paragraph, index) => {
+        if (paragraph === 'OATH SPELLS' || paragraph === 'CHANNEL DIVINITY') {
+          acc[paragraph] = index;
+        }
+        return acc;
+      }, {});
+      const oathSpellsIndex = headingIndexes['OATH SPELLS'];
+      const channelDivinityIndex = headingIndexes['CHANNEL DIVINITY'];
+      const introEnd = oathSpellsIndex ?? paragraphs.length;
+      const introBlocks = paragraphs.slice(0, introEnd);
+      const oathSpellsBody =
+        oathSpellsIndex !== undefined && paragraphs[oathSpellsIndex + 1]
+          ? paragraphs[oathSpellsIndex + 1]
+          : '';
+      const channelDivinityBody =
+        channelDivinityIndex !== undefined && paragraphs[channelDivinityIndex + 1]
+          ? paragraphs[channelDivinityIndex + 1]
+          : '';
+
+      return (
+        <div className={`mt-2 rounded border border-[var(--color-border-strong)] bg-[var(--color-surface-pop)] p-4 ${unlocked ? '' : 'opacity-70'}`}>
+          <div className="mt-1 space-y-4 text-[0.98rem] leading-7 text-[var(--color-text-soft)]">
+            {introBlocks.map((paragraph, index) => (
+              <p key={`sacred-oath-intro-${index}`}>{paragraph}</p>
+            ))}
+
+            {oathSpellsBody && (
+              <div>
+                <div className="text-lg font-bold uppercase tracking-[0.14em] text-[var(--color-text-strong)]">
+                  Oath Spells
+                </div>
+                <p className="mt-2">{oathSpellsBody}</p>
+              </div>
+            )}
+
+            {channelDivinityBody && (
+              <div>
+                <div className="text-lg font-bold uppercase tracking-[0.14em] text-[var(--color-text-strong)]">
+                  Channel Divinity
+                </div>
+                <p className="mt-2">{channelDivinityBody}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    if (feature.name === 'Elder Champion') {
+      const paragraphs = normalizeFeatureParagraphs(feature.description);
+      const intro = paragraphs[0] ?? '';
+      const transform = paragraphs[1] ?? '';
+      const bullets = paragraphs.slice(2, 5);
+      const ending = paragraphs[5] ?? '';
+
+      return (
+        <div className={`mt-2 rounded border border-[var(--color-border-strong)] bg-[var(--color-surface-pop)] p-4 ${unlocked ? '' : 'opacity-70'}`}>
+          <div className="border-b border-[var(--color-border-strong)] pb-2 text-lg font-bold uppercase tracking-[0.22em] text-[var(--color-text-strong)]">
+            Elder Champion
+          </div>
+          <div className="mt-3 space-y-3 text-[0.98rem] leading-8 text-[var(--color-text-soft)]">
+            <p>{intro}</p>
+            <p>{transform}</p>
+            <ul className="list-disc space-y-2 pl-6">
+              {bullets.map((bullet, index) => (
+                <li key={`elder-champion-${index}`}>{bullet.replace(/^•\s*/, '')}</li>
+              ))}
+            </ul>
+            {ending && <p>{ending}</p>}
+          </div>
+        </div>
+      );
+    }
+
+    if (feature.name === 'Avenging Angel') {
+      const paragraphs = normalizeFeatureParagraphs(feature.description);
+      const intro = paragraphs[0] ?? '';
+      const transform = paragraphs[1] ?? '';
+      const bullets = paragraphs.slice(2, 4);
+      const ending = paragraphs[4] ?? '';
+
+      return (
+        <div className={`mt-2 rounded border border-[var(--color-border-strong)] bg-[var(--color-surface-pop)] p-4 ${unlocked ? '' : 'opacity-70'}`}>
+          <div className="border-b border-[var(--color-border-strong)] pb-2 text-lg font-bold uppercase tracking-[0.22em] text-[var(--color-text-strong)]">
+            Avenging Angel
+          </div>
+          <div className="mt-3 space-y-3 text-[0.98rem] leading-8 text-[var(--color-text-soft)]">
+            <p>{intro}</p>
+            <p>{transform}</p>
+            <ul className="list-disc space-y-2 pl-6">
+              {bullets.map((bullet, index) => (
+                <li key={`avenging-angel-${index}`}>{bullet.replace(/^•\s*/, '')}</li>
+              ))}
+            </ul>
+            {ending && <p>{ending}</p>}
           </div>
         </div>
       );
@@ -3164,6 +3282,26 @@ export default function ClassStep({ state, onChange }: Props) {
 
                   {selectedPaladinOath && (
                     <div className="mt-4">
+                      {selectedPaladinOath.tenets && selectedPaladinOath.tenets.length > 0 && (
+                        <div className="mt-4">
+                          <div className="section-title">
+                            {selectedPaladinOath.name === 'Oath of the Ancients'
+                              ? 'Tenets of the Ancients'
+                              : selectedPaladinOath.name === 'Oath of Devotion'
+                              ? 'Tenets of Devotion'
+                              : `Tenets of ${selectedPaladinOath.name.replace(/^Oath of /, '')}`}
+                          </div>
+                          <div className="rounded border border-[var(--color-border-muted)] bg-[var(--color-surface-2)] p-4 text-[0.98rem] leading-7 text-[var(--color-text-soft)]">
+                            <p>{selectedPaladinOath.tenets[0]}</p>
+                            <ul className="mt-3 list-disc space-y-2 pl-6">
+                              {selectedPaladinOath.tenets.slice(1).map(tenet => (
+                                <li key={tenet}>{tenet}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      )}
+
                       <div className="section-title">Sacred Oath Features</div>
                       <div className="flex flex-col gap-2">
                         {paladinOathFeatures.map((feature, i) => {
