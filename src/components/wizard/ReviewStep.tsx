@@ -48,6 +48,7 @@ export default function ReviewStep({ state, onFinish }: Props) {
         clericDomain: state.clericDomain,
         druidCircle: state.druidCircle,
         fighterArchetype: state.fighterArchetype,
+        rangerArchetype: state.rangerArchetype,
         paladinOath: state.paladinOath,
       })
     : [];

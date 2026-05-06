@@ -8,6 +8,7 @@ import {
   CLASS_DATA,
   DRUID_CIRCLES,
   FIGHTER_ARCHETYPES,
+  RANGER_ARCHETYPES,
   getEffectiveSpellcasting,
   getFeaturesUpToLevel,
   getSlotsAtLevel,
@@ -193,6 +194,7 @@ export function getLanguages(state: WizardState): string[] {
   languages.push(...(state.raceLanguageChoices ?? []));
   languages.push(...(state.backgroundLanguageChoices ?? []));
   languages.push(...(state.clericKnowledgeLanguageChoices ?? []));
+  languages.push(...(state.rangerFavoredEnemyLanguages ?? []));
   if (state.className === 'Druid') {
     languages.push('Druidic');
   }
@@ -214,6 +216,7 @@ export function getTraitEntries(state: WizardState): string[] {
         clericDomain: state.clericDomain,
         druidCircle: state.druidCircle,
         fighterArchetype: state.fighterArchetype,
+        rangerArchetype: state.rangerArchetype,
         monkTradition: state.monkTradition,
         paladinOath: state.paladinOath,
       })
@@ -282,6 +285,10 @@ export function getTraitEntries(state: WizardState): string[] {
     const archetype = FIGHTER_ARCHETYPES.find(option => option.name === state.fighterArchetype);
     if (archetype) entries.push(`Martial Archetype: You chose ${archetype.name}.`);
   }
+  if (state.rangerArchetype) {
+    const archetype = RANGER_ARCHETYPES.find(option => option.name === state.rangerArchetype);
+    if (archetype) entries.push(`Ranger Archetype: You chose ${archetype.name}.`);
+  }
   if (state.className === 'Monk' && state.monkToolProficiency) {
     entries.push(`Monk Tool Proficiency: You chose ${state.monkToolProficiency}.`);
   }
@@ -300,6 +307,35 @@ export function getTraitEntries(state: WizardState): string[] {
   if (state.className === 'Fighter' && state.fighterManeuverChoices.length) {
     entries.push(`Combat Superiority Maneuvers: You chose ${state.fighterManeuverChoices.join(', ')}.`);
   }
+  if (state.className === 'Ranger' && state.rangerFightingStyle) {
+    entries.push(`Fighting Style: You chose ${state.rangerFightingStyle}.`);
+  }
+  if (state.rangerHunterPreyChoice) {
+    entries.push(`Hunter's Prey: You chose ${state.rangerHunterPreyChoice}.`);
+  }
+  if (state.rangerDefensiveTacticsChoice) {
+    entries.push(`Defensive Tactics: You chose ${state.rangerDefensiveTacticsChoice}.`);
+  }
+  if (state.rangerMultiattackChoice) {
+    entries.push(`Multiattack: You chose ${state.rangerMultiattackChoice}.`);
+  }
+  if (state.rangerSuperiorDefenseChoice) {
+    entries.push(`Superior Hunter's Defense: You chose ${state.rangerSuperiorDefenseChoice}.`);
+  }
+  (state.rangerFavoredEnemyChoices ?? []).forEach((choice, index) => {
+    if (!choice) return;
+    const humanoids = state.rangerFavoredEnemyHumanoids[index];
+    const language = state.rangerFavoredEnemyLanguages[index];
+    const label =
+      choice === 'Two Humanoid Races' && humanoids
+        ? `Favored Enemy ${index + 1}: ${choice} (${humanoids.replace(/\|/g, ' & ')})`
+        : `Favored Enemy ${index + 1}: ${choice}`;
+    entries.push(language ? `${label}. Associated language: ${language}.` : `${label}.`);
+  });
+  (state.rangerFavoredTerrains ?? []).forEach((terrain, index) => {
+    if (!terrain) return;
+    entries.push(`Favored Terrain ${index + 1}: ${terrain}.`);
+  });
   if (state.druidLandTerrain) {
     entries.push(`Circle of the Land Terrain: You chose ${state.druidLandTerrain}.`);
   }
@@ -326,6 +362,7 @@ export function getFutureClassFeatures(state: WizardState): ClassFeature[] {
     clericDomain: state.clericDomain,
     druidCircle: state.druidCircle,
     fighterArchetype: state.fighterArchetype,
+    rangerArchetype: state.rangerArchetype,
     monkTradition: state.monkTradition,
     paladinOath: state.paladinOath,
   })

@@ -17,7 +17,12 @@ import {
   MONK_TRADITIONS,
   MONK_ELEMENTAL_DISCIPLINES,
   PALADIN_OATHS,
+  RANGER_ARCHETYPES,
+  RANGER_FAVORED_ENEMY_OPTIONS,
+  RANGER_FAVORED_TERRAINS,
+  RANGER_HUMANOID_RACE_OPTIONS,
   type ClassFeature,
+  type NamedDescriptionOption,
   getCantripsKnown,
   getClassFeatureTimeline,
   getEffectiveSpellcasting,
@@ -93,6 +98,53 @@ const CLERIC_NATURE_CANTRIP_OPTIONS = SPELL_LIST
   .sort((a, b) => a.name.localeCompare(b.name));
 
 const MONK_SHADOW_ARTS_SPELLS = ['Minor Illusion', 'Darkness', 'Darkvision', 'Pass without Trace', 'Silence'];
+const RANGER_FAVORED_ENEMY_LANGUAGE_OPTIONS: Record<string, string[]> = {
+  Aberrations: ['Deep Speech', 'Undercommon'],
+  Beasts: [],
+  Celestials: ['Celestial'],
+  Constructs: [],
+  Dragons: ['Draconic'],
+  Elementals: ['Primordial'],
+  Fey: ['Elvish', 'Sylvan'],
+  Fiends: ['Abyssal', 'Infernal'],
+  Giants: ['Giant'],
+  Monstrosities: [],
+  Oozes: [],
+  Plants: [],
+  Undead: [],
+  'Two Humanoid Races': [],
+};
+const RANGER_HUMANOID_LANGUAGE_MAP: Record<string, string[]> = {
+  Bugbears: ['Goblin'],
+  Goblins: ['Goblin'],
+  Gnolls: [],
+  Hobgoblins: ['Goblin'],
+  Kobolds: ['Draconic'],
+  Lizardfolk: ['Draconic'],
+  Orcs: ['Orc'],
+  Sahuagin: [],
+  Troglodytes: ['Draconic'],
+  Yuanti: ['Abyssal'],
+};
+const RANGER_HUNTER_PREY_OPTIONS: NamedDescriptionOption[] = [
+  { name: 'Colossus Slayer', description: 'Your tenacity can wear down the most potent foes. When you hit a creature with a weapon attack, the creature takes an extra 1d8 damage if it is below its hit point maximum. You can deal this extra damage only once per turn.' },
+  { name: 'Giant Killer', description: 'When a Large or larger creature within 5 feet of you hits or misses you with an attack, you can use your reaction to attack that creature immediately after its attack, provided that you can see the creature.' },
+  { name: 'Horde Breaker', description: 'Once on each of your turns when you make a weapon attack, you can make another attack with the same weapon against a different creature that is within 5 feet of the original target and within range of your weapon.' },
+];
+const RANGER_DEFENSIVE_TACTICS_OPTIONS: NamedDescriptionOption[] = [
+  { name: 'Escape the Horde', description: 'Opportunity attacks against you are made with disadvantage.' },
+  { name: 'Multiattack Defense', description: 'When a creature hits you with an attack, you gain a +4 bonus to AC against all subsequent attacks made by that creature for the rest of the turn.' },
+  { name: 'Steel Will', description: 'You have advantage on saving throws against being frightened.' },
+];
+const RANGER_MULTIATTACK_OPTIONS: NamedDescriptionOption[] = [
+  { name: 'Volley', description: 'You can use your action to make a ranged attack against any number of creatures within 10 feet of a point you can see within your weapon’s range. You must have ammunition for each target, as normal, and you make a separate attack roll for each target.' },
+  { name: 'Whirlwind Attack', description: 'You can use your action to make a melee attack against any number of creatures within 5 feet of you, with a separate attack roll for each target.' },
+];
+const RANGER_SUPERIOR_DEFENSE_OPTIONS: NamedDescriptionOption[] = [
+  { name: 'Evasion', description: 'When you are subjected to an effect, such as a red dragon’s fiery breath or a lightning bolt spell, that allows you to make a Dexterity saving throw to take only half damage, you instead take no damage if you succeed on the saving throw, and only half damage if you fail.' },
+  { name: 'Stand Against the Tide', description: 'When a hostile creature misses you with a melee attack, you can use your reaction to force that creature to repeat the same attack against another creature (other than itself) of your choice.' },
+  { name: 'Uncanny Dodge', description: 'When an attacker that you can see hits you with an attack, you can use your reaction to halve the attack’s damage against you.' },
+];
 
 const CLASS_FEATURE_SPELLS: Record<string, SpellDetail[]> = {
   'Shadow Arts': MONK_SHADOW_ARTS_SPELLS.map(spellName => {
@@ -194,6 +246,30 @@ function getMonkElementalDisciplineLimit(level: number): number {
   return 0;
 }
 
+function getRangerFavoredEnemySlots(level: number): number {
+  if (level >= 14) return 3;
+  if (level >= 6) return 2;
+  return level >= 1 ? 1 : 0;
+}
+
+function getRangerFavoredTerrainSlots(level: number): number {
+  if (level >= 10) return 3;
+  if (level >= 6) return 2;
+  return level >= 1 ? 1 : 0;
+}
+
+function parseHumanoidChoice(value: string | undefined): string[] {
+  return (value ?? '').split('|').map(part => part.trim()).filter(Boolean);
+}
+
+function getRangerLanguageOptions(choice: string, humanoidValue: string | undefined): string[] {
+  if (!choice) return [];
+  if (choice === 'Two Humanoid Races') {
+    return [...new Set(parseHumanoidChoice(humanoidValue).flatMap(race => RANGER_HUMANOID_LANGUAGE_MAP[race] ?? []))];
+  }
+  return RANGER_FAVORED_ENEMY_LANGUAGE_OPTIONS[choice] ?? [];
+}
+
 function getAbilityModifier(score: number): number {
   return Math.floor((score - 10) / 2);
 }
@@ -284,9 +360,10 @@ function getDisplayedAbilityMax(state: WizardState, key: AbilityKey): number {
 
 function getCombinedFeatureEffects(
   className: string,
-  features: ClassFeature[]
+  features: ClassFeature[],
+  state?: WizardState
 ): { resistances: EffectSummary[]; advantages: EffectSummary[] } {
-  if (className !== 'Barbarian' && className !== 'Cleric' && className !== 'Druid' && className !== 'Monk') {
+  if (className !== 'Barbarian' && className !== 'Cleric' && className !== 'Druid' && className !== 'Monk' && className !== 'Ranger') {
     return { resistances: [], advantages: [] };
   }
 
@@ -411,6 +488,36 @@ function getCombinedFeatureEffects(
         condition: 'While Empty Body is active',
       });
     }
+
+    if (feature.name === 'Favored Enemy' || feature.name === 'Favored Enemy (Additional Choice)') {
+      const favoredEnemies = state?.rangerFavoredEnemyChoices?.filter(Boolean) ?? [];
+      if (favoredEnemies.length) {
+        advantages.push({
+          label: `Wisdom (Survival) checks to track favored enemies: ${favoredEnemies.join(', ')}`,
+        });
+        advantages.push({
+          label: `Intelligence checks to recall information about favored enemies: ${favoredEnemies.join(', ')}`,
+        });
+      }
+    }
+
+    if (feature.name === "Land's Stride") {
+      advantages.push({
+        label: 'Saving throws against plants that are magically created or manipulated to impede movement',
+      });
+    }
+
+    if (feature.name === 'Defensive Tactics' && state?.rangerDefensiveTacticsChoice === 'Steel Will') {
+      advantages.push({
+        label: 'Saving throws against being frightened',
+      });
+    }
+
+    if (feature.name === "Superior Hunter's Defense" && state?.rangerSuperiorDefenseChoice === 'Evasion') {
+      advantages.push({
+        label: 'Dexterity saving throws against effects that allow half damage on a success',
+      });
+    }
   });
 
   return { resistances, advantages };
@@ -489,6 +596,16 @@ function isPaladinOathFeature(feature: ClassFeature): boolean {
   );
 }
 
+function isRangerArchetypeFeature(feature: ClassFeature): boolean {
+  return RANGER_ARCHETYPES.some(archetype =>
+    archetype.features.some(
+      archetypeFeature =>
+        archetypeFeature.name === feature.name ||
+        feature.name.startsWith(`${archetypeFeature.name} (`)
+    )
+  );
+}
+
 export default function ClassStep({ state, onChange }: Props) {
   const [magicalSecretsSource, setMagicalSecretsSource] = useState<MagicalSecretsSource>('All');
   const [collapsedSpellGroups, setCollapsedSpellGroups] = useState<Record<string, boolean>>({});
@@ -516,6 +633,16 @@ export default function ClassStep({ state, onChange }: Props) {
       fighterFightingStyles: [],
       fighterStudentOfWarTool: '',
       fighterManeuverChoices: [],
+      rangerArchetype: '',
+      rangerFightingStyle: '',
+      rangerFavoredEnemyChoices: [],
+      rangerFavoredEnemyHumanoids: [],
+      rangerFavoredEnemyLanguages: [],
+      rangerFavoredTerrains: [],
+      rangerHunterPreyChoice: '',
+      rangerDefensiveTacticsChoice: '',
+      rangerMultiattackChoice: '',
+      rangerSuperiorDefenseChoice: '',
       monkTradition: '',
       monkToolProficiency: '',
       monkElementalDisciplines: [],
@@ -582,6 +709,8 @@ export default function ClassStep({ state, onChange }: Props) {
             })
             .slice(0, nextMonkDisciplineLimit)
         : [];
+    const nextRangerFavoredEnemySlots = state.className === 'Ranger' ? getRangerFavoredEnemySlots(nextLevel) : 0;
+    const nextRangerFavoredTerrainSlots = state.className === 'Ranger' ? getRangerFavoredTerrainSlots(nextLevel) : 0;
 
     onChange({
       level: nextLevel,
@@ -610,6 +739,24 @@ export default function ClassStep({ state, onChange }: Props) {
                 (state.fighterArchetype === 'Champion' && nextLevel >= 10 ? 1 : 0)
             )
           : [],
+      rangerFightingStyle:
+        state.className === 'Ranger' && nextLevel >= 2 ? state.rangerFightingStyle : '',
+      rangerFavoredEnemyChoices:
+        state.className === 'Ranger' ? state.rangerFavoredEnemyChoices.slice(0, nextRangerFavoredEnemySlots) : [],
+      rangerFavoredEnemyHumanoids:
+        state.className === 'Ranger' ? state.rangerFavoredEnemyHumanoids.slice(0, nextRangerFavoredEnemySlots) : [],
+      rangerFavoredEnemyLanguages:
+        state.className === 'Ranger' ? state.rangerFavoredEnemyLanguages.slice(0, nextRangerFavoredEnemySlots) : [],
+      rangerFavoredTerrains:
+        state.className === 'Ranger' ? state.rangerFavoredTerrains.slice(0, nextRangerFavoredTerrainSlots) : [],
+      rangerHunterPreyChoice:
+        state.className === 'Ranger' && state.rangerArchetype === 'Hunter' && nextLevel >= 3 ? state.rangerHunterPreyChoice : '',
+      rangerDefensiveTacticsChoice:
+        state.className === 'Ranger' && state.rangerArchetype === 'Hunter' && nextLevel >= 7 ? state.rangerDefensiveTacticsChoice : '',
+      rangerMultiattackChoice:
+        state.className === 'Ranger' && state.rangerArchetype === 'Hunter' && nextLevel >= 11 ? state.rangerMultiattackChoice : '',
+      rangerSuperiorDefenseChoice:
+        state.className === 'Ranger' && state.rangerArchetype === 'Hunter' && nextLevel >= 15 ? state.rangerSuperiorDefenseChoice : '',
       fighterStudentOfWarTool:
         state.className === 'Fighter' && state.fighterArchetype === 'Battle Master' && nextLevel >= 3
           ? state.fighterStudentOfWarTool
@@ -633,6 +780,7 @@ export default function ClassStep({ state, onChange }: Props) {
             fighterArchetype: '',
             fighterStudentOfWarTool: '',
             fighterManeuverChoices: [],
+            rangerArchetype: '',
             monkTradition: '',
             monkElementalDisciplines: [],
             paladinOath: '',
@@ -672,6 +820,79 @@ export default function ClassStep({ state, onChange }: Props) {
     } else if (current.length < fighterFightingStyleLimit) {
       onChange({ fighterFightingStyles: [...current, style] });
     }
+  };
+
+  const toggleRangerFightingStyle = (style: string) => {
+    if (previewClass?.name !== 'Ranger') return;
+    onChange({ rangerFightingStyle: state.rangerFightingStyle === style ? '' : style });
+  };
+
+  const updateRangerArrayValue = (
+    key: 'rangerFavoredEnemyChoices' | 'rangerFavoredEnemyHumanoids' | 'rangerFavoredEnemyLanguages' | 'rangerFavoredTerrains',
+    index: number,
+    value: string
+  ) => {
+    const next = [...(state[key] ?? [])];
+    next[index] = value;
+    while (next.length && !next[next.length - 1]) next.pop();
+    onChange({ [key]: next } as Partial<WizardState>);
+  };
+
+  const selectRangerFavoredEnemy = (index: number, choice: string) => {
+    const current = state.rangerFavoredEnemyChoices[index] ?? '';
+    const nextChoice = current === choice ? '' : choice;
+    const nextHumanoids = [...state.rangerFavoredEnemyHumanoids];
+    const nextLanguages = [...state.rangerFavoredEnemyLanguages];
+
+    if (nextChoice !== 'Two Humanoid Races') {
+      nextHumanoids[index] = '';
+    }
+    if (!nextChoice) {
+      nextLanguages[index] = '';
+      nextHumanoids[index] = '';
+    } else {
+      nextLanguages[index] = '';
+    }
+
+    const nextChoices = [...state.rangerFavoredEnemyChoices];
+    nextChoices[index] = nextChoice;
+    while (nextChoices.length && !nextChoices[nextChoices.length - 1]) nextChoices.pop();
+    while (nextHumanoids.length && !nextHumanoids[nextHumanoids.length - 1]) nextHumanoids.pop();
+    while (nextLanguages.length && !nextLanguages[nextLanguages.length - 1]) nextLanguages.pop();
+
+    onChange({
+      rangerFavoredEnemyChoices: nextChoices,
+      rangerFavoredEnemyHumanoids: nextHumanoids,
+      rangerFavoredEnemyLanguages: nextLanguages,
+    });
+  };
+
+  const toggleRangerHumanoidRace = (slotIndex: number, race: string) => {
+    const current = parseHumanoidChoice(state.rangerFavoredEnemyHumanoids[slotIndex]);
+    const selected = current.includes(race);
+    let next = current;
+
+    if (selected) {
+      next = current.filter(item => item !== race);
+    } else if (current.length < 2) {
+      next = [...current, race];
+    }
+
+    const nextHumanoidValue = next.join('|');
+    const validLanguages = getRangerLanguageOptions('Two Humanoid Races', nextHumanoidValue);
+    const currentLanguage = state.rangerFavoredEnemyLanguages[slotIndex] ?? '';
+    const nextLanguages = [...state.rangerFavoredEnemyLanguages];
+    if (currentLanguage && !validLanguages.includes(currentLanguage)) {
+      nextLanguages[slotIndex] = '';
+    }
+    const nextHumanoids = [...state.rangerFavoredEnemyHumanoids];
+    nextHumanoids[slotIndex] = nextHumanoidValue;
+    while (nextHumanoids.length && !nextHumanoids[nextHumanoids.length - 1]) nextHumanoids.pop();
+    while (nextLanguages.length && !nextLanguages[nextLanguages.length - 1]) nextLanguages.pop();
+    onChange({
+      rangerFavoredEnemyHumanoids: nextHumanoids,
+      rangerFavoredEnemyLanguages: nextLanguages,
+    });
   };
 
   const toggleFighterManeuver = (maneuver: string) => {
@@ -861,6 +1082,7 @@ export default function ClassStep({ state, onChange }: Props) {
         clericDomain: state.clericDomain,
         druidCircle: state.druidCircle,
         fighterArchetype: state.fighterArchetype,
+        rangerArchetype: state.rangerArchetype,
         monkTradition: state.monkTradition,
         paladinOath: state.paladinOath,
       })
@@ -872,6 +1094,7 @@ export default function ClassStep({ state, onChange }: Props) {
       !isClericDomainFeature(feature) &&
       !isDruidCircleFeature(feature) &&
       !isFighterArchetypeFeature(feature) &&
+      !isRangerArchetypeFeature(feature) &&
       !isMonkTraditionFeature(feature) &&
       !isPaladinOathFeature(feature)
   );
@@ -881,6 +1104,7 @@ export default function ClassStep({ state, onChange }: Props) {
   const selectedClericDomain = CLERIC_DOMAINS.find(domain => domain.name === state.clericDomain);
   const selectedDruidCircle = DRUID_CIRCLES.find(circle => circle.name === state.druidCircle);
   const selectedFighterArchetype = FIGHTER_ARCHETYPES.find(archetype => archetype.name === state.fighterArchetype);
+  const selectedRangerArchetype = RANGER_ARCHETYPES.find(archetype => archetype.name === state.rangerArchetype);
   const selectedMonkTradition = MONK_TRADITIONS.find(tradition => tradition.name === state.monkTradition);
   const selectedPaladinOath = PALADIN_OATHS.find(oath => oath.name === state.paladinOath);
   const selectedTotemSpirit = getTotemSpiritOption(3, state.barbarianTotemSpirit);
@@ -902,11 +1126,12 @@ export default function ClassStep({ state, onChange }: Props) {
           },
         ].sort((a, b) => a.level - b.level || a.name.localeCompare(b.name))
       : selectedPrimalPath?.features ?? [];
-  const classEffects = getCombinedFeatureEffects(previewClass?.name ?? '', unlockedFeatures);
+  const classEffects = getCombinedFeatureEffects(previewClass?.name ?? '', unlockedFeatures, state);
   const bardCollegeFeatures = selectedBardCollege?.features ?? [];
   const clericDomainFeatures = selectedClericDomain?.features ?? [];
   const druidCircleFeatures = selectedDruidCircle?.features ?? [];
   const fighterArchetypeFeatures = selectedFighterArchetype?.features ?? [];
+  const rangerArchetypeFeatures = selectedRangerArchetype?.features ?? [];
   const monkTraditionFeatures = selectedMonkTradition?.features ?? [];
   const monkElementalDisciplineLimit =
     state.className === 'Monk' && state.monkTradition === 'Way of the Four Elements'
@@ -1111,6 +1336,10 @@ export default function ClassStep({ state, onChange }: Props) {
   const filteredMagicalSecretOptions = bardMagicalSecretOptions.filter(
     spell => magicalSecretsSource === 'All' || spell.classes.includes(magicalSecretsSource)
   );
+  const rangerFavoredEnemySlotCount =
+    previewClass?.name === 'Ranger' ? getRangerFavoredEnemySlots(level) : 0;
+  const rangerFavoredTerrainSlotCount =
+    previewClass?.name === 'Ranger' ? getRangerFavoredTerrainSlots(level) : 0;
   const bardSecretSelectedNames = [...state.bardMagicalSecretChoices, ...state.bardAdditionalMagicalSecretChoices];
   const selectedFighterArchetypeFeatureNames = new Set(fighterArchetypeFeatures.map(feature => feature.name));
 
@@ -1618,7 +1847,7 @@ export default function ClassStep({ state, onChange }: Props) {
 
     return (
       <>
-        <p className={`mt-1 text-[0.98rem] leading-7 ${unlocked ? 'text-[var(--color-text-soft)]' : 'text-[var(--color-text-faint)]'}`}>{feature.description}</p>
+        <p className={`mt-1 whitespace-pre-line text-[0.98rem] leading-7 ${unlocked ? 'text-[var(--color-text-soft)]' : 'text-[var(--color-text-faint)]'}`}>{feature.description}</p>
         {renderSpellCards(feature)}
       </>
     );
@@ -2014,7 +2243,7 @@ export default function ClassStep({ state, onChange }: Props) {
                 <span className="ml-2 rounded border border-green-700 px-2 py-1 text-xs text-green-400">Selected ✓</span>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
                 <div className="stat-box">
                   <div className="text-base font-bold">{level} d{previewClass.hitDie}</div>
                   <div className="field-label">Hit Dice</div>
@@ -2023,11 +2252,11 @@ export default function ClassStep({ state, onChange }: Props) {
                   <div className="text-sm font-bold">{previewClass.primaryAbility}</div>
                   <div className="field-label">Primary Ability</div>
                 </div>
-                <div className="stat-box lg:col-span-2">
-                  <div className="text-xs font-bold text-[var(--color-text-strong)]">{previewClass.savingThrows.map(s => ABILITY_NAMES[s]).join(', ')}</div>
+                <div className="stat-box">
+                  <div className="text-sm font-bold text-[var(--color-text-strong)]">{previewClass.savingThrows.map(s => ABILITY_NAMES[s]).join(' & ')}</div>
                   <div className="field-label">Saving Throw Proficiencies</div>
                 </div>
-                <div className="stat-box lg:col-span-4">
+                <div className="stat-box">
                   <div className="text-base font-bold">+{profBonus}</div>
                   <div className="field-label">Prof Bonus</div>
                 </div>
@@ -2507,20 +2736,206 @@ export default function ClassStep({ state, onChange }: Props) {
                 </div>
               </div>
 
-              {previewClass.name === 'Fighter' && (
+              {previewClass.name === 'Ranger' && state.className === 'Ranger' && (
+                <div className="space-y-4">
+                  <div className="section-box border-[var(--color-border-muted)] bg-[var(--color-surface-3)]">
+                    <div className="section-title">Favored Enemy Choices</div>
+                    <div className="mb-3 text-sm leading-6 text-[var(--color-text-soft)]">
+                      Choose your favored enemies and an associated language, if that enemy speaks one at all.
+                    </div>
+                    <div className="space-y-4">
+                      {Array.from({ length: rangerFavoredEnemySlotCount }, (_, index) => {
+                        const currentChoice = state.rangerFavoredEnemyChoices[index] ?? '';
+                        const currentHumanoids = parseHumanoidChoice(state.rangerFavoredEnemyHumanoids[index]);
+                        const currentLanguage = state.rangerFavoredEnemyLanguages[index] ?? '';
+                        const unlockLevel = index === 0 ? 1 : index === 1 ? 6 : 14;
+                        const usedOtherChoices = new Set(
+                          (state.rangerFavoredEnemyChoices ?? []).filter((choice, choiceIndex) => choiceIndex !== index && Boolean(choice))
+                        );
+                        const usedOtherHumanoids = new Set(
+                          (state.rangerFavoredEnemyHumanoids ?? [])
+                            .flatMap((value, humanoidIndex) => (
+                              humanoidIndex === index ? [] : parseHumanoidChoice(value)
+                            ))
+                        );
+                        const availableLanguages = getRangerLanguageOptions(currentChoice, state.rangerFavoredEnemyHumanoids[index]);
+                        return (
+                          <div key={`ranger-favored-enemy-${index}`} className="rounded border border-[var(--color-border-strong)] bg-[var(--color-surface-pop)] p-3">
+                            <div className="mb-2 flex items-center justify-between gap-2">
+                              <div className="text-sm font-bold text-[var(--color-text-strong)]">
+                                Favored Enemy {index + 1}
+                              </div>
+                              <div className="text-[0.68rem] uppercase tracking-wide text-[var(--color-accent)]">
+                                Unlocks at level {unlockLevel}
+                              </div>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              {RANGER_FAVORED_ENEMY_OPTIONS.filter(
+                                option => !usedOtherChoices.has(option) || currentChoice === option
+                              ).map(option => {
+                                const selected = currentChoice === option;
+                                return (
+                                  <button
+                                    key={`ranger-enemy-${index}-${option}`}
+                                    onClick={() => selectRangerFavoredEnemy(index, option)}
+                                    className={`rounded border px-3 py-1 text-xs transition-all ${
+                                      selected
+                                        ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)] text-[var(--color-text-strong)]'
+                                        : 'border-[var(--color-accent)] text-[var(--color-accent)] hover:bg-[var(--color-hover)]'
+                                    }`}
+                                  >
+                                    {option}
+                                  </button>
+                                );
+                              })}
+                            </div>
+
+                            {currentChoice === 'Two Humanoid Races' && (
+                              <div className="mt-3">
+                                <div className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-[var(--color-accent)]">
+                                  Choose Two Humanoid Races ({currentHumanoids.length}/2)
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                  {RANGER_HUMANOID_RACE_OPTIONS.map(option => {
+                                    const selected = currentHumanoids.includes(option);
+                                    const canAdd = currentHumanoids.length < 2;
+                                    const alreadyTaken = usedOtherHumanoids.has(option) && !selected;
+                                    return (
+                                      <button
+                                        key={`ranger-humanoid-${index}-${option}`}
+                                        onClick={() => toggleRangerHumanoidRace(index, option)}
+                                        disabled={alreadyTaken || (!selected && !canAdd)}
+                                        className={`rounded border px-3 py-1 text-xs transition-all ${
+                                          selected
+                                            ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)] text-[var(--color-text-strong)]'
+                                            : alreadyTaken || !canAdd
+                                            ? 'cursor-not-allowed border-[var(--color-border-subtle)] text-[var(--color-text-dim)]'
+                                            : 'border-[var(--color-accent)] text-[var(--color-accent)] hover:bg-[var(--color-hover)]'
+                                        }`}
+                                      >
+                                        {option}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+
+                            {currentChoice && (
+                              <div className="mt-3">
+                                <div className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-[var(--color-accent)]">
+                                  Associated Language
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                  <button
+                                    onClick={() => updateRangerArrayValue('rangerFavoredEnemyLanguages', index, '')}
+                                    className={`rounded border px-3 py-1 text-xs transition-all ${
+                                      !currentLanguage
+                                        ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)] text-[var(--color-text-strong)]'
+                                        : 'border-[var(--color-accent)] text-[var(--color-accent)] hover:bg-[var(--color-hover)]'
+                                    }`}
+                                  >
+                                    No Spoken Language
+                                  </button>
+                                  {availableLanguages.map(language => {
+                                    const selected = currentLanguage === language;
+                                    return (
+                                      <button
+                                        key={`ranger-language-${index}-${language}`}
+                                        onClick={() => updateRangerArrayValue('rangerFavoredEnemyLanguages', index, selected ? '' : language)}
+                                        className={`rounded border px-3 py-1 text-xs transition-all ${
+                                          selected
+                                            ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)] text-[var(--color-text-strong)]'
+                                            : 'border-[var(--color-accent)] text-[var(--color-accent)] hover:bg-[var(--color-hover)]'
+                                        }`}
+                                      >
+                                        {language}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="section-box border-[var(--color-border-muted)] bg-[var(--color-surface-3)]">
+                    <div className="section-title">Favored Terrain Choices</div>
+                    <div className="mb-3 text-sm leading-6 text-[var(--color-text-soft)]">
+                      Choose your favored terrains. Your choices unlock at levels 1, 6, and 10.
+                    </div>
+                    <div className="space-y-4">
+                      {Array.from({ length: rangerFavoredTerrainSlotCount }, (_, index) => {
+                        const currentTerrain = state.rangerFavoredTerrains[index] ?? '';
+                        const unlockLevel = index === 0 ? 1 : index === 1 ? 6 : 10;
+                        const usedOtherTerrains = new Set(
+                          (state.rangerFavoredTerrains ?? []).filter((terrain, terrainIndex) => terrainIndex !== index && Boolean(terrain))
+                        );
+                        return (
+                          <div key={`ranger-terrain-${index}`} className="rounded border border-[var(--color-border-strong)] bg-[var(--color-surface-pop)] p-3">
+                            <div className="mb-2 flex items-center justify-between gap-2">
+                              <div className="text-sm font-bold text-[var(--color-text-strong)]">Favored Terrain {index + 1}</div>
+                              <div className="text-[0.68rem] uppercase tracking-wide text-[var(--color-accent)]">
+                                Unlocks at level {unlockLevel}
+                              </div>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              {RANGER_FAVORED_TERRAINS.filter(
+                                terrain => !usedOtherTerrains.has(terrain) || currentTerrain === terrain
+                              ).map(terrain => {
+                                const selected = currentTerrain === terrain;
+                                return (
+                                  <button
+                                    key={`ranger-terrain-choice-${index}-${terrain}`}
+                                    onClick={() => updateRangerArrayValue('rangerFavoredTerrains', index, selected ? '' : terrain)}
+                                    className={`rounded border px-3 py-1 text-xs transition-all ${
+                                      selected
+                                        ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)] text-[var(--color-text-strong)]'
+                                        : 'border-[var(--color-accent)] text-[var(--color-accent)] hover:bg-[var(--color-hover)]'
+                                    }`}
+                                  >
+                                    {terrain}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {(previewClass.name === 'Fighter' || previewClass.name === 'Ranger') && (
                 <div className="space-y-4">
                   <div>
                     <div className="mb-1 field-label">
-                      Choose Fighting Style{fighterFightingStyleLimit > 1 ? 's' : ''} ({state.fighterFightingStyles.length}/{fighterFightingStyleLimit})
+                      {previewClass.name === 'Fighter'
+                        ? `Choose Fighting Style${fighterFightingStyleLimit > 1 ? 's' : ''} (${state.fighterFightingStyles.length}/${fighterFightingStyleLimit})`
+                        : `Choose Fighting Style (${state.rangerFightingStyle ? '1' : '0'}/1)`}
                     </div>
                     <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
                       {fightingStyleOptions.map(option => {
-                        const selected = state.fighterFightingStyles.includes(option.name);
-                        const canAdd = state.fighterFightingStyles.length < fighterFightingStyleLimit;
+                        const selected =
+                          previewClass.name === 'Fighter'
+                            ? state.fighterFightingStyles.includes(option.name)
+                            : state.rangerFightingStyle === option.name;
+                        const canAdd =
+                          previewClass.name === 'Fighter'
+                            ? state.fighterFightingStyles.length < fighterFightingStyleLimit
+                            : !state.rangerFightingStyle;
                         return (
                           <button
-                            key={`fighter-style-${option.name}`}
-                            onClick={() => toggleFighterFightingStyle(option.name)}
+                            key={`${previewClass.name.toLowerCase()}-style-${option.name}`}
+                            onClick={() =>
+                              previewClass.name === 'Fighter'
+                                ? toggleFighterFightingStyle(option.name)
+                                : toggleRangerFightingStyle(option.name)
+                            }
                             disabled={!selected && !canAdd}
                             className={`rounded border p-3 text-left transition-all ${
                               selected
@@ -3085,6 +3500,183 @@ export default function ClassStep({ state, onChange }: Props) {
                                     >
                                       <div className="text-sm font-bold text-[var(--color-text-strong)]">{maneuver.name}</div>
                                       <div className="mt-2 text-sm leading-6 text-[var(--color-text-soft)]">{maneuver.description}</div>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {previewClass.name === 'Ranger' && (
+                <div className="section-box border-[var(--color-border-muted)] bg-[var(--color-surface-3)]">
+                  <div className="section-title">Choose Ranger Archetype</div>
+                  {level < 3 && (
+                    <div className="mb-3 text-sm leading-6 text-[var(--color-text-soft)]">
+                      Ranger Archetype unlocks at level 3. You can choose one now to preview its future features.
+                    </div>
+                  )}
+                  <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
+                    {RANGER_ARCHETYPES.map(archetype => {
+                      const selected = state.rangerArchetype === archetype.name;
+                      return (
+                        <button
+                          key={archetype.name}
+                          onClick={() =>
+                            onChange({
+                              rangerArchetype: archetype.name,
+                              rangerHunterPreyChoice: archetype.name === 'Hunter' ? state.rangerHunterPreyChoice : '',
+                              rangerDefensiveTacticsChoice: archetype.name === 'Hunter' ? state.rangerDefensiveTacticsChoice : '',
+                              rangerMultiattackChoice: archetype.name === 'Hunter' ? state.rangerMultiattackChoice : '',
+                              rangerSuperiorDefenseChoice: archetype.name === 'Hunter' ? state.rangerSuperiorDefenseChoice : '',
+                            })
+                          }
+                          className={`rounded border p-3 text-left transition-all ${
+                            selected
+                              ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)]'
+                              : 'border-[var(--color-accent)] bg-[var(--color-surface-3)] hover:bg-[var(--color-hover)]'
+                          }`}
+                        >
+                          <div className="text-sm font-bold text-[var(--color-text-strong)]">{archetype.name}</div>
+                          <div className="mt-2 text-sm leading-6 text-[var(--color-text-soft)]">{archetype.description}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {selectedRangerArchetype && (
+                    <div className="mt-4">
+                      <div className="section-title">Ranger Archetype Features</div>
+                      <div className="flex flex-col gap-2">
+                        {rangerArchetypeFeatures.map((feature, i) => {
+                          const unlocked = feature.level <= level;
+                          return (
+                            <div
+                              key={`${feature.level}-${feature.name}-ranger-archetype-${i}`}
+                              className={`border-l-2 pl-3 ${unlocked ? 'border-[var(--color-accent)]' : 'border-[var(--color-border-faint)]'}`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <span className={`rounded border px-2 py-0.5 text-[0.8rem] font-bold ${unlocked ? 'border-[var(--color-accent)] text-[var(--color-text-strong)]' : 'border-[var(--color-border-faint)] text-[var(--color-text-dim)]'}`}>
+                                  Level {feature.level}
+                                </span>
+                                <span className={`text-base font-bold ${unlocked ? 'text-[var(--color-text-strong)]' : 'text-[var(--color-text-muted)]'}`}>{feature.name}</span>
+                              </div>
+                              {renderFeatureDescription(feature, unlocked)}
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {selectedRangerArchetype.name === 'Hunter' && (
+                        <div className="mt-4 space-y-4">
+                          <div>
+                            <div className="section-title">Hunter's Prey Choice</div>
+                            <div className="mb-2 text-sm leading-6 text-[var(--color-text-soft)]">
+                              Choose one Hunter&apos;s Prey option.
+                            </div>
+                            <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
+                              {RANGER_HUNTER_PREY_OPTIONS.map(option => {
+                                const selected = state.rangerHunterPreyChoice === option.name;
+                                return (
+                                  <button
+                                    key={`hunter-prey-${option.name}`}
+                                    onClick={() => onChange({ rangerHunterPreyChoice: selected ? '' : option.name })}
+                                    className={`rounded border p-3 text-left transition-all ${
+                                      selected
+                                        ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)]'
+                                        : 'border-[var(--color-accent)] bg-[var(--color-surface-3)] hover:bg-[var(--color-hover)]'
+                                    }`}
+                                  >
+                                    <div className="text-sm font-bold text-[var(--color-text-strong)]">{option.name}</div>
+                                    <div className="mt-2 text-sm leading-6 text-[var(--color-text-soft)]">{option.description}</div>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          {level >= 7 && (
+                            <div>
+                              <div className="section-title">Defensive Tactics Choice</div>
+                              <div className="mb-2 text-sm leading-6 text-[var(--color-text-soft)]">
+                                Choose one Defensive Tactics option.
+                              </div>
+                              <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
+                                {RANGER_DEFENSIVE_TACTICS_OPTIONS.map(option => {
+                                  const selected = state.rangerDefensiveTacticsChoice === option.name;
+                                  return (
+                                    <button
+                                      key={`defensive-tactics-${option.name}`}
+                                      onClick={() => onChange({ rangerDefensiveTacticsChoice: selected ? '' : option.name })}
+                                      className={`rounded border p-3 text-left transition-all ${
+                                        selected
+                                          ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)]'
+                                          : 'border-[var(--color-accent)] bg-[var(--color-surface-3)] hover:bg-[var(--color-hover)]'
+                                      }`}
+                                    >
+                                      <div className="text-sm font-bold text-[var(--color-text-strong)]">{option.name}</div>
+                                      <div className="mt-2 text-sm leading-6 text-[var(--color-text-soft)]">{option.description}</div>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+
+                          {level >= 11 && (
+                            <div>
+                              <div className="section-title">Multiattack Choice</div>
+                              <div className="mb-2 text-sm leading-6 text-[var(--color-text-soft)]">
+                                Choose one Multiattack option.
+                              </div>
+                              <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
+                                {RANGER_MULTIATTACK_OPTIONS.map(option => {
+                                  const selected = state.rangerMultiattackChoice === option.name;
+                                  return (
+                                    <button
+                                      key={`multiattack-${option.name}`}
+                                      onClick={() => onChange({ rangerMultiattackChoice: selected ? '' : option.name })}
+                                      className={`rounded border p-3 text-left transition-all ${
+                                        selected
+                                          ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)]'
+                                          : 'border-[var(--color-accent)] bg-[var(--color-surface-3)] hover:bg-[var(--color-hover)]'
+                                      }`}
+                                    >
+                                      <div className="text-sm font-bold text-[var(--color-text-strong)]">{option.name}</div>
+                                      <div className="mt-2 text-sm leading-6 text-[var(--color-text-soft)]">{option.description}</div>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+
+                          {level >= 15 && (
+                            <div>
+                              <div className="section-title">Superior Hunter's Defense Choice</div>
+                              <div className="mb-2 text-sm leading-6 text-[var(--color-text-soft)]">
+                                Choose one Superior Hunter&apos;s Defense option.
+                              </div>
+                              <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
+                                {RANGER_SUPERIOR_DEFENSE_OPTIONS.map(option => {
+                                  const selected = state.rangerSuperiorDefenseChoice === option.name;
+                                  return (
+                                    <button
+                                      key={`superior-defense-${option.name}`}
+                                      onClick={() => onChange({ rangerSuperiorDefenseChoice: selected ? '' : option.name })}
+                                      className={`rounded border p-3 text-left transition-all ${
+                                        selected
+                                          ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)]'
+                                          : 'border-[var(--color-accent)] bg-[var(--color-surface-3)] hover:bg-[var(--color-hover)]'
+                                      }`}
+                                    >
+                                      <div className="text-sm font-bold text-[var(--color-text-strong)]">{option.name}</div>
+                                      <div className="mt-2 text-sm leading-6 text-[var(--color-text-soft)]">{option.description}</div>
                                     </button>
                                   );
                                 })}

@@ -26,6 +26,16 @@ export interface WizardState {
   fighterFightingStyles: string[];
   fighterStudentOfWarTool: string;
   fighterManeuverChoices: string[];
+  rangerArchetype: string;
+  rangerFightingStyle: string;
+  rangerFavoredEnemyChoices: string[];
+  rangerFavoredEnemyHumanoids: string[];
+  rangerFavoredEnemyLanguages: string[];
+  rangerFavoredTerrains: string[];
+  rangerHunterPreyChoice: string;
+  rangerDefensiveTacticsChoice: string;
+  rangerMultiattackChoice: string;
+  rangerSuperiorDefenseChoice: string;
   monkTradition: string;
   monkToolProficiency: string;
   monkElementalDisciplines: string[];
@@ -94,6 +104,16 @@ export const WIZARD_INITIAL_STATE: WizardState = {
   fighterFightingStyles: [],
   fighterStudentOfWarTool: '',
   fighterManeuverChoices: [],
+  rangerArchetype: '',
+  rangerFightingStyle: '',
+  rangerFavoredEnemyChoices: [],
+  rangerFavoredEnemyHumanoids: [],
+  rangerFavoredEnemyLanguages: [],
+  rangerFavoredTerrains: [],
+  rangerHunterPreyChoice: '',
+  rangerDefensiveTacticsChoice: '',
+  rangerMultiattackChoice: '',
+  rangerSuperiorDefenseChoice: '',
   monkTradition: '',
   monkToolProficiency: '',
   monkElementalDisciplines: [],

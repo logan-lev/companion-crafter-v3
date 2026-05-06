@@ -61,6 +61,47 @@ export interface MonkElementalDisciplineOption extends NamedDescriptionOption {
   spellName?: string;
 }
 
+export const RANGER_FAVORED_ENEMY_OPTIONS = [
+  'Aberrations',
+  'Beasts',
+  'Celestials',
+  'Constructs',
+  'Dragons',
+  'Elementals',
+  'Fey',
+  'Fiends',
+  'Giants',
+  'Monstrosities',
+  'Oozes',
+  'Plants',
+  'Undead',
+  'Two Humanoid Races',
+] as const;
+
+export const RANGER_HUMANOID_RACE_OPTIONS = [
+  'Bugbears',
+  'Goblins',
+  'Gnolls',
+  'Hobgoblins',
+  'Kobolds',
+  'Lizardfolk',
+  'Orcs',
+  'Sahuagin',
+  'Troglodytes',
+  'Yuanti',
+] as const;
+
+export const RANGER_FAVORED_TERRAINS = [
+  'Arctic',
+  'Coast',
+  'Desert',
+  'Forest',
+  'Grassland',
+  'Mountain',
+  'Swamp',
+  'Underdark',
+] as const;
+
 // Spell slot tables: index = char level - 1, value = [L1,L2,L3,L4,L5,L6,L7,L8,L9]
 const FULL_CASTER_SLOTS: number[][] = [
   [2,0,0,0,0,0,0,0,0], // 1
@@ -590,6 +631,71 @@ export const FIGHTER_ARCHETYPES: ClassSubclassOption[] = [
       { level: 10, name: 'Eldritch Strike', description: "You learn how to make your weapon strikes undercut a creature's resistance to your spells. When you hit a creature with a weapon attack, that creature has disadvantage on the next saving throw it makes against a spell you cast before the end of your next turn." },
       { level: 15, name: 'Arcane Charge', description: 'You gain the ability to teleport up to 30 feet to an unoccupied space you can see when you use your Action Surge. You can teleport before or after the additional action.' },
       { level: 18, name: 'Improved War Magic', description: 'When you use your action to cast a spell, you can make one weapon attack as a bonus action.' },
+    ],
+  },
+];
+
+export const RANGER_ARCHETYPES: ClassSubclassOption[] = [
+  {
+    name: 'Hunter',
+    description:
+      'Emulating the Hunter archetype means accepting your place as a bulwark between civilization and the terrors of the wilderness. As you walk the Hunter’s path, you learn specialized techniques for fighting the threats you face, from rampaging ogres and hordes of orcs to towering giants and terrifying dragons.',
+    features: [
+      {
+        level: 3,
+        name: "Hunter's Prey",
+        description:
+          'You gain one of the following features of your choice.\n• Colossus Slayer. Your tenacity can wear down the most potent foes. When you hit a creature with a weapon attack, the creature takes an extra 1d8 damage if it is below its hit point maximum. You can deal this extra damage only once per turn.\n• Giant Killer. When a Large or larger creature within 5 feet of you hits or misses you with an attack, you can use your reaction to attack that creature immediately after its attack, provided that you can see the creature.\n• Horde Breaker. Once on each of your turns when you make a weapon attack, you can make another attack with the same weapon against a different creature that is within 5 feet of the original target and within range of your weapon.',
+      },
+      {
+        level: 7,
+        name: 'Defensive Tactics',
+        description:
+          'You gain one of the following features of your choice.\n• Escape the Horde. Opportunity attacks against you are made with disadvantage.\n• Multiattack Defense. When a creature hits you with an attack, you gain a +4 bonus to AC against all subsequent attacks made by that creature for the rest of the turn.\n• Steel Will. You have advantage on saving throws against being frightened.',
+      },
+      {
+        level: 11,
+        name: 'Multiattack',
+        description:
+          'You gain one of the following features of your choice.\n• Volley. You can use your action to make a ranged attack against any number of creatures within 10 feet of a point you can see within your weapon’s range. You must have ammunition for each target, as normal, and you make a separate attack roll for each target.\n• Whirlwind Attack. You can use your action to make a melee attack against any number of creatures within 5 feet of you, with a separate attack roll for each target.',
+      },
+      {
+        level: 15,
+        name: "Superior Hunter's Defense",
+        description:
+          'You gain one of the following features of your choice.\n• Evasion. When you are subjected to an effect, such as a red dragon’s fiery breath or a lightning bolt spell, that allows you to make a Dexterity saving throw to take only half damage, you instead take no damage if you succeed on the saving throw, and only half damage if you fail.\n• Stand Against the Tide. When a hostile creature misses you with a melee attack, you can use your reaction to force that creature to repeat the same attack against another creature (other than itself) of your choice.\n• Uncanny Dodge. When an attacker that you can see hits you with an attack, you can use your reaction to halve the attack’s damage against you.',
+      },
+    ],
+  },
+  {
+    name: 'Beast Master',
+    description:
+      'The Beast Master archetype embodies a friendship between the civilized races and the beasts of the world. United in focus, beast and ranger work as one to fight the monstrous foes that threaten civilization and the wilderness alike. Emulating the Beast Master archetype means committing yourself to this ideal, working in partnership with an animal as its companion and friend.',
+    features: [
+      {
+        level: 3,
+        name: "Ranger's Companion",
+        description:
+          'You gain a beast companion that accompanies you on your adventures and is trained to fight alongside you. Choose a beast that is no larger than Medium and that has a challenge rating of 1/4 or lower. Add your proficiency bonus to the beast’s AC, attack rolls, damage rolls, and saving throws, as well as to any skills it is proficient in. Its hit point maximum equals the hit point number in its stat block or four times your ranger level, whichever is higher. The beast obeys your commands as best as it can. It takes its turn on your initiative, though it doesn\'t take an action unless you command it to. On your turn, you can verbally command the beast where to move (no action required by you). You can use your action to verbally command it to take the Attack, Dash, Disengage, Dodge, or Help action. Once you have the Extra Attack feature, you can make one weapon attack yourself when you command the beast to take the Attack action. While traveling through your favored terrain with only the beast, you can move stealthily at a normal pace. If the beast dies, you can obtain another one by spending 8 hours magically bonding with another beast that isn\'t hostile to you, either the same type of beast as before or a different one.',
+      },
+      {
+        level: 7,
+        name: 'Exceptional Training',
+        description:
+          'On any of your turns when your beast companion doesn\'t attack, you can use a bonus action to command the beast to take the Dash, Disengage, Dodge, or Help action on its turn.',
+      },
+      {
+        level: 11,
+        name: 'Bestial Fury',
+        description:
+          'Your beast companion can make two attacks when you command it to use the Attack action.',
+      },
+      {
+        level: 15,
+        name: 'Share Spells',
+        description:
+          'When you cast a spell targeting yourself, you can also affect your beast companion with the spell if the beast is within 30 feet of you.',
+      },
     ],
   },
 ];
@@ -1145,18 +1251,19 @@ export const CLASS_DATA: ClassData[] = [
       slots: HALF_CASTER_SLOTS,
     },
     features: [
-      { level: 1, name: 'Favored Enemy', description: 'You have significant experience studying, tracking, hunting, and talking to a certain type of enemy. Choose a type of favored enemy (aberrations, beasts, celestials, constructs, dragons, elementals, fey, fiends, giants, monstrosities, oozes, plants, or undead) or two races of humanoid. You have advantage on Survival checks to track your favored enemies and Intelligence checks to recall information about them. You gain an additional favored enemy at 6th and 14th level.' },
-      { level: 1, name: 'Natural Explorer', description: 'You are particularly familiar with one type of natural environment and are adept at traveling and surviving in such regions. Choose a Favored Terrain (arctic, coast, desert, forest, grassland, mountain, swamp, or Underdark). When you make an Intelligence or Wisdom check related to your Favored Terrain you add double your proficiency bonus.' },
+      { level: 1, name: 'Favored Enemy', description: 'Beginning at 1st level, you have significant experience studying, tracking, hunting, and even talking to a certain type of enemy.\nChoose a type of favored enemy: aberrations, beasts, celestials, constructs, dragons, elementals, fey, fiends, giants, monstrosities, oozes, plants, or undead. Alternatively, you can select two races of humanoid (such as gnolls and orcs) as favored enemies.\nYou have advantage on Wisdom (Survival) checks to track your favored enemies, as well as on Intelligence checks to recall information about them.\nWhen you gain this feature, you also learn one language of your choice that is spoken by your favored enemies, if they speak one at all.\nYou choose one additional favored enemy, as well as an associated language, at 6th and 14th level. As you gain levels, your choices should reflect the types of monsters you have encountered on your adventures.' },
+      { level: 1, name: 'Natural Explorer', description: 'You are particularly familiar with one type of natural environment and are adept at traveling and surviving in such regions. Choose one type of favored terrain: arctic, coast, desert, forest, grassland, mountain, swamp, or the Underdark. When you make an Intelligence or Wisdom check related to your favored terrain, your proficiency bonus is doubled if you are using a skill that you’re proficient in.\nWhile traveling for an hour or more in your favored terrain, you gain the following benefits:\n• Difficult terrain doesn’t slow your group’s travel.\n• Your group can’t become lost except by magical means.\n• Even when you are engaged in another activity while traveling, you remain alert to danger.\n• If you are traveling alone, you can move stealthily at a normal pace.\n• When you forage, you find twice as much food as you normally would.\n• While tracking other creatures, you also learn their exact number, their sizes, and how long ago they passed through the area.\nYou choose additional favored terrain types at 6th and 10th level.' },
       { level: 2, name: 'Fighting Style', description: 'You adopt a style of fighting. Choose from Archery, Defense, Dueling, or Two-Weapon Fighting.' },
-      { level: 2, name: 'Spellcasting', description: 'You have learned to use the magical essence of nature to cast spells. You know 2 ranger spells at 2nd level and learn more as you level up.' },
-      { level: 3, name: 'Ranger Archetype', description: 'You choose an archetype that you strive to emulate (Hunter or Beast Master). Your archetype grants features at 3rd, 7th, 11th, and 15th level.' },
-      { level: 3, name: 'Primeval Awareness', description: 'You can use your action and expend one ranger spell slot to focus your awareness on the region around you. For 1 minute per level of the slot, you can sense whether the following types of creatures are present within 1 mile: aberrations, celestials, dragons, elementals, fey, fiends, and undead.' },
+      { level: 2, name: 'Spellcasting', description: 'You have learned to use the magical essence of nature to cast spells, much as a druid does. Wisdom is your spellcasting ability for your ranger spells.' },
+      { level: 3, name: 'Ranger Archetype', description: 'You choose an archetype that you strive to emulate: Hunter or Beast Master, both detailed at the end of the class description. Your choice grants you features at 3rd level and again at 7th, 11th, and 15th level.' },
+      { level: 3, name: 'Primeval Awareness', description: 'You can use your action and expend one ranger spell slot to focus your awareness on the region around you. For 1 minute per level of the spell slot you expend, you can sense whether the following types of creatures are present within 1 mile of you (or within up to 6 miles if you are in your favored terrain): aberrations, celestials, dragons, elementals, fey, fiends, and undead. This feature doesn’t reveal the creatures’ location or number.' },
       { level: 4, name: 'Ability Score Improvement', description: 'You can increase one ability score by 2, or two ability scores by 1 each. Also at levels 8, 12, 16, and 19.' },
       { level: 5, name: 'Extra Attack', description: 'You can attack twice, instead of once, whenever you take the Attack action on your turn.' },
-      { level: 8, name: 'Land\'s Stride', description: 'Moving through nonmagical difficult terrain costs you no extra movement. You can also pass through nonmagical plants without being slowed by them and without taking damage from them if they have thorns, spines, or a similar hazard.' },
-      { level: 10, name: 'Hide in Plain Sight', description: 'You can spend 1 minute creating camouflage for yourself. You must have access to fresh mud, dirt, plants, soot, and other naturally occurring materials. Once camouflaged, you can try to hide by pressing yourself up against a solid surface. You gain a +10 bonus to Stealth checks as long as you remain there without moving.' },
+      { level: 8, name: 'Land\'s Stride', description: 'Moving through nonmagical difficult terrain costs you no extra movement. You can also pass through nonmagical plants without being slowed by them and without taking damage from them if they have thorns, spines, or a similar hazard. In addition, you have advantage on saving throws against plants that are magically created or manipulated to impede movement, such as those created by the entangle spell.' },
+      { level: 10, name: 'Hide in Plain Sight', description: 'You can spend 1 minute creating camouflage for yourself. You must have access to fresh mud, dirt, plants, soot, and other naturally occurring materials with which to create your camouflage.\nOnce you are camouflaged in this way, you can try to hide by pressing yourself up against a solid surface, such as a tree or wall, that is at least as tall and wide as you are. You gain a +10 bonus to Dexterity (Stealth) checks as long as you remain there without moving or taking actions. Once you move or take an action or a reaction, you must camouflage yourself again to gain this benefit.' },
       { level: 14, name: 'Vanish', description: 'You can use the Hide action as a bonus action on your turn. Also, you can\'t be tracked by nonmagical means, unless you choose to leave a trail.' },
-      { level: 18, name: 'Feral Senses', description: 'You gain preternatural senses that help you fight creatures you can\'t see. You don\'t suffer disadvantage on attack rolls against invisible creatures, and you are aware of the location of any invisible creature within 30 feet of you.' },
+      { level: 18, name: 'Feral Senses', description: 'You gain preternatural senses that help you fight creatures you can’t see. When you attack a creature you can’t see, your inability to see it doesn’t impose disadvantage on your attack rolls against it.\nYou are also aware of the location of any invisible creature within 30 feet of you, provided that the creature isn’t hidden from you and you aren’t blinded or deafened.' },
+      { level: 20, name: 'Foe Slayer', description: 'You become an unparalleled hunter of your enemies. Once on each of your turns, you can add your Wisdom modifier to the attack roll or the damage roll of an attack you make against one of your favored enemies. You can choose to use this feature before or after the roll, but before any effects of the roll are applied.' },
     ],
   },
   {
@@ -1547,6 +1654,52 @@ function expandFeature(feature: ClassFeature): ClassFeature[] {
     ];
   }
 
+  if (feature.name === 'Favored Enemy') {
+    return [
+      {
+        level: 1,
+        name: 'Favored Enemy',
+        description:
+          'You have significant experience studying, tracking, hunting, and even talking to a certain type of enemy. Choose one favored enemy and an associated language, if that enemy speaks one at all. You have advantage on Wisdom (Survival) checks to track your favored enemies, as well as on Intelligence checks to recall information about them.',
+      },
+      {
+        level: 6,
+        name: 'Favored Enemy (Additional Choice)',
+        description:
+          'Choose one additional favored enemy and an associated language, if that enemy speaks one at all. You have advantage on Wisdom (Survival) checks to track your favored enemies, as well as on Intelligence checks to recall information about them. As you gain levels, your choices should reflect the types of monsters you have encountered on your adventures.',
+      },
+      {
+        level: 14,
+        name: 'Favored Enemy (Additional Choice)',
+        description:
+          'Choose one additional favored enemy and an associated language, if that enemy speaks one at all. You have advantage on Wisdom (Survival) checks to track your favored enemies, as well as on Intelligence checks to recall information about them. As you gain levels, your choices should reflect the types of monsters you have encountered on your adventures.',
+      },
+    ];
+  }
+
+  if (feature.name === 'Natural Explorer') {
+    return [
+      {
+        level: 1,
+        name: 'Natural Explorer',
+        description:
+          'Choose one favored terrain. When you make an Intelligence or Wisdom check related to your favored terrain, your proficiency bonus is doubled if you are using a skill that you’re proficient in.\nWhile traveling for an hour or more in your favored terrain, you gain the following benefits:\n• Difficult terrain doesn’t slow your group’s travel.\n• Your group can’t become lost except by magical means.\n• Even when you are engaged in another activity while traveling, you remain alert to danger.\n• If you are traveling alone, you can move stealthily at a normal pace.\n• When you forage, you find twice as much food as you normally would.\n• While tracking other creatures, you also learn their exact number, their sizes, and how long ago they passed through the area.',
+      },
+      {
+        level: 6,
+        name: 'Natural Explorer (Additional Terrain)',
+        description:
+          'Choose one additional favored terrain.',
+      },
+      {
+        level: 10,
+        name: 'Natural Explorer (Additional Terrain)',
+        description:
+          'Choose one additional favored terrain.',
+      },
+    ];
+  }
+
   return [feature];
 }
 
@@ -1561,6 +1714,7 @@ export function getClassFeatureTimeline(
     clericDomain?: string;
     druidCircle?: string;
     fighterArchetype?: string;
+    rangerArchetype?: string;
     monkTradition?: string;
     paladinOath?: string;
   }
@@ -1594,6 +1748,8 @@ export function getClassFeatureTimeline(
       ? DRUID_CIRCLES.find(circle => circle.name === options.druidCircle)?.features ?? []
       : className === 'Fighter' && options?.fighterArchetype
       ? FIGHTER_ARCHETYPES.find(archetype => archetype.name === options.fighterArchetype)?.features ?? []
+      : className === 'Ranger' && options?.rangerArchetype
+      ? RANGER_ARCHETYPES.find(archetype => archetype.name === options.rangerArchetype)?.features ?? []
       : className === 'Monk' && options?.monkTradition
       ? MONK_TRADITIONS.find(tradition => tradition.name === options.monkTradition)?.features ?? []
       : className === 'Paladin' && options?.paladinOath
@@ -1620,6 +1776,7 @@ export function getFeaturesUpToLevel(
     clericDomain?: string;
     druidCircle?: string;
     fighterArchetype?: string;
+    rangerArchetype?: string;
     monkTradition?: string;
     paladinOath?: string;
   }
