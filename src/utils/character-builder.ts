@@ -9,6 +9,7 @@ import {
   DRUID_CIRCLES,
   FIGHTER_ARCHETYPES,
   RANGER_ARCHETYPES,
+  ROGUE_ARCHETYPES,
   getEffectiveSpellcasting,
   getFeaturesUpToLevel,
   getSlotsAtLevel,
@@ -165,6 +166,7 @@ export function getAllOtherProficiencies(state: WizardState): string[] {
   const subrace = getSelectedSubrace(state);
   const cls = getSelectedClass(state);
   const clericDomain = CLERIC_DOMAINS.find(option => option.name === state.clericDomain);
+  const rogueArchetype = ROGUE_ARCHETYPES.find(option => option.name === state.rogueArchetype);
 
   return unique([
     ...((race?.proficiencies ?? []).filter(item => !SKILL_NAMES.has(item))),
@@ -182,6 +184,7 @@ export function getAllOtherProficiencies(state: WizardState): string[] {
     ...(state.className === 'Cleric' && (clericDomain?.name === 'Tempest Domain' || clericDomain?.name === 'War Domain')
       ? ['Heavy Armor', 'Martial Weapons']
       : []),
+    ...(state.className === 'Rogue' && rogueArchetype?.name === 'Assassin' ? ['Disguise Kit', "Poisoner's Kit"] : []),
     ...(state.className === 'Fighter' && state.fighterStudentOfWarTool ? [state.fighterStudentOfWarTool] : []),
   ]);
 }
@@ -217,6 +220,7 @@ export function getTraitEntries(state: WizardState): string[] {
         druidCircle: state.druidCircle,
         fighterArchetype: state.fighterArchetype,
         rangerArchetype: state.rangerArchetype,
+        rogueArchetype: state.rogueArchetype,
         monkTradition: state.monkTradition,
         paladinOath: state.paladinOath,
       })
@@ -288,6 +292,13 @@ export function getTraitEntries(state: WizardState): string[] {
   if (state.rangerArchetype) {
     const archetype = RANGER_ARCHETYPES.find(option => option.name === state.rangerArchetype);
     if (archetype) entries.push(`Ranger Archetype: You chose ${archetype.name}.`);
+  }
+  if (state.rogueArchetype) {
+    const archetype = ROGUE_ARCHETYPES.find(option => option.name === state.rogueArchetype);
+    if (archetype) entries.push(`Roguish Archetype: You chose ${archetype.name}.`);
+  }
+  if (state.className === 'Rogue' && state.rogueExpertiseChoices.length) {
+    entries.push(`Expertise: You chose ${state.rogueExpertiseChoices.join(', ')}.`);
   }
   if (state.className === 'Monk' && state.monkToolProficiency) {
     entries.push(`Monk Tool Proficiency: You chose ${state.monkToolProficiency}.`);
@@ -363,6 +374,7 @@ export function getFutureClassFeatures(state: WizardState): ClassFeature[] {
     druidCircle: state.druidCircle,
     fighterArchetype: state.fighterArchetype,
     rangerArchetype: state.rangerArchetype,
+    rogueArchetype: state.rogueArchetype,
     monkTradition: state.monkTradition,
     paladinOath: state.paladinOath,
   })
@@ -437,7 +449,12 @@ function getSpellSlotsRecord(state: WizardState): Record<number, SpellSlots> {
     Array.from({ length: 9 }, (_, index) => [index + 1, { total: 0, used: 0 }])
   ) as Record<number, SpellSlots>;
   const cls = getSelectedClass(state);
-  const spellcasting = cls ? getEffectiveSpellcasting(cls.name, { fighterArchetype: state.fighterArchetype }) : undefined;
+  const spellcasting = cls
+    ? getEffectiveSpellcasting(cls.name, {
+        fighterArchetype: state.fighterArchetype,
+        rogueArchetype: state.rogueArchetype,
+      })
+    : undefined;
 
   if (!spellcasting) return result;
 
@@ -476,6 +493,7 @@ function getExtraSpellNames(state: WizardState): string[] {
   if (state.className === 'Cleric' && state.clericDomain === 'Light Domain') names.push('Light');
   if (state.className === 'Cleric' && state.clericNatureCantrip) names.push(state.clericNatureCantrip);
   if (state.className === 'Druid' && state.druidLandCantrip) names.push(state.druidLandCantrip);
+  if (state.className === 'Rogue' && state.rogueArchetype === 'Arcane Trickster' && state.level >= 3) names.push('Mage Hand');
   names.push(...(state.bardMagicalSecretChoices ?? []));
   names.push(...(state.bardAdditionalMagicalSecretChoices ?? []));
 
@@ -544,7 +562,12 @@ function getResolvedClassEquipment(state: WizardState, className: string): strin
 export function createCharacterFromWizard(state: WizardState): Character {
   const character = createBlankCharacter();
   const cls = getSelectedClass(state);
-  const spellcasting = cls ? getEffectiveSpellcasting(cls.name, { fighterArchetype: state.fighterArchetype }) : undefined;
+  const spellcasting = cls
+    ? getEffectiveSpellcasting(cls.name, {
+        fighterArchetype: state.fighterArchetype,
+        rogueArchetype: state.rogueArchetype,
+      })
+    : undefined;
   const background = getSelectedBackground(state);
   const abilityScores = getFinalAbilityScores(state);
   const proficiencyBonus = profBonusFromLevel(state.level);

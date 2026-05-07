@@ -21,6 +21,7 @@ import {
   RANGER_FAVORED_ENEMY_OPTIONS,
   RANGER_FAVORED_TERRAINS,
   RANGER_HUMANOID_RACE_OPTIONS,
+  ROGUE_ARCHETYPES,
   type ClassFeature,
   type NamedDescriptionOption,
   getCantripsKnown,
@@ -268,6 +269,11 @@ function getRangerLanguageOptions(choice: string, humanoidValue: string | undefi
     return [...new Set(parseHumanoidChoice(humanoidValue).flatMap(race => RANGER_HUMANOID_LANGUAGE_MAP[race] ?? []))];
   }
   return RANGER_FAVORED_ENEMY_LANGUAGE_OPTIONS[choice] ?? [];
+}
+
+function getRogueSneakAttackDice(level: number): string {
+  const dice = Math.min(10, Math.ceil(level / 2));
+  return `${dice}d6`;
 }
 
 function getAbilityModifier(score: number): number {
@@ -606,6 +612,16 @@ function isRangerArchetypeFeature(feature: ClassFeature): boolean {
   );
 }
 
+function isRogueArchetypeFeature(feature: ClassFeature): boolean {
+  return ROGUE_ARCHETYPES.some(archetype =>
+    archetype.features.some(
+      archetypeFeature =>
+        archetypeFeature.name === feature.name ||
+        feature.name.startsWith(`${archetypeFeature.name} (`)
+    )
+  );
+}
+
 export default function ClassStep({ state, onChange }: Props) {
   const [magicalSecretsSource, setMagicalSecretsSource] = useState<MagicalSecretsSource>('All');
   const [collapsedSpellGroups, setCollapsedSpellGroups] = useState<Record<string, boolean>>({});
@@ -643,6 +659,8 @@ export default function ClassStep({ state, onChange }: Props) {
       rangerDefensiveTacticsChoice: '',
       rangerMultiattackChoice: '',
       rangerSuperiorDefenseChoice: '',
+      rogueArchetype: '',
+      rogueExpertiseChoices: [],
       monkTradition: '',
       monkToolProficiency: '',
       monkElementalDisciplines: [],
@@ -683,8 +701,15 @@ export default function ClassStep({ state, onChange }: Props) {
 
     const nextSpellcasting = getEffectiveSpellcasting(state.className, {
       fighterArchetype: state.fighterArchetype,
+      rogueArchetype: state.rogueArchetype,
     });
-    const nextCantripLimit = nextSpellcasting ? getCantripsKnown(nextSpellcasting, nextLevel) : 0;
+    const nextCantripLimit = nextSpellcasting
+      ? Math.max(
+          0,
+          getCantripsKnown(nextSpellcasting, nextLevel) -
+            (state.className === 'Rogue' && state.rogueArchetype === 'Arcane Trickster' && nextLevel >= 3 ? 1 : 0)
+        )
+      : 0;
     const nextBaseSpellsKnown = nextSpellcasting?.spellsKnown ? getSpellsKnown(nextSpellcasting, nextLevel) : 0;
     const nextMagicalSecrets = state.className === 'Bard'
       ? getClassFeatureTimeline('Bard', { bardCollege: state.bardCollege })
@@ -711,6 +736,11 @@ export default function ClassStep({ state, onChange }: Props) {
         : [];
     const nextRangerFavoredEnemySlots = state.className === 'Ranger' ? getRangerFavoredEnemySlots(nextLevel) : 0;
     const nextRangerFavoredTerrainSlots = state.className === 'Ranger' ? getRangerFavoredTerrainSlots(nextLevel) : 0;
+    const nextRogueExpertiseAllowed =
+      state.className === 'Rogue'
+        ? getClassFeatureTimeline('Rogue', { rogueArchetype: state.rogueArchetype })
+            .filter(feature => feature.name === 'Expertise' && feature.level <= nextLevel).length * 2
+        : 0;
 
     onChange({
       level: nextLevel,
@@ -757,6 +787,10 @@ export default function ClassStep({ state, onChange }: Props) {
         state.className === 'Ranger' && state.rangerArchetype === 'Hunter' && nextLevel >= 11 ? state.rangerMultiattackChoice : '',
       rangerSuperiorDefenseChoice:
         state.className === 'Ranger' && state.rangerArchetype === 'Hunter' && nextLevel >= 15 ? state.rangerSuperiorDefenseChoice : '',
+      rogueArchetype:
+        state.className === 'Rogue' && nextLevel >= 3 ? state.rogueArchetype : '',
+      rogueExpertiseChoices:
+        state.className === 'Rogue' ? state.rogueExpertiseChoices.slice(0, nextRogueExpertiseAllowed) : [],
       fighterStudentOfWarTool:
         state.className === 'Fighter' && state.fighterArchetype === 'Battle Master' && nextLevel >= 3
           ? state.fighterStudentOfWarTool
@@ -781,6 +815,8 @@ export default function ClassStep({ state, onChange }: Props) {
             fighterStudentOfWarTool: '',
             fighterManeuverChoices: [],
             rangerArchetype: '',
+            rogueArchetype: '',
+            rogueExpertiseChoices: [],
             monkTradition: '',
             monkElementalDisciplines: [],
             paladinOath: '',
@@ -942,6 +978,15 @@ export default function ClassStep({ state, onChange }: Props) {
     }
   };
 
+  const toggleRogueExpertise = (proficiency: string) => {
+    const current = state.rogueExpertiseChoices;
+    if (current.includes(proficiency)) {
+      onChange({ rogueExpertiseChoices: current.filter(item => item !== proficiency) });
+    } else if (current.length < rogueExpertiseAllowed) {
+      onChange({ rogueExpertiseChoices: [...current, proficiency] });
+    }
+  };
+
   const toggleBardLoreSkill = (skill: string) => {
     const current = state.bardLoreSkillChoices;
     if (current.includes(skill)) {
@@ -1012,18 +1057,20 @@ export default function ClassStep({ state, onChange }: Props) {
       onChange({ selectedSpells: current.filter(item => item !== name) });
     } else if (!state.bardMagicalSecretChoices.includes(name) && current.length < spellAllowance) {
       if (
-        previewClass?.name === 'Fighter' &&
-        state.fighterArchetype === 'Eldritch Knight'
+        (previewClass?.name === 'Fighter' && state.fighterArchetype === 'Eldritch Knight') ||
+        (previewClass?.name === 'Rogue' && state.rogueArchetype === 'Arcane Trickster')
       ) {
         const spell = classLevelSpellOptions.find(option => option.name === name);
         if (!spell) return;
 
+        const restrictedSchools =
+          previewClass?.name === 'Fighter' ? ['Abjuration', 'Evocation'] : ['Enchantment', 'Illusion'];
         const unrestrictedSpellChoices = [8, 14, 20].filter(levelValue => level >= levelValue).length;
         const selectedUnrestrictedCount = current.filter(selectedName => {
           const selectedSpell = classLevelSpellOptions.find(option => option.name === selectedName);
-          return selectedSpell && !['Abjuration', 'Evocation'].includes(selectedSpell.school);
+          return selectedSpell && !restrictedSchools.includes(selectedSpell.school);
         }).length;
-        const isRestrictedSchool = ['Abjuration', 'Evocation'].includes(spell.school);
+        const isRestrictedSchool = restrictedSchools.includes(spell.school);
 
         if (!isRestrictedSchool && selectedUnrestrictedCount >= unrestrictedSpellChoices) {
           return;
@@ -1079,13 +1126,14 @@ export default function ClassStep({ state, onChange }: Props) {
         barbarianAspectSpirit: state.barbarianAspectSpirit,
         barbarianAttunementSpirit: state.barbarianAttunementSpirit,
         bardCollege: state.bardCollege,
-        clericDomain: state.clericDomain,
-        druidCircle: state.druidCircle,
-        fighterArchetype: state.fighterArchetype,
-        rangerArchetype: state.rangerArchetype,
-        monkTradition: state.monkTradition,
-        paladinOath: state.paladinOath,
-      })
+      clericDomain: state.clericDomain,
+      druidCircle: state.druidCircle,
+      fighterArchetype: state.fighterArchetype,
+      rangerArchetype: state.rangerArchetype,
+      rogueArchetype: state.rogueArchetype,
+      monkTradition: state.monkTradition,
+      paladinOath: state.paladinOath,
+    })
     : [];
   const baseFeatures = features.filter(
     feature =>
@@ -1095,6 +1143,7 @@ export default function ClassStep({ state, onChange }: Props) {
       !isDruidCircleFeature(feature) &&
       !isFighterArchetypeFeature(feature) &&
       !isRangerArchetypeFeature(feature) &&
+      !isRogueArchetypeFeature(feature) &&
       !isMonkTraditionFeature(feature) &&
       !isPaladinOathFeature(feature)
   );
@@ -1105,6 +1154,7 @@ export default function ClassStep({ state, onChange }: Props) {
   const selectedDruidCircle = DRUID_CIRCLES.find(circle => circle.name === state.druidCircle);
   const selectedFighterArchetype = FIGHTER_ARCHETYPES.find(archetype => archetype.name === state.fighterArchetype);
   const selectedRangerArchetype = RANGER_ARCHETYPES.find(archetype => archetype.name === state.rangerArchetype);
+  const selectedRogueArchetype = ROGUE_ARCHETYPES.find(archetype => archetype.name === state.rogueArchetype);
   const selectedMonkTradition = MONK_TRADITIONS.find(tradition => tradition.name === state.monkTradition);
   const selectedPaladinOath = PALADIN_OATHS.find(oath => oath.name === state.paladinOath);
   const selectedTotemSpirit = getTotemSpiritOption(3, state.barbarianTotemSpirit);
@@ -1132,6 +1182,7 @@ export default function ClassStep({ state, onChange }: Props) {
   const druidCircleFeatures = selectedDruidCircle?.features ?? [];
   const fighterArchetypeFeatures = selectedFighterArchetype?.features ?? [];
   const rangerArchetypeFeatures = selectedRangerArchetype?.features ?? [];
+  const rogueArchetypeFeatures = selectedRogueArchetype?.features ?? [];
   const monkTraditionFeatures = selectedMonkTradition?.features ?? [];
   const monkElementalDisciplineLimit =
     state.className === 'Monk' && state.monkTradition === 'Way of the Four Elements'
@@ -1219,6 +1270,16 @@ export default function ClassStep({ state, onChange }: Props) {
   const bardExpertiseAllowed = state.className === 'Bard'
     ? unlockedFeatures.filter(feature => feature.name === 'Expertise').length * 2
     : 0;
+  const rogueExpertiseAllowed = state.className === 'Rogue'
+    ? unlockedFeatures.filter(feature => feature.name === 'Expertise').length * 2
+    : 0;
+  const rogueExpertiseOptions =
+    state.className === 'Rogue'
+      ? [...new Set([
+          ...allCurrentSkillProficiencies,
+          ...(previewClass?.toolProf.includes("Thieves' Tools") ? ["Thieves' Tools"] : []),
+        ])]
+      : [];
   const bardMagicalSecretsAllowed = state.className === 'Bard'
     ? unlockedFeatures.filter(feature => feature.name === 'Magical Secrets').length * 2
     : 0;
@@ -1227,9 +1288,14 @@ export default function ClassStep({ state, onChange }: Props) {
   const finalScores = getFinalAbilityScores(state);
   const monkKiSaveDC =
     previewClass?.name === 'Monk' && level >= 2 ? 8 + profBonus + getAbilityModifier(finalScores.wis) : 0;
+  const rogueDeathStrikeDC =
+    previewClass?.name === 'Rogue' && state.rogueArchetype === 'Assassin' && level >= 17
+      ? 8 + profBonus + getAbilityModifier(finalScores.dex)
+      : 0;
   const spellcasting = previewClass
     ? getEffectiveSpellcasting(previewClass.name, {
         fighterArchetype: state.fighterArchetype,
+        rogueArchetype: state.rogueArchetype,
       })
     : undefined;
   const spellcastingAbilityMod = spellcasting ? Math.floor(((finalScores[spellcasting.ability] ?? 10) - 10) / 2) : 0;
@@ -1237,7 +1303,13 @@ export default function ClassStep({ state, onChange }: Props) {
   const spellAttackBonus = spellcastingAbilityMod + profBonus;
   const spellSlots = spellcasting ? getSlotsAtLevel(spellcasting, level) : [];
   const maxSpellLevel = spellSlots.length ? spellSlots.reduce((highest, count, index) => (count > 0 ? index + 1 : highest), 0) : 0;
-  const cantripAllowance = spellcasting ? getCantripsKnown(spellcasting, level) : 0;
+  const cantripAllowance = spellcasting
+    ? Math.max(
+        0,
+        getCantripsKnown(spellcasting, level) -
+          (previewClass?.name === 'Rogue' && state.rogueArchetype === 'Arcane Trickster' && level >= 3 ? 1 : 0)
+      )
+    : 0;
   const baseSpellAllowance = spellcasting ? (spellcasting.prepares
     ? Math.max(1, spellcastingAbilityMod + (spellcasting.type === 'half' ? Math.max(1, Math.ceil(level / 2)) : level))
     : getSpellsKnown(spellcasting, level)) : 0;
@@ -1286,7 +1358,11 @@ export default function ClassStep({ state, onChange }: Props) {
           (a, b) => a.level - b.level || a.name.localeCompare(b.name)
         )
       : [];
-  const classCantripOptions = classSpellOptions.filter(spell => spell.level === 0);
+  const classCantripOptions = classSpellOptions.filter(
+    spell =>
+      spell.level === 0 &&
+      !(previewClass?.name === 'Rogue' && state.rogueArchetype === 'Arcane Trickster' && spell.name === 'Mage Hand')
+  );
   const availableDruidLandCantrips =
     previewClass?.name === 'Druid'
       ? classCantripOptions.filter(
@@ -1315,6 +1391,31 @@ export default function ClassStep({ state, onChange }: Props) {
               spell && !['Abjuration', 'Evocation'].includes(spell.school)
                 ? 'Any-school spell'
                 : 'Abjuration/Evocation',
+            ];
+          })
+        )
+      : undefined;
+  const arcaneTricksterFreeSchoolChoices =
+    previewClass?.name === 'Rogue' && state.rogueArchetype === 'Arcane Trickster'
+      ? [8, 14, 20].filter(levelValue => level >= levelValue).length
+      : 0;
+  const arcaneTricksterSelectedFreeSchoolChoices =
+    previewClass?.name === 'Rogue' && state.rogueArchetype === 'Arcane Trickster'
+      ? state.selectedSpells.filter(name => {
+          const spell = classLevelSpellOptions.find(option => option.name === name);
+          return spell && !['Enchantment', 'Illusion'].includes(spell.school);
+        }).length
+      : 0;
+  const arcaneTricksterSelectedMeta =
+    previewClass?.name === 'Rogue' && state.rogueArchetype === 'Arcane Trickster'
+      ? Object.fromEntries(
+          state.selectedSpells.map(name => {
+            const spell = classLevelSpellOptions.find(option => option.name === name);
+            return [
+              name,
+              spell && !['Enchantment', 'Illusion'].includes(spell.school)
+                ? 'Any-school spell'
+                : 'Enchantment/Illusion',
             ];
           })
         )
@@ -2296,6 +2397,21 @@ export default function ClassStep({ state, onChange }: Props) {
                 </div>
               )}
 
+              {previewClass.name === 'Rogue' && (
+                <div className={`mx-auto grid w-full gap-2 ${rogueDeathStrikeDC ? 'max-w-xl grid-cols-1 md:grid-cols-2' : 'max-w-xs grid-cols-1'}`}>
+                  <div className="stat-box">
+                    <div className="text-base font-bold">{getRogueSneakAttackDice(level)}</div>
+                    <div className="field-label">Sneak Attack</div>
+                  </div>
+                  {rogueDeathStrikeDC ? (
+                    <div className="stat-box">
+                      <div className="text-base font-bold">{rogueDeathStrikeDC}</div>
+                      <div className="field-label">Death Strike Save DC</div>
+                    </div>
+                  ) : null}
+                </div>
+              )}
+
               {spellcasting && (
                 <div className="rounded border border-[var(--color-spell-border-strong)] bg-[var(--color-spell-panel)] p-4">
                   <div className="section-title text-[var(--color-spell-strong)]">Spellcasting</div>
@@ -2336,6 +2452,13 @@ export default function ClassStep({ state, onChange }: Props) {
                           <div className="mt-3 rounded border border-[var(--color-border-muted)] bg-[var(--color-surface-accent)] p-3 text-sm leading-6 text-[var(--color-text-soft)]">
                             You learn two wizard cantrips of your choice at 3rd level and a third at 10th level.
                             Most Eldritch Knight spells must be from the <span className="font-bold text-[var(--color-text-strong)]">Abjuration</span> or <span className="font-bold text-[var(--color-text-strong)]">Evocation</span> schools.
+                            At 8th, 14th, and 20th level, one spell you learn at that level can be from any school of magic.
+                          </div>
+                        )}
+                        {previewClass.name === 'Rogue' && state.rogueArchetype === 'Arcane Trickster' && (
+                          <div className="mt-3 rounded border border-[var(--color-border-muted)] bg-[var(--color-surface-accent)] p-3 text-sm leading-6 text-[var(--color-text-soft)]">
+                            You automatically know <span className="font-bold text-[var(--color-text-strong)]">Mage Hand</span>, so the cantrip picker below is for your remaining wizard cantrips.
+                            Most Arcane Trickster spells must be from the <span className="font-bold text-[var(--color-text-strong)]">Enchantment</span> or <span className="font-bold text-[var(--color-text-strong)]">Illusion</span> schools.
                             At 8th, 14th, and 20th level, one spell you learn at that level can be from any school of magic.
                           </div>
                         )}
@@ -2393,6 +2516,11 @@ export default function ClassStep({ state, onChange }: Props) {
                             Any-school spell choices used {eldritchKnightSelectedFreeSchoolChoices}/{eldritchKnightFreeSchoolChoices}. All other known spells must be Abjuration or Evocation.
                           </div>
                         )}
+                        {previewClass.name === 'Rogue' && state.rogueArchetype === 'Arcane Trickster' && (
+                          <div className="mb-3 text-sm leading-6 text-[var(--color-spell-text)]">
+                            Any-school spell choices used {arcaneTricksterSelectedFreeSchoolChoices}/{arcaneTricksterFreeSchoolChoices}. All other known spells must be Enchantment or Illusion.
+                          </div>
+                        )}
                         {renderGroupedSpellPicker(
                           'class-spell',
                           classLevelSpellOptions,
@@ -2401,7 +2529,7 @@ export default function ClassStep({ state, onChange }: Props) {
                           state.selectedSpells.length,
                           spellAllowance,
                           'No leveled spells available at this level yet.',
-                          eldritchKnightSelectedMeta,
+                          eldritchKnightSelectedMeta ?? arcaneTricksterSelectedMeta,
                           clearClassSpellsInGroup
                         )}
                       </div>
@@ -2955,6 +3083,39 @@ export default function ClassStep({ state, onChange }: Props) {
                 </div>
               )}
 
+              {previewClass.name === 'Rogue' && rogueExpertiseAllowed > 0 && (
+                <div>
+                  <div className="mb-1 field-label">
+                    Choose Expertise Proficiencies ({state.rogueExpertiseChoices.length}/{rogueExpertiseAllowed})
+                  </div>
+                  <div className="mb-2 text-sm leading-6 text-[var(--color-text-soft)]">
+                    Choose from your skill proficiencies or thieves&apos; tools.
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {rogueExpertiseOptions.map(proficiency => {
+                      const selected = state.rogueExpertiseChoices.includes(proficiency);
+                      const canAdd = state.rogueExpertiseChoices.length < rogueExpertiseAllowed;
+                      return (
+                        <button
+                          key={`rogue-expertise-${proficiency}`}
+                          onClick={() => toggleRogueExpertise(proficiency)}
+                          disabled={!selected && !canAdd}
+                          className={`rounded border px-3 py-1 text-xs transition-all ${
+                            selected
+                              ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)] text-[var(--color-text-strong)]'
+                              : canAdd
+                              ? 'border-[var(--color-accent)] text-[var(--color-accent)] hover:bg-[var(--color-hover)]'
+                              : 'cursor-not-allowed border-[var(--color-border-subtle)] text-[var(--color-text-dim)]'
+                          }`}
+                        >
+                          {proficiency}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {previewClass.name === 'Bard' && bardExpertiseAllowed > 0 && (
                 <div>
                   <div className="mb-1 field-label">
@@ -2982,6 +3143,70 @@ export default function ClassStep({ state, onChange }: Props) {
                       );
                     })}
                   </div>
+                </div>
+              )}
+
+              {previewClass.name === 'Rogue' && (
+                <div className="section-box border-[var(--color-border-muted)] bg-[var(--color-surface-3)]">
+                  <div className="section-title">Choose Roguish Archetype</div>
+                  {level < 3 && (
+                    <div className="mb-3 text-sm leading-6 text-[var(--color-text-soft)]">
+                      Roguish Archetype unlocks at level 3. You can choose one now to preview its future features.
+                    </div>
+                  )}
+                  <div className="grid grid-cols-1 gap-2 lg:grid-cols-3">
+                    {ROGUE_ARCHETYPES.map(archetype => {
+                      const selected = state.rogueArchetype === archetype.name;
+                      return (
+                        <button
+                          key={archetype.name}
+                          onClick={() => onChange({ rogueArchetype: archetype.name })}
+                          className={`rounded border p-3 text-left transition-all ${
+                            selected
+                              ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)]'
+                              : 'border-[var(--color-accent)] bg-[var(--color-surface-3)] hover:bg-[var(--color-hover)]'
+                          }`}
+                        >
+                          <div className="text-sm font-bold text-[var(--color-text-strong)]">{archetype.name}</div>
+                          <div className="mt-2 text-sm leading-6 text-[var(--color-text-soft)]">{archetype.description}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {selectedRogueArchetype && (
+                    <div className="mt-4">
+                      <div className="section-title">Roguish Archetype Features</div>
+                      <div className="flex flex-col gap-2">
+                        {rogueArchetypeFeatures.map((feature, i) => {
+                          const unlocked = feature.level <= level;
+                          return (
+                            <div
+                              key={`${feature.level}-${feature.name}-rogue-archetype-${i}`}
+                              className={`border-l-2 pl-3 ${unlocked ? 'border-[var(--color-accent)]' : 'border-[var(--color-border-faint)]'}`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <span className={`rounded border px-2 py-0.5 text-[0.8rem] font-bold ${unlocked ? 'border-[var(--color-accent)] text-[var(--color-text-strong)]' : 'border-[var(--color-border-faint)] text-[var(--color-text-dim)]'}`}>
+                                  Level {feature.level}
+                                </span>
+                                <span className={`text-base font-bold ${unlocked ? 'text-[var(--color-text-strong)]' : 'text-[var(--color-text-muted)]'}`}>{feature.name}</span>
+                              </div>
+                              {renderFeatureDescription(feature, unlocked)}
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {selectedRogueArchetype.name === 'Assassin' && level >= 3 && (
+                        <div className="mt-4">
+                          <div className="section-title">Additional Proficiencies</div>
+                          <div className="text-sm leading-6 text-[var(--color-text)]">
+                            Disguise Kit · Poisoner&apos;s Kit
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
 
