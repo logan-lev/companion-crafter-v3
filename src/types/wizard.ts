@@ -38,6 +38,9 @@ export interface WizardState {
   rangerSuperiorDefenseChoice: string;
   rogueArchetype: string;
   rogueExpertiseChoices: string[];
+  sorcerousOrigin: string;
+  sorcererDragonAncestor: string;
+  sorcererMetamagicChoices: string[];
   monkTradition: string;
   monkToolProficiency: string;
   monkElementalDisciplines: string[];
@@ -118,6 +121,9 @@ export const WIZARD_INITIAL_STATE: WizardState = {
   rangerSuperiorDefenseChoice: '',
   rogueArchetype: '',
   rogueExpertiseChoices: [],
+  sorcerousOrigin: '',
+  sorcererDragonAncestor: '',
+  sorcererMetamagicChoices: [],
   monkTradition: '',
   monkToolProficiency: '',
   monkElementalDisciplines: [],

@@ -61,6 +61,30 @@ export interface MonkElementalDisciplineOption extends NamedDescriptionOption {
   spellName?: string;
 }
 
+export const SORCERER_DRAGON_ANCESTORS = [
+  { name: 'Black', damageType: 'Acid' },
+  { name: 'Blue', damageType: 'Lightning' },
+  { name: 'Brass', damageType: 'Fire' },
+  { name: 'Bronze', damageType: 'Lightning' },
+  { name: 'Copper', damageType: 'Acid' },
+  { name: 'Gold', damageType: 'Fire' },
+  { name: 'Green', damageType: 'Poison' },
+  { name: 'Red', damageType: 'Fire' },
+  { name: 'Silver', damageType: 'Cold' },
+  { name: 'White', damageType: 'Cold' },
+] as const;
+
+export const SORCERER_METAMAGIC_OPTIONS: NamedDescriptionOption[] = [
+  { name: 'Careful Spell', description: 'When you cast a spell that forces other creatures to make a saving throw, you can protect some of those creatures from the spell\'s full force. To do so, you spend 1 sorcery point and choose a number of those creatures up to your Charisma modifier (minimum of one creature). A chosen creature automatically succeeds on its saving throw against the spell.' },
+  { name: 'Distant Spell', description: 'When you cast a spell that has a range of 5 feet or greater, you can spend 1 sorcery point to double the range of the spell. When you cast a spell that has a range of touch, you can spend 1 sorcery point to make the range of the spell 30 feet.' },
+  { name: 'Empowered Spell', description: 'When you roll damage for a spell, you can spend 1 sorcery point to reroll a number of the damage dice up to your Charisma modifier (minimum of one). You must use the new rolls. You can use Empowered Spell even if you have already used a different Metamagic option during the casting of the spell.' },
+  { name: 'Extended Spell', description: 'When you cast a spell that has a duration of 1 minute or longer, you can spend 1 sorcery point to double its duration, to a maximum duration of 24 hours.' },
+  { name: 'Heightened Spell', description: 'When you cast a spell that forces a creature to make a saving throw to resist its effects, you can spend 3 sorcery points to give one target of the spell disadvantage on its first saving throw made against the spell.' },
+  { name: 'Quickened Spell', description: 'When you cast a spell that has a casting time of 1 action, you can spend 2 sorcery points to change the casting time to 1 bonus action for this casting.' },
+  { name: 'Subtle Spell', description: 'When you cast a spell, you can spend 1 sorcery point to cast it without any somatic or verbal components.' },
+  { name: 'Twinned Spell', description: 'When you cast a spell that targets only one creature and does not have a range of self, you can spend a number of sorcery points equal to the spell’s level to target a second creature in range with the same spell. A cantrip costs 1 sorcery point.' },
+] as const;
+
 export const RANGER_FAVORED_ENEMY_OPTIONS = [
   'Aberrations',
   'Beasts',
@@ -823,6 +847,83 @@ export const ROGUE_ARCHETYPES: ClassSubclassOption[] = [
   },
 ];
 
+export const SORCEROUS_ORIGINS: ClassSubclassOption[] = [
+  {
+    name: 'Draconic Bloodline',
+    description:
+      'Your innate magic comes from draconic magic that was mingled with your blood or that of your ancestors. Often, sorcerers with this origin can trace their descent back to a mighty sorcerer of ancient times who made a bargain with a dragon or who might even have claimed a dragon parent. Some of these bloodlines are well established in the world, but most are obscure. Any given sorcerer could be the first of a new bloodline, as a result of a pact or some other exceptional circumstance.',
+    features: [
+      {
+        level: 1,
+        name: 'Dragon Ancestor',
+        description:
+          'You choose one type of dragon as your ancestor. The damage type associated with each dragon is used by features you gain later. You can speak, read, and write Draconic. Additionally, whenever you make a Charisma check when interacting with dragons, your proficiency bonus is doubled if it applies to the check.',
+      },
+      {
+        level: 1,
+        name: 'Draconic Resilience',
+        description:
+          'Magic flows through your body, causing physical traits of your dragon ancestors to emerge. Your hit point maximum increases by 1 and increases by 1 again whenever you gain a level in this class. Additionally, parts of your skin are covered by a thin sheen of dragon-like scales. When you aren’t wearing armor, your AC equals 13 + your Dexterity modifier.',
+      },
+      {
+        level: 6,
+        name: 'Elemental Affinity',
+        description:
+          'When you cast a spell that deals damage of the type associated with your draconic ancestry, add your Charisma modifier to that damage. At the same time, you can spend 1 sorcery point to gain resistance to that damage type for 1 hour.',
+      },
+      {
+        level: 14,
+        name: 'Dragon Wings',
+        description:
+          'You gain the ability to sprout a pair of dragon wings from your back, gaining a flying speed equal to your current speed. You can create these wings as a bonus action and dismiss them as a bonus action. You can’t manifest your wings while wearing armor unless the armor is made to accommodate them, and clothing not made to accommodate your wings might be destroyed when you manifest them.',
+      },
+      {
+        level: 18,
+        name: 'Draconic Presence',
+        description:
+          'You can channel the dread presence of your dragon ancestor, causing those around you to become awestruck or frightened. As an action, you can spend 5 sorcery points to draw on this power and exude an aura of awe or fear (your choice) to a distance of 60 feet. For 1 minute or until you lose your concentration (as if you were casting a concentration spell), each hostile creature that starts its turn in this aura must succeed on a Wisdom saving throw or be charmed (if you chose awe) or frightened (if you chose fear) until the aura ends. A creature that succeeds on this saving throw is immune to your aura for 24 hours.',
+      },
+    ],
+  },
+  {
+    name: 'Wild Magic',
+    description:
+      'Your innate magic comes from the wild forces of chaos that underlie the order of creation. You might have endured exposure to some form of raw magic, perhaps through a planar portal leading to Limbo, the Elemental Planes, or the mysterious Far Realm. Perhaps you were blessed by a fey being or marked by a demon. Or your magic could be a fluke of your birth, with no apparent cause or reason. However it came to be, this chaotic magic churns within you, waiting for any outlet.',
+    features: [
+      {
+        level: 1,
+        name: 'Wild Magic Surge',
+        description:
+          'Your spellcasting can unleash surges of untamed magic. Immediately after you cast a sorcerer spell of 1st level or higher, the DM can have you roll a d20. If you roll a 1, roll on the Wild Magic Surge table to create a random magical effect.',
+      },
+      {
+        level: 1,
+        name: 'Tides of Chaos',
+        description:
+          'You can manipulate the forces of chance and chaos to gain advantage on one attack roll, ability check, or saving throw. Once you do so, you must finish a long rest before you can use this feature again. Any time before you regain the use of this feature, the DM can have you roll on the Wild Magic Surge table immediately after you cast a sorcerer spell of 1st level or higher. You then regain the use of this feature.',
+      },
+      {
+        level: 6,
+        name: 'Bend Luck',
+        description:
+          'You have the ability to twist fate using your wild magic. When another creature you can see makes an attack roll, an ability check, or a saving throw, you can use your reaction and spend 2 sorcery points to roll 1d4 and apply the number rolled as a bonus or penalty (your choice) to the creature\'s roll. You can do so after the creature rolls but before any effects of the roll occur.',
+      },
+      {
+        level: 14,
+        name: 'Controlled Chaos',
+        description:
+          'You gain a modicum of control over the surges of your wild magic. Whenever you roll on the Wild Magic Surge table, you can roll twice and use either number.',
+      },
+      {
+        level: 18,
+        name: 'Spell Bombardment',
+        description:
+          'The harmful energy of your spells intensifies. When you roll damage for a spell and roll the highest number possible on any of the dice, choose one of those dice, roll it again and add that roll to the damage. You can use the feature only once per turn.',
+      },
+    ],
+  },
+];
+
 export const MONK_TRADITIONS: ClassSubclassOption[] = [
   {
     name: 'Way of the Open Hand',
@@ -1437,11 +1538,11 @@ export const CLASS_DATA: ClassData[] = [
       slots: FULL_CASTER_SLOTS,
     },
     features: [
-      { level: 1, name: 'Spellcasting', description: 'An event in your past, or in the life of a parent or ancestor, left an indelible mark on you, infusing you with arcane magic. You know 4 cantrips and 2 spells. Charisma is your spellcasting ability.' },
-      { level: 1, name: 'Sorcerous Origin', description: 'Choose a sorcerous origin which describes the source of your innate magical power: Draconic Bloodline or Wild Magic. Your choice grants you features at 1st, 6th, 14th, and 18th level.' },
-      { level: 2, name: 'Font of Magic', description: 'You tap into a deep wellspring of magic within yourself. You have sorcery points equal to your sorcerer level. You can convert sorcery points to spell slots and vice versa. Regain on long rest.' },
-      { level: 2, name: 'Flexible Casting', description: 'You can use your sorcery points to gain additional spell slots, or sacrifice spell slots to gain additional sorcery points. Bonus: 2pts→L1, 3→L2, 5→L3, 6→L4, 7→L5. Convert slot: L1→1pt, L2→2, L3→3, L4→4, L5→5.' },
-      { level: 3, name: 'Metamagic', description: 'You gain the ability to twist your spells to suit your needs. Choose 2 options from: Careful, Distant, Empowered, Extended, Heightened, Quickened, Subtle, Twinned Spell. You gain one more at 10th and 17th level.' },
+      { level: 1, name: 'Spellcasting', description: 'An event in your past, or in the life of a parent or ancestor, left an indelible mark on you, infusing you with arcane magic. This font of magic, whatever its origin, fuels your spells. Charisma is your spellcasting ability for your sorcerer spells, since the power of your magic relies on your ability to project your will into the world.' },
+      { level: 1, name: 'Sorcerous Origin', description: 'Choose a sorcerous origin, which describes the source of your innate magical power: Draconic Bloodline or Wild Magic, both detailed at the end of the class description. Your choice grants you features when you choose it at 1st level and again at 6th, 14th, and 18th level.' },
+      { level: 2, name: 'Font of Magic', description: 'At 2nd level, you tap into a deep wellspring of magic within yourself. This wellspring is represented by sorcery points, which allow you to create a variety of magical effects.\nSorcery Points. You have 2 sorcery points, and you gain more as you reach higher levels, as shown in the Sorcery Points column of the Sorcerer table. You can never have more sorcery points than shown on the table for your level. You regain all spent sorcery points when you finish a long rest.' },
+      { level: 2, name: 'Flexible Casting', description: 'You can use your sorcery points to gain additional spell slots, or sacrifice spell slots to gain additional sorcery points. You learn other ways to use your sorcery points as you reach higher levels.\nCreating Spell Slots. You can transform unexpended sorcery points into one spell slot as a bonus action on your turn. The Creating Spell Slots table shows the cost of creating a spell slot of a given level. You can create spell slots no higher in level than 5th.\nCreating Spell Slots Table: 1st level = 2 points, 2nd level = 3 points, 3rd level = 5 points, 4th level = 6 points, 5th level = 7 points.\nConverting a Spell Slot to Sorcery Points. As a bonus action on your turn, you can expend one spell slot and gain a number of sorcery points equal to the slot’s level.' },
+      { level: 3, name: 'Metamagic', description: 'You gain the ability to twist your spells to suit your needs. You gain two of the following Metamagic options of your choice: Careful Spell, Distant Spell, Empowered Spell, Extended Spell, Heightened Spell, Quickened Spell, Subtle Spell, Twinned Spell. You gain another one at 10th and 17th level. You can use only one Metamagic option on a spell when you cast it, unless otherwise noted.' },
       { level: 4, name: 'Ability Score Improvement', description: 'You can increase one ability score by 2, or two ability scores by 1 each. Also at levels 8, 12, 16, and 19.' },
       { level: 20, name: 'Sorcerous Restoration', description: 'You regain 4 expended sorcery points whenever you finish a short rest.' },
     ],
@@ -1840,6 +1941,14 @@ function expandFeature(feature: ClassFeature): ClassFeature[] {
     ];
   }
 
+  if (feature.name === 'Metamagic' && feature.description.includes('10th and 17th level')) {
+    return [
+      { level: 3, name: 'Metamagic', description: 'You gain the ability to twist your spells to suit your needs. Choose two Metamagic options.' },
+      { level: 10, name: 'Metamagic', description: 'You learn one additional Metamagic option.' },
+      { level: 17, name: 'Metamagic', description: 'You learn one additional Metamagic option.' },
+    ];
+  }
+
   return [feature];
 }
 
@@ -1856,6 +1965,7 @@ export function getClassFeatureTimeline(
     fighterArchetype?: string;
     rangerArchetype?: string;
     rogueArchetype?: string;
+    sorcerousOrigin?: string;
     monkTradition?: string;
     paladinOath?: string;
   }
@@ -1893,6 +2003,8 @@ export function getClassFeatureTimeline(
       ? RANGER_ARCHETYPES.find(archetype => archetype.name === options.rangerArchetype)?.features ?? []
       : className === 'Rogue' && options?.rogueArchetype
       ? ROGUE_ARCHETYPES.find(archetype => archetype.name === options.rogueArchetype)?.features ?? []
+      : className === 'Sorcerer' && options?.sorcerousOrigin
+      ? SORCEROUS_ORIGINS.find(origin => origin.name === options.sorcerousOrigin)?.features ?? []
       : className === 'Monk' && options?.monkTradition
       ? MONK_TRADITIONS.find(tradition => tradition.name === options.monkTradition)?.features ?? []
       : className === 'Paladin' && options?.paladinOath
@@ -1921,6 +2033,7 @@ export function getFeaturesUpToLevel(
     fighterArchetype?: string;
     rangerArchetype?: string;
     rogueArchetype?: string;
+    sorcerousOrigin?: string;
     monkTradition?: string;
     paladinOath?: string;
   }

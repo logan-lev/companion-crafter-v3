@@ -10,6 +10,7 @@ import {
   FIGHTER_ARCHETYPES,
   RANGER_ARCHETYPES,
   ROGUE_ARCHETYPES,
+  SORCEROUS_ORIGINS,
   getEffectiveSpellcasting,
   getFeaturesUpToLevel,
   getSlotsAtLevel,
@@ -201,6 +202,9 @@ export function getLanguages(state: WizardState): string[] {
   if (state.className === 'Druid') {
     languages.push('Druidic');
   }
+  if (state.className === 'Sorcerer' && state.sorcerousOrigin === 'Draconic Bloodline') {
+    languages.push('Draconic');
+  }
 
   return unique(languages);
 }
@@ -221,6 +225,7 @@ export function getTraitEntries(state: WizardState): string[] {
         fighterArchetype: state.fighterArchetype,
         rangerArchetype: state.rangerArchetype,
         rogueArchetype: state.rogueArchetype,
+        sorcerousOrigin: state.sorcerousOrigin,
         monkTradition: state.monkTradition,
         paladinOath: state.paladinOath,
       })
@@ -296,6 +301,16 @@ export function getTraitEntries(state: WizardState): string[] {
   if (state.rogueArchetype) {
     const archetype = ROGUE_ARCHETYPES.find(option => option.name === state.rogueArchetype);
     if (archetype) entries.push(`Roguish Archetype: You chose ${archetype.name}.`);
+  }
+  if (state.sorcerousOrigin) {
+    const origin = SORCEROUS_ORIGINS.find(option => option.name === state.sorcerousOrigin);
+    if (origin) entries.push(`Sorcerous Origin: You chose ${origin.name}.`);
+  }
+  if (state.className === 'Sorcerer' && state.sorcererDragonAncestor) {
+    entries.push(`Dragon Ancestor: You chose ${state.sorcererDragonAncestor}.`);
+  }
+  if (state.className === 'Sorcerer' && state.sorcererMetamagicChoices.length) {
+    entries.push(`Metamagic: You chose ${state.sorcererMetamagicChoices.join(', ')}.`);
   }
   if (state.className === 'Rogue' && state.rogueExpertiseChoices.length) {
     entries.push(`Expertise: You chose ${state.rogueExpertiseChoices.join(', ')}.`);
@@ -375,6 +390,7 @@ export function getFutureClassFeatures(state: WizardState): ClassFeature[] {
     fighterArchetype: state.fighterArchetype,
     rangerArchetype: state.rangerArchetype,
     rogueArchetype: state.rogueArchetype,
+    sorcerousOrigin: state.sorcerousOrigin,
     monkTradition: state.monkTradition,
     paladinOath: state.paladinOath,
   })

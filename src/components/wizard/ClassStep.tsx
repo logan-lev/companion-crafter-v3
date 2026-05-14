@@ -22,6 +22,9 @@ import {
   RANGER_FAVORED_TERRAINS,
   RANGER_HUMANOID_RACE_OPTIONS,
   ROGUE_ARCHETYPES,
+  SORCERER_DRAGON_ANCESTORS,
+  SORCERER_METAMAGIC_OPTIONS,
+  SORCEROUS_ORIGINS,
   type ClassFeature,
   type NamedDescriptionOption,
   getCantripsKnown,
@@ -62,6 +65,59 @@ interface SpellDetail {
   description: string;
   ritual?: boolean;
 }
+
+const WILD_MAGIC_SURGE_REFERENCE = [
+  { roll: '01–02', effect: 'Roll on this table at the start of each of your turns for the next minute, ignoring this result on subsequent rolls.' },
+  { roll: '03–04', effect: 'For the next minute, you can see any invisible creature if you have line of sight to it.' },
+  { roll: '05–06', effect: 'A modron chosen and controlled by the DM appears in an unoccupied space within 5 feet of you, then disappears 1 minute later.' },
+  { roll: '07–08', effect: 'You cast fireball as a 3rd-level spell centered on yourself.' },
+  { roll: '09–10', effect: 'You cast magic missile as a 5th-level spell.' },
+  { roll: '11–12', effect: 'Roll a d10. Your height changes by a number of inches equal to the roll. If the roll is odd, you shrink. If the roll is even, you grow.' },
+  { roll: '13–14', effect: 'You cast confusion centered on yourself.' },
+  { roll: '15–16', effect: 'For the next minute, you regain 5 hit points at the start of each of your turns.' },
+  { roll: '17–18', effect: 'You grow a long beard made of feathers that remains until you sneeze, at which point the feathers explode out from your face.' },
+  { roll: '19–20', effect: 'You cast grease centered on yourself.' },
+  { roll: '21–22', effect: 'Creatures have disadvantage on saving throws against the next spell you cast in the next minute that involves a saving throw.' },
+  { roll: '23–24', effect: 'Your skin turns a vibrant shade of blue. A remove curse spell can end this effect.' },
+  { roll: '25–26', effect: 'An eye appears on your forehead for the next minute. During that time, you have advantage on Wisdom (Perception) checks that rely on sight.' },
+  { roll: '27–28', effect: 'For the next minute, all your spells with a casting time of 1 action have a casting time of 1 bonus action.' },
+  { roll: '29–30', effect: 'You teleport up to 60 feet to an unoccupied space of your choice that you can see.' },
+  { roll: '31–32', effect: 'You are transported to the Astral Plane until the end of your next turn, after which time you return to the space you previously occupied or the nearest unoccupied space if that space is occupied.' },
+  { roll: '33–34', effect: 'Maximize the damage of the next damaging spell you cast within the next minute.' },
+  { roll: '35–36', effect: 'Roll a d10. Your age changes by a number of years equal to the roll. If the roll is odd, you get younger (minimum 1 year old). If the roll is even, you get older.' },
+  { roll: '37–38', effect: '1d6 flumphs controlled by the DM appear in unoccupied spaces within 60 feet of you and are frightened of you. They vanish after 1 minute.' },
+  { roll: '39–40', effect: 'You regain 2d10 hit points.' },
+  { roll: '41–42', effect: 'You turn into a potted plant until the start of your next turn. While a plant, you are incapacitated and have vulnerability to all damage. If you drop to 0 hit points, your pot breaks, and your form reverts.' },
+  { roll: '43–44', effect: 'For the next minute, you can teleport up to 20 feet as a bonus action on each of your turns.' },
+  { roll: '45–46', effect: 'You cast levitate on yourself.' },
+  { roll: '47–48', effect: 'A unicorn controlled by the DM appears in a space within 5 feet of you, then disappears 1 minute later.' },
+  { roll: '49–50', effect: 'You can’t speak for the next minute. Whenever you try, pink bubbles float out of your mouth.' },
+  { roll: '51–52', effect: 'A spectral shield hovers near you for the next minute, granting you a +2 bonus to AC and immunity to magic missile.' },
+  { roll: '53–54', effect: 'You are immune to being intoxicated by alcohol for the next 5d6 days.' },
+  { roll: '55–56', effect: 'Your hair falls out but grows back within 24 hours.' },
+  { roll: '57–58', effect: 'For the next minute, any flammable object you touch that isn’t being worn or carried by another creature bursts into flame.' },
+  { roll: '59–60', effect: 'You regain your lowest-level expended spell slot.' },
+  { roll: '61–62', effect: 'For the next minute, you must shout when you speak.' },
+  { roll: '63–64', effect: 'You cast fog cloud centered on yourself.' },
+  { roll: '65–66', effect: 'Up to three creatures you choose within 30 feet of you take 4d10 lightning damage.' },
+  { roll: '67–68', effect: 'You are frightened by the nearest creature until the end of your next turn.' },
+  { roll: '69–70', effect: 'Each creature within 30 feet of you becomes invisible for the next minute. The invisibility ends on a creature when it attacks or casts a spell.' },
+  { roll: '71–72', effect: 'You gain resistance to all damage for the next minute.' },
+  { roll: '73–74', effect: 'A random creature within 60 feet of you becomes poisoned for 1d4 hours.' },
+  { roll: '75–76', effect: 'You glow with bright light in a 30-foot radius for the next minute. Any creature that ends its turn within 5 feet of you is blinded until the end of its next turn.' },
+  { roll: '77–78', effect: 'You cast polymorph on yourself. If you fail the saving throw, you turn into a sheep for the spell’s duration.' },
+  { roll: '79–80', effect: 'Illusory butterflies and flower petals flutter in the air within 10 feet of you for the next minute.' },
+  { roll: '81–82', effect: 'You can take one additional action immediately.' },
+  { roll: '83–84', effect: 'Each creature within 30 feet of you takes 1d10 necrotic damage. You regain hit points equal to the sum of the necrotic damage dealt.' },
+  { roll: '85–86', effect: 'You cast mirror image.' },
+  { roll: '87–88', effect: 'You cast fly on a random creature within 60 feet of you.' },
+  { roll: '89–90', effect: 'You become invisible for the next minute. During that time, other creatures can’t hear you. The invisibility ends if you attack or cast a spell.' },
+  { roll: '91–92', effect: 'If you die within the next minute, you immediately come back to life as if by the reincarnate spell.' },
+  { roll: '93–94', effect: 'Your size increases by one size category for the next minute.' },
+  { roll: '95–96', effect: 'You and all creatures within 30 feet of you gain vulnerability to piercing damage for the next minute.' },
+  { roll: '97–98', effect: 'You are surrounded by faint, ethereal music for the next minute.' },
+  { roll: '99–00', effect: 'You regain all expended sorcery points.' },
+] as const;
 
 type MagicalSecretsSource =
   | 'All'
@@ -274,6 +330,10 @@ function getRangerLanguageOptions(choice: string, humanoidValue: string | undefi
 function getRogueSneakAttackDice(level: number): string {
   const dice = Math.min(10, Math.ceil(level / 2));
   return `${dice}d6`;
+}
+
+function getSorceryPoints(level: number): number {
+  return level >= 2 ? level : 0;
 }
 
 function getAbilityModifier(score: number): number {
@@ -495,6 +555,14 @@ function getCombinedFeatureEffects(
       });
     }
 
+    if (feature.name === 'Elemental Affinity') {
+      const chosenAncestor = SORCERER_DRAGON_ANCESTORS.find(option => option.name === state?.sorcererDragonAncestor);
+      resistances.push({
+        label: chosenAncestor ? `${chosenAncestor.damageType} damage` : 'Damage type associated with your draconic ancestry',
+        condition: 'When you spend 1 sorcery point after casting a matching spell',
+      });
+    }
+
     if (feature.name === 'Favored Enemy' || feature.name === 'Favored Enemy (Additional Choice)') {
       const favoredEnemies = state?.rangerFavoredEnemyChoices?.filter(Boolean) ?? [];
       if (favoredEnemies.length) {
@@ -622,9 +690,20 @@ function isRogueArchetypeFeature(feature: ClassFeature): boolean {
   );
 }
 
+function isSorcerousOriginFeature(feature: ClassFeature): boolean {
+  return SORCEROUS_ORIGINS.some(origin =>
+    origin.features.some(
+      originFeature =>
+        originFeature.name === feature.name ||
+        feature.name.startsWith(`${originFeature.name} (`)
+    )
+  );
+}
+
 export default function ClassStep({ state, onChange }: Props) {
   const [magicalSecretsSource, setMagicalSecretsSource] = useState<MagicalSecretsSource>('All');
   const [collapsedSpellGroups, setCollapsedSpellGroups] = useState<Record<string, boolean>>({});
+  const [showWildMagicTable, setShowWildMagicTable] = useState(false);
   const selectedClassData = CLASS_DATA.find(c => c.name === state.className);
   const previewClass = selectedClassData;
   const level = state.level;
@@ -661,6 +740,9 @@ export default function ClassStep({ state, onChange }: Props) {
       rangerSuperiorDefenseChoice: '',
       rogueArchetype: '',
       rogueExpertiseChoices: [],
+      sorcerousOrigin: '',
+      sorcererDragonAncestor: '',
+      sorcererMetamagicChoices: [],
       monkTradition: '',
       monkToolProficiency: '',
       monkElementalDisciplines: [],
@@ -741,6 +823,16 @@ export default function ClassStep({ state, onChange }: Props) {
         ? getClassFeatureTimeline('Rogue', { rogueArchetype: state.rogueArchetype })
             .filter(feature => feature.name === 'Expertise' && feature.level <= nextLevel).length * 2
         : 0;
+    const nextSorcererMetamagicAllowed =
+      state.className === 'Sorcerer'
+        ? nextLevel >= 17
+          ? 4
+          : nextLevel >= 10
+          ? 3
+          : nextLevel >= 3
+          ? 2
+          : 0
+        : 0;
 
     onChange({
       level: nextLevel,
@@ -791,6 +883,16 @@ export default function ClassStep({ state, onChange }: Props) {
         state.className === 'Rogue' && nextLevel >= 3 ? state.rogueArchetype : '',
       rogueExpertiseChoices:
         state.className === 'Rogue' ? state.rogueExpertiseChoices.slice(0, nextRogueExpertiseAllowed) : [],
+      sorcerousOrigin:
+        state.className === 'Sorcerer' ? state.sorcerousOrigin : '',
+      sorcererDragonAncestor:
+        state.className === 'Sorcerer' && state.sorcerousOrigin === 'Draconic Bloodline'
+          ? state.sorcererDragonAncestor
+          : '',
+      sorcererMetamagicChoices:
+        state.className === 'Sorcerer'
+          ? state.sorcererMetamagicChoices.slice(0, nextSorcererMetamagicAllowed)
+          : [],
       fighterStudentOfWarTool:
         state.className === 'Fighter' && state.fighterArchetype === 'Battle Master' && nextLevel >= 3
           ? state.fighterStudentOfWarTool
@@ -817,6 +919,13 @@ export default function ClassStep({ state, onChange }: Props) {
             rangerArchetype: '',
             rogueArchetype: '',
             rogueExpertiseChoices: [],
+            sorcerousOrigin: state.className === 'Sorcerer' ? state.sorcerousOrigin : '',
+            sorcererDragonAncestor:
+              state.className === 'Sorcerer' && state.sorcerousOrigin === 'Draconic Bloodline'
+                ? state.sorcererDragonAncestor
+                : '',
+            sorcererMetamagicChoices:
+              state.className === 'Sorcerer' ? state.sorcererMetamagicChoices.slice(0, nextSorcererMetamagicAllowed) : [],
             monkTradition: '',
             monkElementalDisciplines: [],
             paladinOath: '',
@@ -987,6 +1096,17 @@ export default function ClassStep({ state, onChange }: Props) {
     }
   };
 
+  const toggleSorcererMetamagic = (name: string) => {
+    if (state.className !== 'Sorcerer') return;
+    const current = state.sorcererMetamagicChoices;
+    const limit = level >= 17 ? 4 : level >= 10 ? 3 : level >= 3 ? 2 : 0;
+    if (current.includes(name)) {
+      onChange({ sorcererMetamagicChoices: current.filter(item => item !== name) });
+    } else if (current.length < limit) {
+      onChange({ sorcererMetamagicChoices: [...current, name] });
+    }
+  };
+
   const toggleBardLoreSkill = (skill: string) => {
     const current = state.bardLoreSkillChoices;
     if (current.includes(skill)) {
@@ -1131,12 +1251,14 @@ export default function ClassStep({ state, onChange }: Props) {
       fighterArchetype: state.fighterArchetype,
       rangerArchetype: state.rangerArchetype,
       rogueArchetype: state.rogueArchetype,
+      sorcerousOrigin: state.sorcerousOrigin,
       monkTradition: state.monkTradition,
       paladinOath: state.paladinOath,
     })
     : [];
   const baseFeatures = features.filter(
     feature =>
+      !(previewClass?.name === 'Sorcerer' && feature.name === 'Flexible Casting') &&
       !isBarbarianPathFeature(feature) &&
       !isBardCollegeFeature(feature) &&
       !isClericDomainFeature(feature) &&
@@ -1144,6 +1266,7 @@ export default function ClassStep({ state, onChange }: Props) {
       !isFighterArchetypeFeature(feature) &&
       !isRangerArchetypeFeature(feature) &&
       !isRogueArchetypeFeature(feature) &&
+      !isSorcerousOriginFeature(feature) &&
       !isMonkTraditionFeature(feature) &&
       !isPaladinOathFeature(feature)
   );
@@ -1155,6 +1278,7 @@ export default function ClassStep({ state, onChange }: Props) {
   const selectedFighterArchetype = FIGHTER_ARCHETYPES.find(archetype => archetype.name === state.fighterArchetype);
   const selectedRangerArchetype = RANGER_ARCHETYPES.find(archetype => archetype.name === state.rangerArchetype);
   const selectedRogueArchetype = ROGUE_ARCHETYPES.find(archetype => archetype.name === state.rogueArchetype);
+  const selectedSorcerousOrigin = SORCEROUS_ORIGINS.find(origin => origin.name === state.sorcerousOrigin);
   const selectedMonkTradition = MONK_TRADITIONS.find(tradition => tradition.name === state.monkTradition);
   const selectedPaladinOath = PALADIN_OATHS.find(oath => oath.name === state.paladinOath);
   const selectedTotemSpirit = getTotemSpiritOption(3, state.barbarianTotemSpirit);
@@ -1183,6 +1307,7 @@ export default function ClassStep({ state, onChange }: Props) {
   const fighterArchetypeFeatures = selectedFighterArchetype?.features ?? [];
   const rangerArchetypeFeatures = selectedRangerArchetype?.features ?? [];
   const rogueArchetypeFeatures = selectedRogueArchetype?.features ?? [];
+  const sorcerousOriginFeatures = selectedSorcerousOrigin?.features ?? [];
   const monkTraditionFeatures = selectedMonkTradition?.features ?? [];
   const monkElementalDisciplineLimit =
     state.className === 'Monk' && state.monkTradition === 'Way of the Four Elements'
@@ -1292,6 +1417,7 @@ export default function ClassStep({ state, onChange }: Props) {
     previewClass?.name === 'Rogue' && state.rogueArchetype === 'Assassin' && level >= 17
       ? 8 + profBonus + getAbilityModifier(finalScores.dex)
       : 0;
+  const sorceryPointCount = previewClass?.name === 'Sorcerer' ? getSorceryPoints(level) : 0;
   const spellcasting = previewClass
     ? getEffectiveSpellcasting(previewClass.name, {
         fighterArchetype: state.fighterArchetype,
@@ -1442,6 +1568,16 @@ export default function ClassStep({ state, onChange }: Props) {
   const rangerFavoredTerrainSlotCount =
     previewClass?.name === 'Ranger' ? getRangerFavoredTerrainSlots(level) : 0;
   const bardSecretSelectedNames = [...state.bardMagicalSecretChoices, ...state.bardAdditionalMagicalSecretChoices];
+  const sorcererMetamagicAllowed =
+    previewClass?.name === 'Sorcerer'
+      ? level >= 17
+        ? 4
+        : level >= 10
+        ? 3
+        : level >= 3
+        ? 2
+        : 0
+      : 0;
   const selectedFighterArchetypeFeatureNames = new Set(fighterArchetypeFeatures.map(feature => feature.name));
 
   const isEquipmentOptionAvailable = (choiceKey: string, option: string) => {
@@ -1946,6 +2082,58 @@ export default function ClassStep({ state, onChange }: Props) {
       );
     }
 
+    if (feature.name === 'Font of Magic') {
+      return (
+        <div className={`mt-2 rounded border border-[var(--color-border-strong)] bg-[var(--color-surface-pop)] p-4 ${unlocked ? '' : 'opacity-70'}`}>
+          <div className="border-b border-[var(--color-border-strong)] pb-2 text-lg font-bold uppercase tracking-[0.22em] text-[var(--color-text-strong)]">
+            Font of Magic
+          </div>
+          <div className="mt-3 space-y-4 text-[0.98rem] leading-8 text-[var(--color-text-soft)]">
+            <p>At 2nd level, you tap into a deep wellspring of magic within yourself. This wellspring is represented by sorcery points, which allow you to create a variety of magical effects.</p>
+            <div>
+              <div className="text-lg font-bold uppercase tracking-[0.18em] text-[var(--color-text-strong)]">Sorcery Points</div>
+              <p className="mt-1">You have 2 sorcery points, and you gain more as you reach higher levels, as shown in the Sorcery Points column of the Sorcerer table. You can never have more sorcery points than shown on the table for your level. You regain all spent sorcery points when you finish a long rest.</p>
+            </div>
+            <div>
+              <div className="text-lg font-bold uppercase tracking-[0.18em] text-[var(--color-text-strong)]">Flexible Casting</div>
+              <p className="mt-1">You can use your sorcery points to gain additional spell slots, or sacrifice spell slots to gain additional sorcery points. You learn other ways to use your sorcery points as you reach higher levels.</p>
+            </div>
+            <div>
+              <div className="text-lg font-bold italic text-[var(--color-text-strong)]">Creating Spell Slots.</div>
+              <p className="mt-1">You can transform unexpended sorcery points into one spell slot as a bonus action on your turn. The Creating Spell Slots table shows the cost of creating a spell slot of a given level. You can create spell slots no higher in level than 5th.</p>
+              <div className="mt-3 rounded border border-[var(--color-border-strong)] bg-[var(--color-surface-2)] p-3">
+                <div className="text-lg font-bold uppercase tracking-[0.18em] text-[var(--color-text-strong)]">Creating Spell Slots</div>
+                <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+                  <div className="font-bold text-[var(--color-text-strong)]">Spell Slot Level</div>
+                  <div className="font-bold text-[var(--color-text-strong)]">Sorcery Point Cost</div>
+                  <div>1st</div><div>2</div>
+                  <div>2nd</div><div>3</div>
+                  <div>3rd</div><div>5</div>
+                  <div>4th</div><div>6</div>
+                  <div>5th</div><div>7</div>
+                </div>
+              </div>
+            </div>
+            <div>
+              <div className="text-lg font-bold italic text-[var(--color-text-strong)]">Converting a Spell Slot to Sorcery Points.</div>
+              <p className="mt-1">As a bonus action on your turn, you can expend one spell slot and gain a number of sorcery points equal to the slot’s level.</p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (previewClass?.name === 'Sorcerer' && feature.name === 'Spellcasting') {
+      return (
+        <div className={`mt-2 rounded border border-[var(--color-border-strong)] bg-[var(--color-surface-pop)] p-4 ${unlocked ? '' : 'opacity-70'}`}>
+          <div className="border-b border-[var(--color-border-strong)] pb-2 text-lg font-bold uppercase tracking-[0.22em] text-[var(--color-text-strong)]">
+            Spellcasting
+          </div>
+          <p className="mt-3 text-[0.98rem] leading-8 text-[var(--color-text-soft)]">{feature.description}</p>
+        </div>
+      );
+    }
+
     return (
       <>
         <p className={`mt-1 whitespace-pre-line text-[0.98rem] leading-7 ${unlocked ? 'text-[var(--color-text-soft)]' : 'text-[var(--color-text-faint)]'}`}>{feature.description}</p>
@@ -2412,6 +2600,15 @@ export default function ClassStep({ state, onChange }: Props) {
                 </div>
               )}
 
+              {previewClass.name === 'Sorcerer' && (
+                <div className="mx-auto grid w-full max-w-xs grid-cols-1 gap-2">
+                  <div className="stat-box">
+                    <div className="text-base font-bold">{sorceryPointCount > 0 ? sorceryPointCount : '—'}</div>
+                    <div className="field-label">Sorcery Points</div>
+                  </div>
+                </div>
+              )}
+
               {spellcasting && (
                 <div className="rounded border border-[var(--color-spell-border-strong)] bg-[var(--color-spell-panel)] p-4">
                   <div className="section-title text-[var(--color-spell-strong)]">Spellcasting</div>
@@ -2863,6 +3060,40 @@ export default function ClassStep({ state, onChange }: Props) {
                   })}
                 </div>
               </div>
+
+              {previewClass.name === 'Sorcerer' && sorcererMetamagicAllowed > 0 && (
+                <div className="section-box border-[var(--color-border-muted)] bg-[var(--color-surface-3)]">
+                  <div className="section-title">
+                    Metamagic Choices ({state.sorcererMetamagicChoices.length}/{sorcererMetamagicAllowed})
+                  </div>
+                  <div className="mb-2 text-sm leading-6 text-[var(--color-text-soft)]">
+                    Choose your Metamagic options.
+                  </div>
+                  <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
+                    {SORCERER_METAMAGIC_OPTIONS.map(option => {
+                      const selected = state.sorcererMetamagicChoices.includes(option.name);
+                      const canAdd = state.sorcererMetamagicChoices.length < sorcererMetamagicAllowed;
+                      return (
+                        <button
+                          key={`metamagic-${option.name}`}
+                          onClick={() => toggleSorcererMetamagic(option.name)}
+                          disabled={!selected && !canAdd}
+                          className={`rounded border p-3 text-left transition-all ${
+                            selected
+                              ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)]'
+                              : canAdd
+                              ? 'border-[var(--color-accent)] bg-[var(--color-surface-3)] hover:bg-[var(--color-hover)]'
+                              : 'cursor-not-allowed border-[var(--color-border-subtle)] text-[var(--color-text-dim)]'
+                          }`}
+                        >
+                          <div className="text-sm font-bold text-[var(--color-text-strong)]">{option.name}</div>
+                          <div className="mt-2 text-sm leading-6 text-[var(--color-text-soft)]">{option.description}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {previewClass.name === 'Ranger' && state.className === 'Ranger' && (
                 <div className="space-y-4">
@@ -4139,6 +4370,119 @@ export default function ClassStep({ state, onChange }: Props) {
                           );
                         })}
                       </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {previewClass.name === 'Sorcerer' && (
+                <div className="section-box border-[var(--color-border-muted)] bg-[var(--color-surface-3)]">
+                  <div className="section-title">Choose Sorcerous Origin</div>
+                  <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
+                    {SORCEROUS_ORIGINS.map(origin => {
+                      const selected = state.sorcerousOrigin === origin.name;
+                      return (
+                        <button
+                          key={origin.name}
+                          onClick={() =>
+                            onChange({
+                              sorcerousOrigin: origin.name,
+                              sorcererDragonAncestor:
+                                origin.name === 'Draconic Bloodline' ? state.sorcererDragonAncestor : '',
+                            })
+                          }
+                          className={`rounded border p-3 text-left transition-all ${
+                            selected
+                              ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)]'
+                              : 'border-[var(--color-accent)] bg-[var(--color-surface-3)] hover:bg-[var(--color-hover)]'
+                          }`}
+                        >
+                          <div className="text-sm font-bold text-[var(--color-text-strong)]">{origin.name}</div>
+                          <div className="mt-2 text-sm leading-6 text-[var(--color-text-soft)]">{origin.description}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {selectedSorcerousOrigin && (
+                    <div className="mt-4">
+                      {selectedSorcerousOrigin.name === 'Draconic Bloodline' && (
+                        <div className="mb-4">
+                          <div className="section-title">Choose Dragon Ancestor</div>
+                          <div className="mb-2 text-sm leading-6 text-[var(--color-text-soft)]">
+                            Choose the dragon type tied to your bloodline. Its damage type is used by your later subclass features.
+                          </div>
+                          <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
+                            {SORCERER_DRAGON_ANCESTORS.map(option => {
+                              const selected = state.sorcererDragonAncestor === option.name;
+                              return (
+                                <button
+                                  key={`dragon-ancestor-${option.name}`}
+                                  onClick={() => onChange({ sorcererDragonAncestor: selected ? '' : option.name })}
+                                  className={`rounded border p-3 text-left transition-all ${
+                                    selected
+                                      ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)]'
+                                      : 'border-[var(--color-accent)] bg-[var(--color-surface-3)] hover:bg-[var(--color-hover)]'
+                                  }`}
+                                >
+                                  <div className="text-sm font-bold text-[var(--color-text-strong)]">{option.name}</div>
+                                  <div className="mt-1 text-[0.72rem] uppercase tracking-wide text-[var(--color-accent)]">
+                                    {option.damageType}
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="section-title">Sorcerous Origin Features</div>
+                      <div className="flex flex-col gap-2">
+                        {sorcerousOriginFeatures.map((feature, i) => {
+                          const unlocked = feature.level <= level;
+                          return (
+                            <div
+                              key={`${feature.level}-${feature.name}-sorcerous-origin-${i}`}
+                              className={`border-l-2 pl-3 ${unlocked ? 'border-[var(--color-accent)]' : 'border-[var(--color-border-faint)]'}`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <span className={`rounded border px-2 py-0.5 text-[0.8rem] font-bold ${unlocked ? 'border-[var(--color-accent)] text-[var(--color-text-strong)]' : 'border-[var(--color-border-faint)] text-[var(--color-text-dim)]'}`}>
+                                  Level {feature.level}
+                                </span>
+                                <span className={`text-base font-bold ${unlocked ? 'text-[var(--color-text-strong)]' : 'text-[var(--color-text-muted)]'}`}>{feature.name}</span>
+                              </div>
+                              {renderFeatureDescription(feature, unlocked)}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {selectedSorcerousOrigin.name === 'Wild Magic' && (
+                        <div className="mt-4 rounded border border-[var(--color-border-strong)] bg-[var(--color-surface-pop)] p-4">
+                          <div className="mb-2 flex items-center justify-between gap-2">
+                            <div className="section-title">Wild Magic Surge Table</div>
+                            <button
+                              onClick={() => setShowWildMagicTable(current => !current)}
+                              className="rounded border border-[var(--color-border-muted)] px-2 py-1 text-[0.68rem] uppercase tracking-wide text-[var(--color-accent)] transition-all hover:bg-[var(--color-hover)]"
+                            >
+                              {showWildMagicTable ? 'Close' : 'Open'}
+                            </button>
+                          </div>
+                          {showWildMagicTable && (
+                            <div className="mt-3 rounded border border-[var(--color-border-muted)] bg-[var(--color-surface-2)] p-3">
+                              <div className="grid grid-cols-[92px_minmax(0,1fr)] gap-x-4 gap-y-2 text-sm text-[var(--color-text-soft)]">
+                                <div className="font-bold text-[var(--color-text-strong)]">d100</div>
+                                <div className="font-bold text-[var(--color-text-strong)]">Effect</div>
+                                {WILD_MAGIC_SURGE_REFERENCE.map(entry => (
+                                  <div key={`wild-magic-${entry.roll}`} className="contents">
+                                    <div>{entry.roll}</div>
+                                    <div>{entry.effect}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
