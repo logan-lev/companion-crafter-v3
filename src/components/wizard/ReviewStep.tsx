@@ -51,6 +51,7 @@ export default function ReviewStep({ state, onFinish }: Props) {
         rangerArchetype: state.rangerArchetype,
         rogueArchetype: state.rogueArchetype,
         sorcerousOrigin: state.sorcerousOrigin,
+        warlockPatron: state.warlockPatron,
         paladinOath: state.paladinOath,
       })
     : [];

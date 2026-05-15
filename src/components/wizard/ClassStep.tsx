@@ -22,6 +22,11 @@ import {
   RANGER_FAVORED_TERRAINS,
   RANGER_HUMANOID_RACE_OPTIONS,
   ROGUE_ARCHETYPES,
+  WARLOCK_PACT_LEVEL,
+  WARLOCK_PACT_SLOTS,
+  WARLOCK_ELDRITCH_INVOCATIONS,
+  WARLOCK_PACT_BOONS,
+  WARLOCK_PATRONS,
   SORCERER_DRAGON_ANCESTORS,
   SORCERER_METAMAGIC_OPTIONS,
   SORCEROUS_ORIGINS,
@@ -202,6 +207,7 @@ const RANGER_SUPERIOR_DEFENSE_OPTIONS: NamedDescriptionOption[] = [
   { name: 'Stand Against the Tide', description: 'When a hostile creature misses you with a melee attack, you can use your reaction to force that creature to repeat the same attack against another creature (other than itself) of your choice.' },
   { name: 'Uncanny Dodge', description: 'When an attacker that you can see hits you with an attack, you can use your reaction to halve the attack’s damage against you.' },
 ];
+const WARLOCK_CHAIN_FAMILIAR_FORMS = ['Imp', 'Pseudodragon', 'Quasit', 'Sprite'] as const;
 
 const CLASS_FEATURE_SPELLS: Record<string, SpellDetail[]> = {
   'Shadow Arts': MONK_SHADOW_ARTS_SPELLS.map(spellName => {
@@ -336,6 +342,80 @@ function getSorceryPoints(level: number): number {
   return level >= 2 ? level : 0;
 }
 
+function getWarlockInvocationLimit(level: number): number {
+  if (level >= 18) return 8;
+  if (level >= 15) return 7;
+  if (level >= 12) return 6;
+  if (level >= 9) return 5;
+  if (level >= 7) return 4;
+  if (level >= 5) return 3;
+  if (level >= 2) return 2;
+  return 0;
+}
+
+function getWarlockMysticArcanumLevels(level: number): number[] {
+  const levels: number[] = [];
+  if (level >= 11) levels.push(6);
+  if (level >= 13) levels.push(7);
+  if (level >= 15) levels.push(8);
+  if (level >= 17) levels.push(9);
+  return levels;
+}
+
+function getValidWarlockInvocations(
+  invocations: string[],
+  level: number,
+  pactBoon: string,
+  selectedCantrips: string[] = []
+): string[] {
+  return invocations.filter(name => {
+    const invocation = WARLOCK_ELDRITCH_INVOCATIONS.find(option => option.name === name);
+    return Boolean(
+      invocation &&
+        invocation.levelRequired <= level &&
+        (!invocation.pactBoonRequired || invocation.pactBoonRequired === pactBoon) &&
+        (!invocation.cantripRequired || selectedCantrips.includes(invocation.cantripRequired))
+    );
+  });
+}
+
+function getWarlockInvocationLockReason(
+  invocation: (typeof WARLOCK_ELDRITCH_INVOCATIONS)[number],
+  level: number,
+  pactBoon: string,
+  selectedCantrips: string[]
+): string | null {
+  if (invocation.levelRequired > level) {
+    return `Requires warlock level ${invocation.levelRequired}`;
+  }
+  if (invocation.pactBoonRequired && invocation.pactBoonRequired !== pactBoon) {
+    return `Requires ${invocation.pactBoonRequired}`;
+  }
+  if (invocation.cantripRequired && !selectedCantrips.includes(invocation.cantripRequired)) {
+    return `Requires ${invocation.cantripRequired}`;
+  }
+  return null;
+}
+
+function getWarlockInvocationPrerequisiteText(
+  invocation: (typeof WARLOCK_ELDRITCH_INVOCATIONS)[number]
+): string | null {
+  if (invocation.prerequisiteText) return invocation.prerequisiteText;
+
+  const requirements: string[] = [];
+  if (invocation.levelRequired > 2) {
+    requirements.push(`${invocation.levelRequired}th level`);
+  }
+  if (invocation.pactBoonRequired) {
+    requirements.push(`${invocation.pactBoonRequired} feature`);
+  }
+  if (invocation.cantripRequired) {
+    requirements.push(`${invocation.cantripRequired.toLowerCase()} cantrip`);
+  }
+
+  return requirements.length ? requirements.join(', ') : null;
+}
+
 function getAbilityModifier(score: number): number {
   return Math.floor((score - 10) / 2);
 }
@@ -429,7 +509,15 @@ function getCombinedFeatureEffects(
   features: ClassFeature[],
   state?: WizardState
 ): { resistances: EffectSummary[]; advantages: EffectSummary[] } {
-  if (className !== 'Barbarian' && className !== 'Cleric' && className !== 'Druid' && className !== 'Monk' && className !== 'Ranger') {
+  if (
+    className !== 'Barbarian' &&
+    className !== 'Cleric' &&
+    className !== 'Druid' &&
+    className !== 'Monk' &&
+    className !== 'Ranger' &&
+    className !== 'Sorcerer' &&
+    className !== 'Warlock'
+  ) {
     return { resistances: [], advantages: [] };
   }
 
@@ -563,6 +651,25 @@ function getCombinedFeatureEffects(
       });
     }
 
+    if (feature.name === 'Beguiling Defenses') {
+      advantages.push({
+        label: 'You are immune to being charmed',
+      });
+    }
+
+    if (feature.name === 'Fiendish Resilience') {
+      resistances.push({
+        label: 'One chosen damage type',
+        condition: 'Chosen after a short or long rest',
+      });
+    }
+
+    if (feature.name === 'Thought Shield') {
+      resistances.push({
+        label: 'Psychic damage',
+      });
+    }
+
     if (feature.name === 'Favored Enemy' || feature.name === 'Favored Enemy (Additional Choice)') {
       const favoredEnemies = state?.rangerFavoredEnemyChoices?.filter(Boolean) ?? [];
       if (favoredEnemies.length) {
@@ -624,6 +731,27 @@ function groupSpellsByLevel(spells: typeof SPELL_LIST): Array<{ level: number; s
 
 function normalizeFeatureParagraphs(description: string): string[] {
   return description.split('\n').map(part => part.trim()).filter(Boolean);
+}
+
+function chooseWarlockPactBoon(
+  state: WizardState,
+  onChange: (patch: Partial<WizardState>) => void,
+  boonName: string
+) {
+  const nextPactBoon = state.warlockPactBoon === boonName ? '' : boonName;
+  const nextInvocations = getValidWarlockInvocations(
+    state.warlockInvocations,
+    state.level,
+    nextPactBoon,
+    state.selectedCantrips
+  );
+
+  onChange({
+    warlockPactBoon: nextPactBoon,
+    warlockChainFamiliarForm: nextPactBoon === 'Pact of the Chain' ? state.warlockChainFamiliarForm : '',
+    warlockTomeCantrips: nextPactBoon === 'Pact of the Tome' ? state.warlockTomeCantrips : [],
+    warlockInvocations: nextInvocations,
+  });
 }
 
 function getFeatureSpellDetails(feature: ClassFeature): SpellDetail[] {
@@ -700,6 +828,16 @@ function isSorcerousOriginFeature(feature: ClassFeature): boolean {
   );
 }
 
+function isWarlockPatronFeature(feature: ClassFeature): boolean {
+  return WARLOCK_PATRONS.some(patron =>
+    patron.features.some(
+      patronFeature =>
+        patronFeature.name === feature.name ||
+        feature.name.startsWith(`${patronFeature.name} (`)
+    )
+  );
+}
+
 export default function ClassStep({ state, onChange }: Props) {
   const [magicalSecretsSource, setMagicalSecretsSource] = useState<MagicalSecretsSource>('All');
   const [collapsedSpellGroups, setCollapsedSpellGroups] = useState<Record<string, boolean>>({});
@@ -743,6 +881,12 @@ export default function ClassStep({ state, onChange }: Props) {
       sorcerousOrigin: '',
       sorcererDragonAncestor: '',
       sorcererMetamagicChoices: [],
+      warlockPatron: '',
+      warlockInvocations: [],
+      warlockPactBoon: '',
+      warlockChainFamiliarForm: '',
+      warlockTomeCantrips: [],
+      warlockMysticArcanumChoices: [],
       monkTradition: '',
       monkToolProficiency: '',
       monkElementalDisciplines: [],
@@ -833,7 +977,27 @@ export default function ClassStep({ state, onChange }: Props) {
           ? 2
           : 0
         : 0;
-
+    const nextWarlockInvocationLimit =
+      state.className === 'Warlock' ? getWarlockInvocationLimit(nextLevel) : 0;
+    const nextWarlockMysticArcanumCount =
+      state.className === 'Warlock' ? getWarlockMysticArcanumLevels(nextLevel).length : 0;
+    const nextWarlockPactBoon =
+      state.className === 'Warlock' && nextLevel >= 3 ? state.warlockPactBoon : '';
+    const nextWarlockChainFamiliarForm =
+      state.className === 'Warlock' && nextWarlockPactBoon === 'Pact of the Chain'
+        ? state.warlockChainFamiliarForm
+        : '';
+    const nextWarlockTomeCantrips =
+      state.className === 'Warlock' && nextWarlockPactBoon === 'Pact of the Tome'
+        ? state.warlockTomeCantrips.slice(0, 3)
+        : [];
+    const nextValidWarlockInvocations =
+      state.className === 'Warlock'
+        ? getValidWarlockInvocations(state.warlockInvocations, nextLevel, nextWarlockPactBoon, state.selectedCantrips).slice(
+            0,
+            nextWarlockInvocationLimit
+          )
+        : [];
     onChange({
       level: nextLevel,
       classAbilityBonuses: nextBonuses,
@@ -893,6 +1057,15 @@ export default function ClassStep({ state, onChange }: Props) {
         state.className === 'Sorcerer'
           ? state.sorcererMetamagicChoices.slice(0, nextSorcererMetamagicAllowed)
           : [],
+      warlockPatron:
+        state.className === 'Warlock' ? state.warlockPatron : '',
+      warlockInvocations: nextValidWarlockInvocations,
+      warlockPactBoon:
+        nextWarlockPactBoon,
+      warlockChainFamiliarForm: nextWarlockChainFamiliarForm,
+      warlockTomeCantrips: nextWarlockTomeCantrips,
+      warlockMysticArcanumChoices:
+        state.className === 'Warlock' ? state.warlockMysticArcanumChoices.slice(0, nextWarlockMysticArcanumCount) : [],
       fighterStudentOfWarTool:
         state.className === 'Fighter' && state.fighterArchetype === 'Battle Master' && nextLevel >= 3
           ? state.fighterStudentOfWarTool
@@ -926,6 +1099,14 @@ export default function ClassStep({ state, onChange }: Props) {
                 : '',
             sorcererMetamagicChoices:
               state.className === 'Sorcerer' ? state.sorcererMetamagicChoices.slice(0, nextSorcererMetamagicAllowed) : [],
+            warlockPatron: state.className === 'Warlock' ? state.warlockPatron : '',
+            warlockInvocations: nextValidWarlockInvocations,
+            warlockPactBoon:
+              nextWarlockPactBoon,
+            warlockChainFamiliarForm: nextWarlockChainFamiliarForm,
+            warlockTomeCantrips: nextWarlockTomeCantrips,
+            warlockMysticArcanumChoices:
+              state.className === 'Warlock' ? state.warlockMysticArcanumChoices.slice(0, nextWarlockMysticArcanumCount) : [],
             monkTradition: '',
             monkElementalDisciplines: [],
             paladinOath: '',
@@ -1107,6 +1288,40 @@ export default function ClassStep({ state, onChange }: Props) {
     }
   };
 
+  const toggleWarlockInvocation = (name: string) => {
+    if (state.className !== 'Warlock') return;
+    const invocation = WARLOCK_ELDRITCH_INVOCATIONS.find(option => option.name === name);
+    if (!invocation) return;
+    const current = state.warlockInvocations;
+    const limit = getWarlockInvocationLimit(level);
+    const lockReason = getWarlockInvocationLockReason(invocation, level, state.warlockPactBoon, state.selectedCantrips);
+    if (current.includes(name)) {
+      onChange({ warlockInvocations: current.filter(item => item !== name) });
+    } else if (!lockReason && current.length < limit) {
+      onChange({ warlockInvocations: [...current, name] });
+    }
+  };
+
+  const chooseWarlockMysticArcanum = (spellLevel: number, spellName: string) => {
+    if (state.className !== 'Warlock') return;
+    const arcanumLevels = getWarlockMysticArcanumLevels(level);
+    const index = arcanumLevels.indexOf(spellLevel);
+    if (index === -1) return;
+    const next = [...state.warlockMysticArcanumChoices];
+    next[index] = next[index] === spellName ? '' : spellName;
+    onChange({ warlockMysticArcanumChoices: next });
+  };
+
+  const toggleWarlockTomeCantrip = (name: string) => {
+    if (state.className !== 'Warlock' || state.warlockPactBoon !== 'Pact of the Tome') return;
+    const current = state.warlockTomeCantrips;
+    if (current.includes(name)) {
+      onChange({ warlockTomeCantrips: current.filter(item => item !== name) });
+    } else if (current.length < 3) {
+      onChange({ warlockTomeCantrips: [...current, name] });
+    }
+  };
+
   const toggleBardLoreSkill = (skill: string) => {
     const current = state.bardLoreSkillChoices;
     if (current.includes(skill)) {
@@ -1164,7 +1379,17 @@ export default function ClassStep({ state, onChange }: Props) {
     if (!spellcasting) return;
     const current = state.selectedCantrips;
     if (current.includes(name)) {
-      onChange({ selectedCantrips: current.filter(item => item !== name) });
+      const nextSelectedCantrips = current.filter(item => item !== name);
+      onChange({
+        selectedCantrips: nextSelectedCantrips,
+        warlockInvocations:
+          state.className === 'Warlock'
+            ? getValidWarlockInvocations(state.warlockInvocations, level, state.warlockPactBoon, nextSelectedCantrips).slice(
+                0,
+                warlockInvocationLimit
+              )
+            : state.warlockInvocations,
+      });
     } else if (current.length < cantripAllowance) {
       onChange({ selectedCantrips: [...current, name] });
     }
@@ -1252,6 +1477,7 @@ export default function ClassStep({ state, onChange }: Props) {
       rangerArchetype: state.rangerArchetype,
       rogueArchetype: state.rogueArchetype,
       sorcerousOrigin: state.sorcerousOrigin,
+      warlockPatron: state.warlockPatron,
       monkTradition: state.monkTradition,
       paladinOath: state.paladinOath,
     })
@@ -1267,6 +1493,7 @@ export default function ClassStep({ state, onChange }: Props) {
       !isRangerArchetypeFeature(feature) &&
       !isRogueArchetypeFeature(feature) &&
       !isSorcerousOriginFeature(feature) &&
+      !isWarlockPatronFeature(feature) &&
       !isMonkTraditionFeature(feature) &&
       !isPaladinOathFeature(feature)
   );
@@ -1279,6 +1506,7 @@ export default function ClassStep({ state, onChange }: Props) {
   const selectedRangerArchetype = RANGER_ARCHETYPES.find(archetype => archetype.name === state.rangerArchetype);
   const selectedRogueArchetype = ROGUE_ARCHETYPES.find(archetype => archetype.name === state.rogueArchetype);
   const selectedSorcerousOrigin = SORCEROUS_ORIGINS.find(origin => origin.name === state.sorcerousOrigin);
+  const selectedWarlockPatron = WARLOCK_PATRONS.find(patron => patron.name === state.warlockPatron);
   const selectedMonkTradition = MONK_TRADITIONS.find(tradition => tradition.name === state.monkTradition);
   const selectedPaladinOath = PALADIN_OATHS.find(oath => oath.name === state.paladinOath);
   const selectedTotemSpirit = getTotemSpiritOption(3, state.barbarianTotemSpirit);
@@ -1308,6 +1536,7 @@ export default function ClassStep({ state, onChange }: Props) {
   const rangerArchetypeFeatures = selectedRangerArchetype?.features ?? [];
   const rogueArchetypeFeatures = selectedRogueArchetype?.features ?? [];
   const sorcerousOriginFeatures = selectedSorcerousOrigin?.features ?? [];
+  const warlockPatronFeatures = selectedWarlockPatron?.features ?? [];
   const monkTraditionFeatures = selectedMonkTradition?.features ?? [];
   const monkElementalDisciplineLimit =
     state.className === 'Monk' && state.monkTradition === 'Way of the Four Elements'
@@ -1418,6 +1647,8 @@ export default function ClassStep({ state, onChange }: Props) {
       ? 8 + profBonus + getAbilityModifier(finalScores.dex)
       : 0;
   const sorceryPointCount = previewClass?.name === 'Sorcerer' ? getSorceryPoints(level) : 0;
+  const warlockInvocationLimit = previewClass?.name === 'Warlock' ? getWarlockInvocationLimit(level) : 0;
+  const warlockMysticArcanumLevels = previewClass?.name === 'Warlock' ? getWarlockMysticArcanumLevels(level) : [];
   const spellcasting = previewClass
     ? getEffectiveSpellcasting(previewClass.name, {
         fighterArchetype: state.fighterArchetype,
@@ -1427,8 +1658,23 @@ export default function ClassStep({ state, onChange }: Props) {
   const spellcastingAbilityMod = spellcasting ? Math.floor(((finalScores[spellcasting.ability] ?? 10) - 10) / 2) : 0;
   const spellSaveDC = spellcasting ? 8 + profBonus + spellcastingAbilityMod : 0;
   const spellAttackBonus = spellcastingAbilityMod + profBonus;
-  const spellSlots = spellcasting ? getSlotsAtLevel(spellcasting, level) : [];
-  const maxSpellLevel = spellSlots.length ? spellSlots.reduce((highest, count, index) => (count > 0 ? index + 1 : highest), 0) : 0;
+  const spellSlots =
+    previewClass?.name === 'Warlock'
+      ? (() => {
+          const slots = Array(9).fill(0);
+          const pactLevel = WARLOCK_PACT_LEVEL[level - 1] ?? 1;
+          slots[pactLevel - 1] = WARLOCK_PACT_SLOTS[level - 1] ?? 1;
+          return slots;
+        })()
+      : spellcasting
+      ? getSlotsAtLevel(spellcasting, level)
+      : [];
+  const maxSpellLevel =
+    previewClass?.name === 'Warlock'
+      ? WARLOCK_PACT_LEVEL[level - 1] ?? 1
+      : spellSlots.length
+      ? spellSlots.reduce((highest, count, index) => (count > 0 ? index + 1 : highest), 0)
+      : 0;
   const cantripAllowance = spellcasting
     ? Math.max(
         0,
@@ -1444,9 +1690,28 @@ export default function ClassStep({ state, onChange }: Props) {
   const reservedMagicalSecretsSlots = previewClass?.name === 'Bard' ? bardMagicalSecretsAllowed : 0;
   const spellAllowance = Math.max(0, baseSpellAllowance - reservedMagicalSecretsSlots);
   const spellListClass = spellcasting ? SPELL_LIST_CLASS_MAP[spellcasting.spellListKey] : '';
+  const warlockExpandedSpellNames =
+    previewClass?.name === 'Warlock' && selectedWarlockPatron?.bonusSpells
+      ? selectedWarlockPatron.bonusSpells
+          .filter(entry => entry.level <= Math.max(1, maxSpellLevel))
+          .flatMap(entry => entry.spells)
+      : [];
+  const selectedWarlockPatronSpellDetails =
+    previewClass?.name === 'Warlock' && selectedWarlockPatron?.bonusSpells
+      ? selectedWarlockPatron.bonusSpells
+          .flatMap(entry => entry.spells)
+          .map(name => SPELL_LIST.find(spell => spell.name === name))
+          .filter((spell): spell is (typeof SPELL_LIST)[number] => Boolean(spell))
+      : [];
+  const warlockFindFamiliarSpellDetails =
+    previewClass?.name === 'Warlock' && state.warlockPactBoon === 'Pact of the Chain'
+      ? SPELL_LIST.filter(spell => spell.name === 'Find Familiar')
+      : [];
   const classSpellOptions =
     spellcasting && spellListClass
-      ? SPELL_LIST.filter(spell => spell.classes.includes(spellListClass))
+      ? SPELL_LIST.filter(
+          spell => spell.classes.includes(spellListClass) || (previewClass?.name === 'Warlock' && warlockExpandedSpellNames.includes(spell.name))
+        )
       : [];
   const subclassAutoPreparedSpells =
     previewClass && (previewClass.name === 'Cleric' || previewClass.name === 'Paladin' || previewClass.name === 'Druid')
@@ -1478,6 +1743,21 @@ export default function ClassStep({ state, onChange }: Props) {
     state.druidLandCantrip
       ? SPELL_LIST.filter(spell => spell.name === state.druidLandCantrip)
       : [];
+  const visibleWarlockInvocations =
+    previewClass?.name === 'Warlock'
+      ? [...WARLOCK_ELDRITCH_INVOCATIONS].sort((a, b) => a.name.localeCompare(b.name))
+      : [];
+  const warlockMysticArcanumOptions = warlockMysticArcanumLevels.map(spellLevel =>
+    SPELL_LIST.filter(spell => spell.classes.includes('Warlock') && spell.level === spellLevel)
+  );
+  const warlockTomeCantripOptions =
+    previewClass?.name === 'Warlock'
+      ? SPELL_LIST.filter(
+          spell =>
+            spell.level === 0 &&
+            (!state.selectedCantrips.includes(spell.name) || state.warlockTomeCantrips.includes(spell.name))
+        )
+      : [];
   const shadowArtsSpellDetails =
     selectedMonkTradition?.name === 'Way of Shadow'
       ? SPELL_LIST.filter(spell => MONK_SHADOW_ARTS_SPELLS.includes(spell.name)).sort(
@@ -1487,7 +1767,8 @@ export default function ClassStep({ state, onChange }: Props) {
   const classCantripOptions = classSpellOptions.filter(
     spell =>
       spell.level === 0 &&
-      !(previewClass?.name === 'Rogue' && state.rogueArchetype === 'Arcane Trickster' && spell.name === 'Mage Hand')
+      !(previewClass?.name === 'Rogue' && state.rogueArchetype === 'Arcane Trickster' && spell.name === 'Mage Hand') &&
+      !(previewClass?.name === 'Warlock' && state.warlockTomeCantrips.includes(spell.name))
   );
   const availableDruidLandCantrips =
     previewClass?.name === 'Druid'
@@ -4483,6 +4764,246 @@ export default function ClassStep({ state, onChange }: Props) {
                           )}
                         </div>
                       )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {previewClass.name === 'Warlock' && (
+                <div className="space-y-4">
+                  <div className="section-box border-[var(--color-border-muted)] bg-[var(--color-surface-3)]">
+                    <div className="section-title">Choose Otherworldly Patron</div>
+                    <div className="grid grid-cols-1 gap-2 lg:grid-cols-3">
+                      {WARLOCK_PATRONS.map(patron => {
+                        const selected = state.warlockPatron === patron.name;
+                        return (
+                          <button
+                            key={patron.name}
+                            onClick={() => onChange({ warlockPatron: patron.name })}
+                            className={`rounded border p-3 text-left transition-all ${
+                              selected
+                                ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)]'
+                                : 'border-[var(--color-accent)] bg-[var(--color-surface-3)] hover:bg-[var(--color-hover)]'
+                            }`}
+                          >
+                            <div className="text-sm font-bold text-[var(--color-text-strong)]">{patron.name}</div>
+                            <div className="mt-2 text-sm leading-6 text-[var(--color-text-soft)]">{patron.description}</div>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {selectedWarlockPatron && (
+                      <div className="mt-4">
+                        {selectedWarlockPatronSpellDetails.length > 0 &&
+                          renderCollapsibleSpellDetails(
+                            'warlock-expanded',
+                            selectedWarlockPatronSpellDetails,
+                            'Expanded Spell List',
+                            'Your patron adds these spells to the warlock spell list for you. They become available as you gain warlock levels, and once they are available you can choose them like any other warlock spells you know.'
+                          )}
+
+                        <div className="section-title">Otherworldly Patron Features</div>
+                        <div className="flex flex-col gap-2">
+                          {warlockPatronFeatures.map((feature, i) => {
+                            const unlocked = feature.level <= level;
+                            return (
+                              <div
+                                key={`${feature.level}-${feature.name}-warlock-patron-${i}`}
+                                className={`border-l-2 pl-3 ${unlocked ? 'border-[var(--color-accent)]' : 'border-[var(--color-border-faint)]'}`}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <span className={`rounded border px-2 py-0.5 text-[0.8rem] font-bold ${unlocked ? 'border-[var(--color-accent)] text-[var(--color-text-strong)]' : 'border-[var(--color-border-faint)] text-[var(--color-text-dim)]'}`}>
+                                    Level {feature.level}
+                                  </span>
+                                  <span className={`text-base font-bold ${unlocked ? 'text-[var(--color-text-strong)]' : 'text-[var(--color-text-muted)]'}`}>{feature.name}</span>
+                                </div>
+                                {renderFeatureDescription(feature, unlocked)}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {warlockInvocationLimit > 0 && (
+                    <div className="section-box border-[var(--color-border-muted)] bg-[var(--color-surface-3)]">
+                      <div className="section-title">
+                        Eldritch Invocations ({state.warlockInvocations.length}/{warlockInvocationLimit})
+                      </div>
+                      <div className="mb-2 text-sm leading-6 text-[var(--color-text-soft)]">
+                        Choose your eldritch invocations. You can swap one whenever you gain a warlock level.
+                      </div>
+                      <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
+                        {visibleWarlockInvocations.map(option => {
+                          const selected = state.warlockInvocations.includes(option.name);
+                          const canAdd = state.warlockInvocations.length < warlockInvocationLimit;
+                          const lockReason = getWarlockInvocationLockReason(option, level, state.warlockPactBoon, state.selectedCantrips);
+                          const prerequisiteText = getWarlockInvocationPrerequisiteText(option);
+                          const selectable = selected || (!lockReason && canAdd);
+                          const statusLabel = selected
+                            ? 'Selected'
+                            : lockReason
+                            ? 'Locked'
+                            : canAdd
+                            ? 'Can learn now'
+                            : 'Slots full';
+                          return (
+                            <button
+                              key={`warlock-invocation-${option.name}`}
+                              onClick={() => toggleWarlockInvocation(option.name)}
+                              disabled={!selectable}
+                              className={`rounded border p-3 text-left transition-all ${
+                                selected
+                                  ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)]'
+                                  : selectable
+                                  ? 'border-[var(--color-accent)] bg-[var(--color-surface-3)] hover:bg-[var(--color-hover)]'
+                                  : 'cursor-not-allowed border-[var(--color-border-subtle)] text-[var(--color-text-dim)]'
+                              }`}
+                            >
+                              <div className="text-sm font-bold text-[var(--color-text-strong)]">{option.name}</div>
+                              <div className="mt-1 text-[0.68rem] uppercase tracking-wide text-[var(--color-accent)]">
+                                {statusLabel}
+                              </div>
+                              {prerequisiteText && (
+                                <div className="mt-1 text-[0.68rem] uppercase tracking-wide text-[var(--color-text-dim)]">
+                                  Prerequisite: {prerequisiteText}
+                                </div>
+                              )}
+                              <div className="mt-2 text-sm leading-6 text-[var(--color-text-soft)]">{option.description}</div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {level >= 3 && (
+                    <div className="section-box border-[var(--color-border-muted)] bg-[var(--color-surface-3)]">
+                      <div className="section-title">Choose Pact Boon</div>
+                      <div className="mb-2 text-sm leading-6 text-[var(--color-text-soft)]">
+                        Your pact boon changes what your patron’s gift actually does: Chain grants an empowered familiar, Blade grants a summonable pact weapon, and Tome grants a Book of Shadows with extra cantrips.
+                      </div>
+                      <div className="grid grid-cols-1 gap-2 lg:grid-cols-3">
+                        {WARLOCK_PACT_BOONS.map(option => {
+                          const selected = state.warlockPactBoon === option.name;
+                          return (
+                            <button
+                              key={option.name}
+                              onClick={() => chooseWarlockPactBoon(state, onChange, option.name)}
+                              className={`rounded border p-3 text-left transition-all ${
+                                selected
+                                  ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)]'
+                                  : 'border-[var(--color-accent)] bg-[var(--color-surface-3)] hover:bg-[var(--color-hover)]'
+                              }`}
+                            >
+                              <div className="text-sm font-bold text-[var(--color-text-strong)]">{option.name}</div>
+                              <div className="mt-2 text-sm leading-6 text-[var(--color-text-soft)]">{option.description}</div>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {state.warlockPactBoon === 'Pact of the Chain' && (
+                        <div className="mt-4">
+                          <div className="section-title">Choose Familiar Form</div>
+                          <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+                            {WARLOCK_CHAIN_FAMILIAR_FORMS.map(form => {
+                              const selected = state.warlockChainFamiliarForm === form;
+                              return (
+                                <button
+                                  key={form}
+                                  onClick={() => onChange({ warlockChainFamiliarForm: selected ? '' : form })}
+                                  className={`rounded border p-3 text-left transition-all ${
+                                    selected
+                                      ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)]'
+                                      : 'border-[var(--color-accent)] bg-[var(--color-surface-3)] hover:bg-[var(--color-hover)]'
+                                  }`}
+                                >
+                                  <div className="text-sm font-bold text-[var(--color-text-strong)]">{form}</div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                          {warlockFindFamiliarSpellDetails.length > 0 && (
+                            <div className="mt-4">
+                              {renderCollapsibleSpellDetails(
+                                'warlock-chain-familiar',
+                                warlockFindFamiliarSpellDetails,
+                                'Find Familiar',
+                                'Pact of the Chain teaches you the find familiar spell and lets you cast it as a ritual. Here is what that spell does.'
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {state.warlockPactBoon === 'Pact of the Tome' && (
+                        <div className="mt-4 rounded border border-[var(--color-spell-border)] bg-[var(--color-spell-surface)] p-3">
+                          <div className="mb-2 flex items-center justify-between gap-2">
+                            <div className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--color-spell-strong)]">
+                              Choose Tome Cantrips
+                            </div>
+                            <button
+                              onClick={() => toggleAllSpellGroups('warlock-tome-cantrip', warlockTomeCantripOptions)}
+                              className="rounded border border-[var(--color-spell-border)] px-2 py-1 text-[0.68rem] text-[var(--color-spell-strong)] transition-all hover:bg-[var(--color-spell-chip-bg)]"
+                            >
+                              {groupSpellsByLevel(warlockTomeCantripOptions).every(group => collapsedSpellGroups[`warlock-tome-cantrip-${group.level}`] ?? false)
+                                ? 'Open All'
+                                : 'Close All'}
+                            </button>
+                          </div>
+                          {renderGroupedSpellPicker(
+                            'warlock-tome-cantrip',
+                            warlockTomeCantripOptions,
+                            state.warlockTomeCantrips,
+                            toggleWarlockTomeCantrip,
+                            state.warlockTomeCantrips.length,
+                            3,
+                            'No cantrips available.',
+                            undefined,
+                            spellNames => onChange({ warlockTomeCantrips: state.warlockTomeCantrips.filter(name => !spellNames.includes(name)) })
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {warlockMysticArcanumLevels.length > 0 && (
+                    <div className="section-box border-[var(--color-border-muted)] bg-[var(--color-surface-3)]">
+                      <div className="section-title">Mystic Arcanum Choices</div>
+                      <div className="space-y-4">
+                        {warlockMysticArcanumLevels.map((spellLevel, index) => (
+                          <div key={`warlock-arcanum-${spellLevel}`}>
+                            <div className="mb-2 text-sm font-bold text-[var(--color-text-strong)]">
+                              {spellLevel}th-Level Arcanum
+                            </div>
+                            <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
+                              {warlockMysticArcanumOptions[index].map(spell => {
+                                const selected = state.warlockMysticArcanumChoices[index] === spell.name;
+                                return (
+                                  <button
+                                    key={`warlock-arcanum-${spellLevel}-${spell.name}`}
+                                    onClick={() => chooseWarlockMysticArcanum(spellLevel, spell.name)}
+                                    className={`rounded border p-3 text-left transition-all ${
+                                      selected
+                                        ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)]'
+                                        : 'border-[var(--color-accent)] bg-[var(--color-surface-3)] hover:bg-[var(--color-hover)]'
+                                    }`}
+                                  >
+                                    <div className="text-sm font-bold text-[var(--color-text-strong)]">{spell.name}</div>
+                                    <div className="mt-1 text-[0.68rem] uppercase tracking-wide text-[var(--color-accent)]">
+                                      {spell.school} · {spell.duration}
+                                    </div>
+                                    <div className="mt-2 text-sm leading-6 text-[var(--color-text-soft)]">{spell.description}</div>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>

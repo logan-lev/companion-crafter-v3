@@ -41,6 +41,12 @@ export interface WizardState {
   sorcerousOrigin: string;
   sorcererDragonAncestor: string;
   sorcererMetamagicChoices: string[];
+  warlockPatron: string;
+  warlockInvocations: string[];
+  warlockPactBoon: string;
+  warlockChainFamiliarForm: string;
+  warlockTomeCantrips: string[];
+  warlockMysticArcanumChoices: string[];
   monkTradition: string;
   monkToolProficiency: string;
   monkElementalDisciplines: string[];
@@ -124,6 +130,12 @@ export const WIZARD_INITIAL_STATE: WizardState = {
   sorcerousOrigin: '',
   sorcererDragonAncestor: '',
   sorcererMetamagicChoices: [],
+  warlockPatron: '',
+  warlockInvocations: [],
+  warlockPactBoon: '',
+  warlockChainFamiliarForm: '',
+  warlockTomeCantrips: [],
+  warlockMysticArcanumChoices: [],
   monkTradition: '',
   monkToolProficiency: '',
   monkElementalDisciplines: [],

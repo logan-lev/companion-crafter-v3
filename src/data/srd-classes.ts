@@ -61,6 +61,13 @@ export interface MonkElementalDisciplineOption extends NamedDescriptionOption {
   spellName?: string;
 }
 
+export interface WarlockInvocationOption extends NamedDescriptionOption {
+  levelRequired: number;
+  pactBoonRequired?: string;
+  cantripRequired?: string;
+  prerequisiteText?: string;
+}
+
 export const SORCERER_DRAGON_ANCESTORS = [
   { name: 'Black', damageType: 'Acid' },
   { name: 'Blue', damageType: 'Lightning' },
@@ -84,6 +91,113 @@ export const SORCERER_METAMAGIC_OPTIONS: NamedDescriptionOption[] = [
   { name: 'Subtle Spell', description: 'When you cast a spell, you can spend 1 sorcery point to cast it without any somatic or verbal components.' },
   { name: 'Twinned Spell', description: 'When you cast a spell that targets only one creature and does not have a range of self, you can spend a number of sorcery points equal to the spell’s level to target a second creature in range with the same spell. A cantrip costs 1 sorcery point.' },
 ] as const;
+
+export const WARLOCK_PACT_BOONS: NamedDescriptionOption[] = [
+  {
+    name: 'Pact of the Chain',
+    description:
+      "You learn the find familiar spell and can cast it as a ritual. The spell doesn't count against your number of spells known. When you cast the spell, you can choose one of the normal forms for your familiar or one of the following special forms: imp, pseudodragon, quasit, or sprite. Additionally, when you take the Attack action, you can forgo one of your own attacks to allow your familiar to make one attack of its own.",
+  },
+  {
+    name: 'Pact of the Blade',
+    description:
+      "You can use your action to create a pact weapon in your empty hand. You can choose the form that this melee weapon takes each time you create it. You are proficient with it while you wield it. This weapon counts as magical for the purpose of overcoming resistance and immunity to nonmagical attacks and damage. Your pact weapon disappears if it is more than 5 feet away from you for 1 minute or more. It also disappears if you use this feature again, if you dismiss the weapon (no action required), or if you die. You can transform one magic weapon into your pact weapon by performing a special ritual while you hold the weapon. You perform the ritual over the course of 1 hour, which can be done during a short rest. You can then dismiss the weapon, shunting it into an extradimensional space, and it appears whenever you create your pact weapon thereafter. You can't affect an artifact or a sentient weapon in this way. The weapon ceases being your pact weapon if you die, if you perform the 1-hour ritual on a different weapon, or if you use a 1-hour ritual to break your bond to it. The weapon appears at your feet if it is in the extradimensional space when the bond breaks.",
+  },
+  {
+    name: 'Pact of the Tome',
+    description:
+      "Your patron gives you a grimoire called a Book of Shadows. When you gain this feature, choose three cantrips from any class's spell list. While the book is on your person, you can cast those cantrips at will. They don't count against your number of cantrips known. If you lose your Book of Shadows, you can perform a 1-hour ceremony to receive a replacement from your patron. This ceremony can be performed during a short or long rest, and it destroys the previous book. The book turns to ash when you die.",
+  },
+];
+
+export const WARLOCK_ELDRITCH_INVOCATIONS: WarlockInvocationOption[] = [
+  { name: 'Agonizing Blast', levelRequired: 2, cantripRequired: 'Eldritch Blast', prerequisiteText: 'eldritch blast cantrip', description: 'When you cast eldritch blast, add your Charisma modifier to the damage it deals on a hit.' },
+  { name: 'Armor of Shadows', levelRequired: 2, description: 'You can cast mage armor on yourself at will, without expending a spell slot or material components.' },
+  { name: 'Ascendant Step', levelRequired: 9, description: 'You can cast levitate on yourself at will, without expending a spell slot or material components.' },
+  { name: 'Beast Speech', levelRequired: 2, description: 'You can cast speak with animals at will, without expending a spell slot.' },
+  { name: 'Beguiling Influence', levelRequired: 2, description: 'You gain proficiency in the Deception and Persuasion skills.' },
+  { name: 'Bewitching Whispers', levelRequired: 7, prerequisiteText: '7th level', description: 'You can cast compulsion once using a warlock spell slot. You can’t do so again until you finish a long rest.' },
+  { name: 'Book of Ancient Secrets', levelRequired: 2, pactBoonRequired: 'Pact of the Tome', prerequisiteText: 'Pact of the Tome feature', description: 'You can now inscribe magical rituals in your Book of Shadows. Choose two 1st-level spells that have the ritual tag from any class\'s spell list. The spells appear in the book and don\'t count against the number of spells you know. With your Book of Shadows in hand, you can cast the chosen spells as rituals. You can\'t cast the spells except as rituals, unless you\'ve learned them by some other means. You can also cast a warlock spell you know as a ritual if it has the ritual tag. On your adventures, you can add other ritual spells to your Book of Shadows. When you find such a spell, you can add it to the book if the spell\'s level is equal to or less than half your warlock level (rounded up) and if you can spare the time to transcribe the spell. For each level of the spell, the transcription process takes 2 hours and costs 50 gp for the rare inks needed to inscribe it.' },
+  { name: 'Chains of Carceri', levelRequired: 15, pactBoonRequired: 'Pact of the Chain', prerequisiteText: '15th level, Pact of the Chain feature', description: 'You can cast hold monster at will - targeting a celestial, fiend, or elemental - without expending a spell slot or material components. You must finish a long rest before you can use this invocation on the same creature again.' },
+  { name: 'Devil’s Sight', levelRequired: 2, description: 'You can see normally in darkness, both magical and nonmagical, to a distance of 120 feet.' },
+  { name: 'Dreadful Word', levelRequired: 7, prerequisiteText: '7th level', description: 'You can cast confusion once using a warlock spell slot. You can’t do so again until you finish a long rest.' },
+  { name: 'Eldritch Sight', levelRequired: 2, description: 'You can cast detect magic at will, without expending a spell slot.' },
+  { name: 'Eldritch Spear', levelRequired: 2, cantripRequired: 'Eldritch Blast', prerequisiteText: 'eldritch blast cantrip', description: 'When you cast eldritch blast, its range is 300 feet.' },
+  { name: 'Eyes of the Rune Keeper', levelRequired: 2, description: 'You can read all writing.' },
+  { name: 'Fiendish Vigor', levelRequired: 2, description: 'You can cast false life on yourself at will as a 1st-level spell, without expending a spell slot or material components.' },
+  { name: 'Gaze of Two Minds', levelRequired: 2, description: 'You can use your action to touch a willing humanoid and perceive through its senses until the end of your next turn. As long as the creature is on the same plane of existence as you, you can use your action on subsequent turns to maintain this connection, extending the duration until the end of your next turn. While perceiving through the other creature’s senses, you benefit from any special senses possessed by that creature, and you are blinded and deafened to your own surroundings.' },
+  { name: 'Lifedrinker', levelRequired: 12, pactBoonRequired: 'Pact of the Blade', prerequisiteText: '12th level, Pact of the Blade feature', description: 'When you hit a creature with your pact weapon, the creature takes extra necrotic damage equal to your Charisma modifier (minimum 1).' },
+  { name: 'Mask of Many Faces', levelRequired: 2, description: 'You can cast disguise self at will, without expending a spell slot.' },
+  { name: 'Master of Myriad Forms', levelRequired: 15, prerequisiteText: '15th level', description: 'You can cast alter self at will, without expending a spell slot.' },
+  { name: 'Minions of Chaos', levelRequired: 9, prerequisiteText: '9th level', description: 'You can cast conjure elemental once using a warlock spell slot. You can’t do so again until you finish a long rest.' },
+  { name: 'Mire the Mind', levelRequired: 5, prerequisiteText: '5th level', description: 'You can cast slow once using a warlock spell slot. You can’t do so again until you finish a long rest.' },
+  { name: 'Misty Visions', levelRequired: 2, description: 'You can cast silent image at will, without expending a spell slot or material components.' },
+  { name: 'One with Shadows', levelRequired: 5, prerequisiteText: '5th level', description: 'When you are in an area of dim light or darkness, you can use your action to become invisible until you move or take an action or a reaction.' },
+  { name: 'Otherworldly Leap', levelRequired: 9, prerequisiteText: '9th level', description: 'You can cast jump on yourself at will, without expending a spell slot or material components.' },
+  { name: 'Repelling Blast', levelRequired: 2, cantripRequired: 'Eldritch Blast', prerequisiteText: 'eldritch blast cantrip', description: 'When you hit a creature with eldritch blast, you can push the creature up to 10 feet away from you in a straight line.' },
+  { name: 'Sculptor of Flesh', levelRequired: 7, prerequisiteText: '7th level', description: 'You can cast polymorph once using a warlock spell slot. You can’t do so again until you finish a long rest.' },
+  { name: 'Sign of Ill Omen', levelRequired: 5, prerequisiteText: '5th level', description: 'You can cast bestow curse once using a warlock spell slot. You can’t do so again until you finish a long rest.' },
+  { name: 'Thief of Five Fates', levelRequired: 2, description: 'You can cast bane once using a warlock spell slot. You can’t do so again until you finish a long rest.' },
+  { name: 'Thirsting Blade', levelRequired: 5, pactBoonRequired: 'Pact of the Blade', prerequisiteText: '5th level, Pact of the Blade feature', description: 'You can attack with your pact weapon twice, instead of once, whenever you take the Attack action on your turn.' },
+  { name: 'Visions of Distant Realms', levelRequired: 15, prerequisiteText: '15th level', description: 'You can cast arcane eye at will, without expending a spell slot.' },
+  { name: 'Voice of the Chain Master', levelRequired: 2, pactBoonRequired: 'Pact of the Chain', prerequisiteText: 'Pact of the Chain feature', description: 'You can communicate telepathically with your familiar and perceive through your familiar’s senses as long as you are on the same plane of existence. Additionally, while perceiving through your familiar’s senses, you can also speak through your familiar in your own voice, even if your familiar is normally incapable of speech.' },
+  { name: 'Whispers of the Grave', levelRequired: 9, prerequisiteText: '9th level', description: 'You can cast speak with dead at will, without expending a spell slot.' },
+  { name: 'Witch Sight', levelRequired: 15, prerequisiteText: '15th level', description: 'You can see the true form of any shapechanger or creature concealed by illusion or transmutation magic while the creature is within 30 feet of you and within line of sight.' },
+];
+
+export const WARLOCK_PATRONS: ClassSubclassOption[] = [
+  {
+    name: 'The Archfey',
+    description: "Your patron is a lord or lady of the fey, a creature of legend who holds secrets that were forgotten before the mortal races were born. This being's motivations are often inscrutable, and sometimes whimsical, and might involve a striving for greater magical power or the settling of age-old grudges. Beings of this sort include the Prince of Frost; the Queen of Air and Darkness, ruler of the Gloaming Court; Titania of the Summer Court; her consort Oberon, the Green Lord; Hyrsam, the Prince of Fools; and ancient hags.",
+    bonusSpells: [
+      { level: 1, spells: ['Faerie Fire', 'Sleep'] },
+      { level: 3, spells: ['Calm Emotions', 'Phantasmal Force'] },
+      { level: 5, spells: ['Blink', 'Plant Growth'] },
+      { level: 7, spells: ['Dominate Beast', 'Greater Invisibility'] },
+      { level: 9, spells: ['Dominate Person', 'Seeming'] },
+    ],
+    features: [
+      { level: 1, name: 'Fey Presence', description: 'Your patron bestows upon you the ability to project the beguiling and fearsome presence of the fey. As an action, you can cause each creature in a 10-foot cube originating from you to make a Wisdom saving throw against your warlock spell save DC. The creatures that fail their saving throws are all charmed or frightened by you (your choice) until the end of your next turn. Once you use this feature, you can\'t use it again until you finish a short or long rest.' },
+      { level: 6, name: 'Misty Escape', description: 'You can vanish in a puff of mist in response to harm. When you take damage, you can use your reaction to turn invisible and teleport up to 60 feet to an unoccupied space you can see. You remain invisible until the start of your next turn or until you attack or cast a spell. Once you use this feature, you can\'t use it again until you finish a short or long rest.' },
+      { level: 10, name: 'Beguiling Defenses', description: 'Your patron teaches you how to turn the mind-affecting magic of your enemies against them. You are immune to being charmed, and when another creature attempts to charm you, you can use your reaction to attempt to turn the charm back on that creature. The creature must succeed on a Wisdom saving throw against your warlock spell save DC or be charmed by you for 1 minute or until the creature takes any damage.' },
+      { level: 14, name: 'Dark Delirium', description: 'You can plunge a creature into an illusory realm. As an action, choose a creature that you can see within 60 feet of you. It must make a Wisdom saving throw against your warlock spell save DC. On a failed save, it is charmed or frightened by you (your choice) for 1 minute or until your concentration is broken (as if you are concentrating on a spell). This effect ends early if the creature takes any damage. Until this illusion ends, the creature thinks it is lost in a misty realm, the appearance of which you choose. The creature can see and hear only itself, you, and the illusion. You must finish a short or long rest before you can use this feature again.' },
+    ],
+  },
+  {
+    name: 'The Fiend',
+    description: "You have made a pact with a fiend from the lower planes of existence, a being whose aims are evil, even if you strive against those aims. Such beings desire the corruption or destruction of all things, ultimately including you. Fiends powerful enough to forge a pact include demon lords such as Demogorgon, Orcus, Fraz' Urb-luu, and Baphomet; archdevils such as Asmodeus, Dispater, Mephistopheles, and Belial; pit fiends and balors that are especially mighty; and ultroloths and other lords of the yugoloths.",
+    bonusSpells: [
+      { level: 1, spells: ['Burning Hands', 'Command'] },
+      { level: 3, spells: ['Blindness/Deafness', 'Scorching Ray'] },
+      { level: 5, spells: ['Fireball', 'Stinking Cloud'] },
+      { level: 7, spells: ['Fire Shield', 'Wall of Fire'] },
+      { level: 9, spells: ['Flame Strike', 'Hallow'] },
+    ],
+    features: [
+      { level: 1, name: 'Dark One’s Blessing', description: 'When you reduce a hostile creature to 0 hit points, you gain temporary hit points equal to your Charisma modifier + your warlock level (minimum of 1).' },
+      { level: 6, name: 'Dark One’s Own Luck', description: 'You can call on your patron to alter fate in your favor. When you make an ability check or a saving throw, you can use this feature to add a d10 to your roll. You can do so after seeing the initial roll but before any of the roll\'s effects occur. Once you use this feature, you can\'t use it again until you finish a short or long rest.' },
+      { level: 10, name: 'Fiendish Resilience', description: 'You can choose one damage type when you finish a short or long rest. You gain resistance to that damage type until you choose a different one with this feature. Damage from magical weapons or silver weapons ignores this resistance.' },
+      { level: 14, name: 'Hurl Through Hell', description: 'When you hit a creature with an attack, you can use this feature to instantly transport the target through the lower planes. The creature disappears and hurtles through a nightmare landscape. At the end of your next turn, the target returns to the space it previously occupied, or the nearest unoccupied space. If the target is not a fiend, it takes 10d10 psychic damage as it reels from its horrific experience. Once you use this feature, you can\'t use it again until you finish a long rest.' },
+    ],
+  },
+  {
+    name: 'The Great Old One',
+    description: 'Your patron is a mysterious entity whose nature is utterly foreign to the fabric of reality. It might come from the Far Realm, the space beyond reality, or it could be one of the elder gods known only in legends. Its motives are incomprehensible to mortals, and its knowledge so immense and ancient that even the greatest libraries pale in comparison to the vast secrets it holds. The Great Old One might be unaware of your existence or entirely indifferent to you, but the secrets you have learned allow you to draw your magic from it.\nEntities of this type include Ghaunadar, called That Which Lurks; Tharizdun, the Chained God; Dendar, the Night Serpent; Zargon, the Returner; Great Cthulhu; and other unfathomable beings.',
+    bonusSpells: [
+      { level: 1, spells: ['Dissonant Whispers', "Tasha's Hideous Laughter"] },
+      { level: 3, spells: ['Detect Thoughts', 'Phantasmal Force'] },
+      { level: 5, spells: ['Clairvoyance', 'Sending'] },
+      { level: 7, spells: ['Dominate Beast', "Evard's Black Tentacles"] },
+      { level: 9, spells: ['Dominate Person', 'Telekinesis'] },
+    ],
+    features: [
+      { level: 1, name: 'Awakened Mind', description: 'Your alien knowledge gives you the ability to touch the minds of other creatures. You can communicate telepathically with any creature you can see within 30 feet of you. You don’t need to share a language with the creature for it to understand your telepathic utterances, but the creature must be able to understand at least one language.' },
+      { level: 6, name: 'Entropic Ward', description: 'You learn to magically ward yourself against attack and to turn an enemy’s failed strike into good luck for yourself. When a creature makes an attack roll against you, you can use your reaction to impose disadvantage on that roll. If the attack misses you, your next attack roll against the creature has advantage if you make it before the end of your next turn. Once you use this feature, you can’t use it again until you finish a short or long rest.' },
+      { level: 10, name: 'Thought Shield', description: 'Your thoughts can’t be read by telepathy or other means unless you allow it. You also have resistance to psychic damage, and whenever a creature deals psychic damage to you, it takes the same amount of damage that you do.' },
+      { level: 14, name: 'Create Thrall', description: 'You gain the ability to infect a humanoid’s mind with the alien magic of your patron. You can use your action to touch an incapacitated humanoid. That creature is then charmed by you until a remove curse spell is cast on it, the charmed condition is removed from it, or you use this feature again. You can communicate telepathically with the charmed creature as long as the two of you are on the same plane of existence.' },
+    ],
+  },
+];
 
 export const RANGER_FAVORED_ENEMY_OPTIONS = [
   'Aberrations',
@@ -1568,12 +1682,12 @@ export const CLASS_DATA: ClassData[] = [
       slots: Array(20).fill([0,0,0,0,0,0,0,0,0]),
     },
     features: [
-      { level: 1, name: 'Otherworldly Patron', description: 'You have struck a bargain with an otherworldly being of your choice: the Archfey, the Fiend, or the Great Old One. Your choice grants you features at 1st, 6th, 10th, and 14th level.' },
-      { level: 1, name: 'Pact Magic', description: 'Your arcane research and the magic bestowed on you by your patron have given you facility with spells. You have warlock spell slots that are regained on a short or long rest. All warlock spell slots are the same level (Pact Slot Level), which increases as you level up. You have one pact slot at 1st level, two at 2nd-10th level, three at 11th-16th level, and four at 17th-20th level. Your pact slot level is 1st at 1st-2nd level, 2nd at 3rd-4th level, 3rd at 5th-6th level, 4th at 7th-8th level, and 5th at 9th level and higher.' },
-      { level: 2, name: 'Eldritch Invocations', description: 'In your study of occult lore, you have unearthed eldritch invocations, fragments of forbidden knowledge that imbue you with an abiding magical ability. You gain 2 invocations at level 2. You gain more as you level up (total of 8 by L15).' },
-      { level: 3, name: 'Pact Boon', description: 'Your otherworldly patron bestows a gift upon you for your loyal service. Choose one: Pact of the Chain (familiar), Pact of the Blade (magical weapon), Pact of the Tome (Book of Shadows with 3 cantrips).' },
+      { level: 1, name: 'Otherworldly Patron', description: 'You have struck a bargain with an otherworldly being of your choice: The Archfey, The Fiend, or The Great Old One, each of which is detailed at the end of the class description. Your choice grants you features at 1st level and again at 6th, 10th, and 14th level.' },
+      { level: 1, name: 'Pact Magic', description: 'Your arcane research and the magic bestowed on you by your patron have given you facility with spells. Charisma is your spellcasting ability for your warlock spells.' },
+      { level: 2, name: 'Eldritch Invocations', description: 'In your study of occult lore, you have unearthed eldritch invocations, fragments of forbidden knowledge that imbue you with an abiding magical ability. You gain two eldritch invocations of your choice. Your invocation options are detailed at the end of the class description. Additionally, when you gain a level in this class, you can choose one of the invocations you know and replace it with another invocation that you could learn at that level.' },
+      { level: 3, name: 'Pact Boon', description: 'Your otherworldly patron bestows a gift upon you for your loyal service. You gain one of the following features of your choice: Pact of the Chain, Pact of the Blade, or Pact of the Tome.' },
       { level: 4, name: 'Ability Score Improvement', description: 'You can increase one ability score by 2, or two ability scores by 1 each. Also at levels 8, 12, 16, and 19.' },
-      { level: 11, name: 'Mystic Arcanum', description: 'Your patron bestows upon you a magical secret called an arcanum. Choose one 6th-level spell from the warlock spell list as this arcanum. You can cast it once without expending a spell slot. You must finish a long rest before you can do so again. You gain higher-level arcana at 13th (7th), 15th (8th), and 17th (9th) level.' },
+      { level: 11, name: 'Mystic Arcanum', description: 'Your patron bestows upon you a magical secret called an arcanum. Choose one 6th-level spell from the warlock spell list as this arcanum. You can cast your arcanum spell once without expending a spell slot. You must finish a long rest before you can do so again. At higher levels, you gain more warlock spells of your choice that can be cast in this way: one 7th-level spell at 13th level, one 8th-level spell at 15th level, and one 9th-level spell at 17th level. You regain all uses of your Mystic Arcanum when you finish a long rest.' },
       { level: 20, name: 'Eldritch Master', description: 'You can draw on your inner reserve of mystical power while entreating your patron to regain expended spell slots. You can spend 1 minute entreating your patron for aid to regain all your expended spell slots from your Pact Magic feature. Once you regain spell slots with this feature, you must finish a long rest before you can do so again.' },
     ],
   },
@@ -1949,6 +2063,27 @@ function expandFeature(feature: ClassFeature): ClassFeature[] {
     ];
   }
 
+  if (feature.name === 'Eldritch Invocations') {
+    return [
+      { level: 2, name: 'Eldritch Invocations', description: 'Choose two eldritch invocations.' },
+      { level: 5, name: 'Eldritch Invocations', description: 'You learn one additional eldritch invocation.' },
+      { level: 7, name: 'Eldritch Invocations', description: 'You learn one additional eldritch invocation.' },
+      { level: 9, name: 'Eldritch Invocations', description: 'You learn one additional eldritch invocation.' },
+      { level: 12, name: 'Eldritch Invocations', description: 'You learn one additional eldritch invocation.' },
+      { level: 15, name: 'Eldritch Invocations', description: 'You learn one additional eldritch invocation.' },
+      { level: 18, name: 'Eldritch Invocations', description: 'You learn one additional eldritch invocation.' },
+    ];
+  }
+
+  if (feature.name === 'Mystic Arcanum') {
+    return [
+      { level: 11, name: 'Mystic Arcanum (6th level)', description: 'Choose one 6th-level warlock spell. You can cast it once without expending a spell slot, and you regain the use when you finish a long rest.' },
+      { level: 13, name: 'Mystic Arcanum (7th level)', description: 'Choose one 7th-level warlock spell. You can cast it once without expending a spell slot, and you regain the use when you finish a long rest.' },
+      { level: 15, name: 'Mystic Arcanum (8th level)', description: 'Choose one 8th-level warlock spell. You can cast it once without expending a spell slot, and you regain the use when you finish a long rest.' },
+      { level: 17, name: 'Mystic Arcanum (9th level)', description: 'Choose one 9th-level warlock spell. You can cast it once without expending a spell slot, and you regain the use when you finish a long rest.' },
+    ];
+  }
+
   return [feature];
 }
 
@@ -1966,6 +2101,7 @@ export function getClassFeatureTimeline(
     rangerArchetype?: string;
     rogueArchetype?: string;
     sorcerousOrigin?: string;
+    warlockPatron?: string;
     monkTradition?: string;
     paladinOath?: string;
   }
@@ -2005,6 +2141,8 @@ export function getClassFeatureTimeline(
       ? ROGUE_ARCHETYPES.find(archetype => archetype.name === options.rogueArchetype)?.features ?? []
       : className === 'Sorcerer' && options?.sorcerousOrigin
       ? SORCEROUS_ORIGINS.find(origin => origin.name === options.sorcerousOrigin)?.features ?? []
+      : className === 'Warlock' && options?.warlockPatron
+      ? WARLOCK_PATRONS.find(patron => patron.name === options.warlockPatron)?.features ?? []
       : className === 'Monk' && options?.monkTradition
       ? MONK_TRADITIONS.find(tradition => tradition.name === options.monkTradition)?.features ?? []
       : className === 'Paladin' && options?.paladinOath
@@ -2034,6 +2172,7 @@ export function getFeaturesUpToLevel(
     rangerArchetype?: string;
     rogueArchetype?: string;
     sorcerousOrigin?: string;
+    warlockPatron?: string;
     monkTradition?: string;
     paladinOath?: string;
   }

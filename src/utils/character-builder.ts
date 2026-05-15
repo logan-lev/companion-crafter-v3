@@ -11,6 +11,7 @@ import {
   RANGER_ARCHETYPES,
   ROGUE_ARCHETYPES,
   SORCEROUS_ORIGINS,
+  WARLOCK_PATRONS,
   getEffectiveSpellcasting,
   getFeaturesUpToLevel,
   getSlotsAtLevel,
@@ -149,6 +150,10 @@ export function getAllSkillProficiencies(state: WizardState): string[] {
   const race = getSelectedRace(state);
   const subrace = getSelectedSubrace(state);
   const background = getSelectedBackground(state);
+  const warlockInvocationSkills =
+    state.className === 'Warlock' && state.warlockInvocations.includes('Beguiling Influence')
+      ? ['Deception', 'Persuasion']
+      : [];
 
   return unique([
     ...(state.classSkillChoices ?? []),
@@ -159,6 +164,7 @@ export function getAllSkillProficiencies(state: WizardState): string[] {
     ...(state.bardLoreSkillChoices ?? []),
     ...(state.clericKnowledgeSkillChoices ?? []),
     ...(state.clericNatureSkillChoice ? [state.clericNatureSkillChoice] : []),
+    ...warlockInvocationSkills,
   ]);
 }
 
@@ -226,6 +232,7 @@ export function getTraitEntries(state: WizardState): string[] {
         rangerArchetype: state.rangerArchetype,
         rogueArchetype: state.rogueArchetype,
         sorcerousOrigin: state.sorcerousOrigin,
+        warlockPatron: state.warlockPatron,
         monkTradition: state.monkTradition,
         paladinOath: state.paladinOath,
       })
@@ -312,6 +319,25 @@ export function getTraitEntries(state: WizardState): string[] {
   if (state.className === 'Sorcerer' && state.sorcererMetamagicChoices.length) {
     entries.push(`Metamagic: You chose ${state.sorcererMetamagicChoices.join(', ')}.`);
   }
+  if (state.className === 'Warlock' && state.warlockPatron) {
+    const patron = WARLOCK_PATRONS.find(option => option.name === state.warlockPatron);
+    if (patron) entries.push(`Otherworldly Patron: You chose ${patron.name}.`);
+  }
+  if (state.className === 'Warlock' && state.warlockPactBoon) {
+    entries.push(`Pact Boon: You chose ${state.warlockPactBoon}.`);
+  }
+  if (state.className === 'Warlock' && state.warlockChainFamiliarForm) {
+    entries.push(`Pact of the Chain Familiar: You chose ${state.warlockChainFamiliarForm}.`);
+  }
+  if (state.className === 'Warlock' && state.warlockTomeCantrips.length) {
+    entries.push(`Pact of the Tome Cantrips: You chose ${state.warlockTomeCantrips.join(', ')}.`);
+  }
+  if (state.className === 'Warlock' && state.warlockInvocations.length) {
+    entries.push(`Eldritch Invocations: You chose ${state.warlockInvocations.join(', ')}.`);
+  }
+  if (state.className === 'Warlock' && state.warlockMysticArcanumChoices.length) {
+    entries.push(`Mystic Arcanum: You chose ${state.warlockMysticArcanumChoices.join(', ')}.`);
+  }
   if (state.className === 'Rogue' && state.rogueExpertiseChoices.length) {
     entries.push(`Expertise: You chose ${state.rogueExpertiseChoices.join(', ')}.`);
   }
@@ -391,6 +417,7 @@ export function getFutureClassFeatures(state: WizardState): ClassFeature[] {
     rangerArchetype: state.rangerArchetype,
     rogueArchetype: state.rogueArchetype,
     sorcerousOrigin: state.sorcerousOrigin,
+    warlockPatron: state.warlockPatron,
     monkTradition: state.monkTradition,
     paladinOath: state.paladinOath,
   })
@@ -512,6 +539,8 @@ function getExtraSpellNames(state: WizardState): string[] {
   if (state.className === 'Rogue' && state.rogueArchetype === 'Arcane Trickster' && state.level >= 3) names.push('Mage Hand');
   names.push(...(state.bardMagicalSecretChoices ?? []));
   names.push(...(state.bardAdditionalMagicalSecretChoices ?? []));
+  names.push(...(state.className === 'Warlock' ? state.warlockTomeCantrips ?? [] : []));
+  names.push(...(state.className === 'Warlock' ? state.warlockMysticArcanumChoices ?? [] : []));
 
   return unique(names);
 }
