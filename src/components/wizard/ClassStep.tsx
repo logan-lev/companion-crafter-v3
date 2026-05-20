@@ -22,6 +22,7 @@ import {
   RANGER_FAVORED_TERRAINS,
   RANGER_HUMANOID_RACE_OPTIONS,
   ROGUE_ARCHETYPES,
+  WIZARD_TRADITIONS,
   WARLOCK_PACT_LEVEL,
   WARLOCK_PACT_SLOTS,
   WARLOCK_ELDRITCH_INVOCATIONS,
@@ -670,6 +671,21 @@ function getCombinedFeatureEffects(
       });
     }
 
+    if (feature.name === 'Spell Resistance') {
+      resistances.push({
+        label: 'Damage from spells',
+      });
+      advantages.push({
+        label: 'Saving throws against spells',
+      });
+    }
+
+    if (feature.name === 'Inured to Undeath') {
+      resistances.push({
+        label: 'Necrotic damage',
+      });
+    }
+
     if (feature.name === 'Favored Enemy' || feature.name === 'Favored Enemy (Additional Choice)') {
       const favoredEnemies = state?.rangerFavoredEnemyChoices?.filter(Boolean) ?? [];
       if (favoredEnemies.length) {
@@ -828,6 +844,16 @@ function isSorcerousOriginFeature(feature: ClassFeature): boolean {
   );
 }
 
+function isWizardTraditionFeature(feature: ClassFeature): boolean {
+  return WIZARD_TRADITIONS.some(tradition =>
+    tradition.features.some(
+      traditionFeature =>
+        traditionFeature.name === feature.name ||
+        feature.name.startsWith(`${traditionFeature.name} (`)
+    )
+  );
+}
+
 function isWarlockPatronFeature(feature: ClassFeature): boolean {
   return WARLOCK_PATRONS.some(patron =>
     patron.features.some(
@@ -878,6 +904,10 @@ export default function ClassStep({ state, onChange }: Props) {
       rangerSuperiorDefenseChoice: '',
       rogueArchetype: '',
       rogueExpertiseChoices: [],
+      wizardTradition: '',
+      wizardImprovedMinorIllusionCantrip: '',
+      wizardSpellMasteryChoices: [],
+      wizardSignatureSpells: [],
       sorcerousOrigin: '',
       sorcererDragonAncestor: '',
       sorcererMetamagicChoices: [],
@@ -977,6 +1007,16 @@ export default function ClassStep({ state, onChange }: Props) {
           ? 2
           : 0
         : 0;
+    const nextWizardTradition =
+      state.className === 'Wizard' && nextLevel >= 2 ? state.wizardTradition : '';
+    const nextWizardImprovedMinorIllusionCantrip =
+      state.className === 'Wizard' && nextLevel >= 2 && nextWizardTradition === 'School of Illusion'
+        ? state.wizardImprovedMinorIllusionCantrip
+        : '';
+    const nextWizardSpellMasteryChoices =
+      state.className === 'Wizard' && nextLevel >= 18 ? state.wizardSpellMasteryChoices.slice(0, 2) : [];
+    const nextWizardSignatureSpells =
+      state.className === 'Wizard' && nextLevel >= 20 ? state.wizardSignatureSpells.slice(0, 2) : [];
     const nextWarlockInvocationLimit =
       state.className === 'Warlock' ? getWarlockInvocationLimit(nextLevel) : 0;
     const nextWarlockMysticArcanumCount =
@@ -1047,6 +1087,10 @@ export default function ClassStep({ state, onChange }: Props) {
         state.className === 'Rogue' && nextLevel >= 3 ? state.rogueArchetype : '',
       rogueExpertiseChoices:
         state.className === 'Rogue' ? state.rogueExpertiseChoices.slice(0, nextRogueExpertiseAllowed) : [],
+      wizardTradition: nextWizardTradition,
+      wizardImprovedMinorIllusionCantrip: nextWizardImprovedMinorIllusionCantrip,
+      wizardSpellMasteryChoices: nextWizardSpellMasteryChoices,
+      wizardSignatureSpells: nextWizardSignatureSpells,
       sorcerousOrigin:
         state.className === 'Sorcerer' ? state.sorcerousOrigin : '',
       sorcererDragonAncestor:
@@ -1092,6 +1136,9 @@ export default function ClassStep({ state, onChange }: Props) {
             rangerArchetype: '',
             rogueArchetype: '',
             rogueExpertiseChoices: [],
+            wizardTradition: state.className === 'Wizard' && nextLevel >= 2 ? state.wizardTradition : '',
+            wizardSpellMasteryChoices: nextWizardSpellMasteryChoices,
+            wizardSignatureSpells: nextWizardSignatureSpells,
             sorcerousOrigin: state.className === 'Sorcerer' ? state.sorcerousOrigin : '',
             sorcererDragonAncestor:
               state.className === 'Sorcerer' && state.sorcerousOrigin === 'Draconic Bloodline'
@@ -1277,6 +1324,33 @@ export default function ClassStep({ state, onChange }: Props) {
     }
   };
 
+  const chooseWizardSpellMastery = (slotIndex: 0 | 1, spellName: string) => {
+    if (state.className !== 'Wizard') return;
+    const next = [...state.wizardSpellMasteryChoices];
+    next[slotIndex] = next[slotIndex] === spellName ? '' : spellName;
+    onChange({
+      wizardSpellMasteryChoices: next,
+    });
+  };
+
+  const chooseWizardImprovedMinorIllusionCantrip = (spellName: string) => {
+    if (state.className !== 'Wizard') return;
+    onChange({
+      wizardImprovedMinorIllusionCantrip:
+        state.wizardImprovedMinorIllusionCantrip === spellName ? '' : spellName,
+    });
+  };
+
+  const toggleWizardSignatureSpell = (spellName: string) => {
+    if (state.className !== 'Wizard') return;
+    const current = state.wizardSignatureSpells;
+    if (current.includes(spellName)) {
+      onChange({ wizardSignatureSpells: current.filter(name => name !== spellName) });
+    } else if (current.length < 2) {
+      onChange({ wizardSignatureSpells: [...current, spellName] });
+    }
+  };
+
   const toggleSorcererMetamagic = (name: string) => {
     if (state.className !== 'Sorcerer') return;
     const current = state.sorcererMetamagicChoices;
@@ -1361,7 +1435,19 @@ export default function ClassStep({ state, onChange }: Props) {
   };
 
   const clearCantripsInGroup = (spellNames: string[]) => {
-    onChange({ selectedCantrips: state.selectedCantrips.filter(name => !spellNames.includes(name)) });
+    const nextSelectedCantrips = state.selectedCantrips.filter(name => !spellNames.includes(name));
+    onChange({
+      selectedCantrips: nextSelectedCantrips,
+      wizardImprovedMinorIllusionCantrip:
+        state.className === 'Wizard' &&
+        state.wizardTradition === 'School of Illusion' &&
+        spellNames.includes('Minor Illusion') &&
+        !nextSelectedCantrips.includes('Minor Illusion') &&
+        state.highElfCantrip !== 'Minor Illusion' &&
+        !(state.race === 'Gnome' && state.subrace === 'Forest Gnome')
+          ? ''
+          : state.wizardImprovedMinorIllusionCantrip,
+    });
   };
 
   const clearClassSpellsInGroup = (spellNames: string[]) => {
@@ -1382,6 +1468,14 @@ export default function ClassStep({ state, onChange }: Props) {
       const nextSelectedCantrips = current.filter(item => item !== name);
       onChange({
         selectedCantrips: nextSelectedCantrips,
+        wizardImprovedMinorIllusionCantrip:
+          state.className === 'Wizard' &&
+          state.wizardTradition === 'School of Illusion' &&
+          name === 'Minor Illusion' &&
+          state.highElfCantrip !== 'Minor Illusion' &&
+          !(state.race === 'Gnome' && state.subrace === 'Forest Gnome')
+            ? ''
+            : state.wizardImprovedMinorIllusionCantrip,
         warlockInvocations:
           state.className === 'Warlock'
             ? getValidWarlockInvocations(state.warlockInvocations, level, state.warlockPactBoon, nextSelectedCantrips).slice(
@@ -1471,16 +1565,17 @@ export default function ClassStep({ state, onChange }: Props) {
         barbarianAspectSpirit: state.barbarianAspectSpirit,
         barbarianAttunementSpirit: state.barbarianAttunementSpirit,
         bardCollege: state.bardCollege,
-      clericDomain: state.clericDomain,
-      druidCircle: state.druidCircle,
-      fighterArchetype: state.fighterArchetype,
-      rangerArchetype: state.rangerArchetype,
-      rogueArchetype: state.rogueArchetype,
-      sorcerousOrigin: state.sorcerousOrigin,
-      warlockPatron: state.warlockPatron,
-      monkTradition: state.monkTradition,
-      paladinOath: state.paladinOath,
-    })
+        clericDomain: state.clericDomain,
+        druidCircle: state.druidCircle,
+        fighterArchetype: state.fighterArchetype,
+        rangerArchetype: state.rangerArchetype,
+        rogueArchetype: state.rogueArchetype,
+        wizardTradition: state.wizardTradition,
+        sorcerousOrigin: state.sorcerousOrigin,
+        warlockPatron: state.warlockPatron,
+        monkTradition: state.monkTradition,
+        paladinOath: state.paladinOath,
+      })
     : [];
   const baseFeatures = features.filter(
     feature =>
@@ -1492,6 +1587,7 @@ export default function ClassStep({ state, onChange }: Props) {
       !isFighterArchetypeFeature(feature) &&
       !isRangerArchetypeFeature(feature) &&
       !isRogueArchetypeFeature(feature) &&
+      !isWizardTraditionFeature(feature) &&
       !isSorcerousOriginFeature(feature) &&
       !isWarlockPatronFeature(feature) &&
       !isMonkTraditionFeature(feature) &&
@@ -1505,6 +1601,7 @@ export default function ClassStep({ state, onChange }: Props) {
   const selectedFighterArchetype = FIGHTER_ARCHETYPES.find(archetype => archetype.name === state.fighterArchetype);
   const selectedRangerArchetype = RANGER_ARCHETYPES.find(archetype => archetype.name === state.rangerArchetype);
   const selectedRogueArchetype = ROGUE_ARCHETYPES.find(archetype => archetype.name === state.rogueArchetype);
+  const selectedWizardTradition = WIZARD_TRADITIONS.find(tradition => tradition.name === state.wizardTradition);
   const selectedSorcerousOrigin = SORCEROUS_ORIGINS.find(origin => origin.name === state.sorcerousOrigin);
   const selectedWarlockPatron = WARLOCK_PATRONS.find(patron => patron.name === state.warlockPatron);
   const selectedMonkTradition = MONK_TRADITIONS.find(tradition => tradition.name === state.monkTradition);
@@ -1535,6 +1632,7 @@ export default function ClassStep({ state, onChange }: Props) {
   const fighterArchetypeFeatures = selectedFighterArchetype?.features ?? [];
   const rangerArchetypeFeatures = selectedRangerArchetype?.features ?? [];
   const rogueArchetypeFeatures = selectedRogueArchetype?.features ?? [];
+  const wizardTraditionFeatures = selectedWizardTradition?.features ?? [];
   const sorcerousOriginFeatures = selectedSorcerousOrigin?.features ?? [];
   const warlockPatronFeatures = selectedWarlockPatron?.features ?? [];
   const monkTraditionFeatures = selectedMonkTradition?.features ?? [];
@@ -1777,6 +1875,56 @@ export default function ClassStep({ state, onChange }: Props) {
         )
       : [];
   const classLevelSpellOptions = classSpellOptions.filter(spell => spell.level > 0 && spell.level <= Math.max(1, maxSpellLevel));
+  const wizardSpellMasteryLevel1Options =
+    previewClass?.name === 'Wizard'
+      ? classSpellOptions.filter(spell => spell.level === 1)
+      : [];
+  const wizardKnowsMinorIllusionAlready =
+    previewClass?.name === 'Wizard' &&
+    (state.selectedCantrips.includes('Minor Illusion') ||
+      state.highElfCantrip === 'Minor Illusion' ||
+      (state.race === 'Gnome' && state.subrace === 'Forest Gnome'));
+  const wizardKnownCantripNames = new Set(
+    [
+      ...state.selectedCantrips,
+      state.highElfCantrip,
+      state.race === 'Gnome' && state.subrace === 'Forest Gnome' ? 'Minor Illusion' : '',
+      state.race === 'Tiefling' ? 'Thaumaturgy' : '',
+      state.race === 'Elf' && state.subrace === 'Dark Elf (Drow)' ? 'Dancing Lights' : '',
+    ].filter(Boolean)
+  );
+  const wizardImprovedMinorIllusionOptions =
+    previewClass?.name === 'Wizard'
+      ? classCantripOptions.filter(
+          spell =>
+            spell.name !== 'Minor Illusion' &&
+            (!wizardKnownCantripNames.has(spell.name) || state.wizardImprovedMinorIllusionCantrip === spell.name)
+        )
+      : [];
+  const wizardImprovedMinorIllusionDetails =
+    previewClass?.name === 'Wizard' && state.wizardImprovedMinorIllusionCantrip
+      ? SPELL_LIST.filter(spell => spell.name === state.wizardImprovedMinorIllusionCantrip)
+      : [];
+  const wizardSpellMasteryLevel2Options =
+    previewClass?.name === 'Wizard'
+      ? classSpellOptions.filter(spell => spell.level === 2)
+      : [];
+  const wizardSignatureSpellOptions =
+    previewClass?.name === 'Wizard'
+      ? classSpellOptions.filter(spell => spell.level === 3)
+      : [];
+  const wizardSpellMasteryDetails =
+    previewClass?.name === 'Wizard'
+      ? state.wizardSpellMasteryChoices
+          .map(name => SPELL_LIST.find(spell => spell.name === name))
+          .filter((spell): spell is (typeof SPELL_LIST)[number] => Boolean(spell))
+      : [];
+  const wizardSignatureSpellDetails =
+    previewClass?.name === 'Wizard'
+      ? state.wizardSignatureSpells
+          .map(name => SPELL_LIST.find(spell => spell.name === name))
+          .filter((spell): spell is (typeof SPELL_LIST)[number] => Boolean(spell))
+      : [];
   const eldritchKnightFreeSchoolChoices =
     previewClass?.name === 'Fighter' && state.fighterArchetype === 'Eldritch Knight'
       ? [8, 14, 20].filter(levelValue => level >= levelValue).length
@@ -3319,6 +3467,44 @@ export default function ClassStep({ state, onChange }: Props) {
                 </div>
               )}
 
+              {previewClass.name === 'Wizard' && (
+                <div className="section-box border-[var(--color-border-strong)] bg-[var(--color-surface-pop)]">
+                  <div className="section-title">Your Spellbook</div>
+                  <div className="space-y-4 text-[0.98rem] leading-7 text-[var(--color-text-soft)]">
+                    <p>
+                      The spells that you add to your spellbook as you gain levels reflect the arcane research you conduct on your own, as well as intellectual breakthroughs you have had about the nature of the multiverse. You might find other spells during your adventures. You could discover a spell recorded on a scroll in an evil wizard&apos;s chest, for example, or in a dusty tome in an ancient library.
+                    </p>
+                    <div>
+                      <div className="font-bold italic text-[var(--color-text-strong)]">Copying a Spell into the Book.</div>
+                      <p>
+                        When you find a wizard spell of 1st level or higher, you can add it to your spellbook if it is of a level for which you have spell slots and if you can spare the time to decipher and copy it.
+                      </p>
+                      <p className="mt-2">
+                        Copying a spell into your spellbook involves reproducing the basic form of the spell, then deciphering the unique system of notation used by the wizard who wrote it. You must practice the spell until you understand the sounds or gestures required, then transcribe it into your spellbook using your own notation.
+                      </p>
+                      <p className="mt-2">
+                        For each level of the spell, the process takes 2 hours and costs 50 gp. The cost represents material components you expend as you experiment with the spell to master it, as well as the fine inks you need to record it. Once you have spent this time and money, you can prepare the spell just like your other spells.
+                      </p>
+                    </div>
+                    <div>
+                      <div className="font-bold italic text-[var(--color-text-strong)]">Replacing the Book.</div>
+                      <p>
+                        You can copy a spell from your own spellbook into another book, for example if you want to make a backup copy of your spellbook. This is just like copying a new spell into your spellbook, but faster and easier, since you understand your own notation and already know how to cast the spell. You need spend only 1 hour and 10 gp for each level of the copied spell.
+                      </p>
+                      <p className="mt-2">
+                        If you lose your spellbook, you can use the same procedure to transcribe the spells that you have prepared into a new spellbook. Filling out the remainder of your spellbook requires you to find new spells to do so, as normal. For this reason, many wizards keep backup spellbooks in a safe place.
+                      </p>
+                    </div>
+                    <div>
+                      <div className="font-bold italic text-[var(--color-text-strong)]">The Book&apos;s Appearance.</div>
+                      <p>
+                        Your spellbook is a unique compilation of spells, with its own decorative flourishes and margin notes. It might be a plain, functional leather volume that you received as a gift from your master, a finely bound gilt-edged tome you found in an ancient library, or even a loose collection of notes scrounged together after you lost your previous spellbook in a mishap.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div>
                 <div className="mb-2 field-label">Class Features</div>
                 <div className="flex flex-col gap-2">
@@ -3715,6 +3901,226 @@ export default function ClassStep({ state, onChange }: Props) {
                           <div className="text-sm leading-6 text-[var(--color-text)]">
                             Disguise Kit · Poisoner&apos;s Kit
                           </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {previewClass.name === 'Wizard' && (
+                <div className="space-y-4">
+                  <div className="section-box border-[var(--color-border-muted)] bg-[var(--color-surface-3)]">
+                    <div className="section-title">Choose Arcane Tradition</div>
+                    {level < 2 && (
+                      <div className="mb-3 text-sm leading-6 text-[var(--color-text-soft)]">
+                        Arcane Tradition unlocks at level 2. You can choose one now to preview its future features.
+                      </div>
+                    )}
+                    <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
+                      {WIZARD_TRADITIONS.map(tradition => {
+                        const selected = state.wizardTradition === tradition.name;
+                        return (
+                          <button
+                            key={tradition.name}
+                            onClick={() =>
+                              onChange({
+                                wizardTradition: tradition.name,
+                                wizardImprovedMinorIllusionCantrip:
+                                  tradition.name === 'School of Illusion' ? state.wizardImprovedMinorIllusionCantrip : '',
+                              })
+                            }
+                            className={`rounded border p-3 text-left transition-all ${
+                              selected
+                                ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)]'
+                                : 'border-[var(--color-accent)] bg-[var(--color-surface-3)] hover:bg-[var(--color-hover)]'
+                            }`}
+                          >
+                            <div className="text-sm font-bold text-[var(--color-text-strong)]">{tradition.name}</div>
+                            <div className="mt-2 text-sm leading-6 text-[var(--color-text-soft)]">{tradition.description}</div>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {selectedWizardTradition && (
+                      <>
+                        <div className="mt-4">
+                          <div className="section-title">Arcane Tradition Features</div>
+                          <div className="flex flex-col gap-2">
+                            {wizardTraditionFeatures.map((feature, i) => {
+                              const unlocked = feature.level <= level;
+                              return (
+                                <div
+                                  key={`${feature.level}-${feature.name}-wizard-tradition-${i}`}
+                                  className={`border-l-2 pl-3 ${unlocked ? 'border-[var(--color-accent)]' : 'border-[var(--color-border-faint)]'}`}
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <span className={`rounded border px-2 py-0.5 text-[0.8rem] font-bold ${unlocked ? 'border-[var(--color-accent)] text-[var(--color-text-strong)]' : 'border-[var(--color-border-faint)] text-[var(--color-text-dim)]'}`}>
+                                      Level {feature.level}
+                                    </span>
+                                    <span className={`text-base font-bold ${unlocked ? 'text-[var(--color-text-strong)]' : 'text-[var(--color-text-muted)]'}`}>{feature.name}</span>
+                                  </div>
+                                  {renderFeatureDescription(feature, unlocked)}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {selectedWizardTradition.name === 'School of Illusion' && level >= 2 && wizardKnowsMinorIllusionAlready && (
+                          <div className="mt-4">
+                            <div className="section-title">Improved Minor Illusion Bonus Cantrip</div>
+                            <div className="mb-3 text-sm leading-6 text-[var(--color-text-soft)]">
+                              You already know <span className="font-semibold text-[var(--color-text-strong)]">Minor Illusion</span>, so choose a different wizard cantrip.
+                            </div>
+                            <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
+                              {wizardImprovedMinorIllusionOptions.map(spell => {
+                                const selected = state.wizardImprovedMinorIllusionCantrip === spell.name;
+                                return (
+                                  <button
+                                    key={`wizard-improved-minor-illusion-${spell.name}`}
+                                    onClick={() => chooseWizardImprovedMinorIllusionCantrip(spell.name)}
+                                    className={`rounded border p-3 text-left transition-all ${
+                                      selected
+                                        ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)]'
+                                        : 'border-[var(--color-accent)] bg-[var(--color-surface-3)] hover:bg-[var(--color-hover)]'
+                                    }`}
+                                  >
+                                    <div className="text-sm font-bold text-[var(--color-text-strong)]">{spell.name}</div>
+                                    <div className="mt-1 text-[0.68rem] uppercase tracking-wide text-[var(--color-accent)]">
+                                      {spell.school} · {spell.duration}
+                                    </div>
+                                  </button>
+                                );
+                              })}
+                            </div>
+
+                            {wizardImprovedMinorIllusionDetails.length > 0 && (
+                              <div className="mt-4">
+                                {renderCollapsibleSpellDetails(
+                                  'wizard-improved-minor-illusion',
+                                  wizardImprovedMinorIllusionDetails,
+                                  'Improved Minor Illusion Bonus Cantrip'
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+
+                  {level >= 18 && (
+                    <div className="section-box border-[var(--color-border-muted)] bg-[var(--color-surface-3)]">
+                      <div className="section-title">Choose Spell Mastery</div>
+                      <div className="mb-3 text-sm leading-6 text-[var(--color-text-soft)]">
+                        Choose one 1st-level wizard spell and one 2nd-level wizard spell for Spell Mastery.
+                      </div>
+
+                      <div>
+                        <div className="mb-2 text-sm font-bold text-[var(--color-text-strong)]">1st-Level Spell</div>
+                        <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
+                          {wizardSpellMasteryLevel1Options.map(spell => {
+                            const selected = state.wizardSpellMasteryChoices[0] === spell.name;
+                            return (
+                              <button
+                                key={`wizard-spell-mastery-1-${spell.name}`}
+                                onClick={() => chooseWizardSpellMastery(0, spell.name)}
+                                className={`rounded border p-3 text-left transition-all ${
+                                  selected
+                                    ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)]'
+                                    : 'border-[var(--color-accent)] bg-[var(--color-surface-3)] hover:bg-[var(--color-hover)]'
+                                }`}
+                              >
+                                <div className="text-sm font-bold text-[var(--color-text-strong)]">{spell.name}</div>
+                                <div className="mt-1 text-[0.68rem] uppercase tracking-wide text-[var(--color-accent)]">
+                                  {spell.school} · {spell.duration}
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div className="mt-4">
+                        <div className="mb-2 text-sm font-bold text-[var(--color-text-strong)]">2nd-Level Spell</div>
+                        <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
+                          {wizardSpellMasteryLevel2Options.map(spell => {
+                            const selected = state.wizardSpellMasteryChoices[1] === spell.name;
+                            return (
+                              <button
+                                key={`wizard-spell-mastery-2-${spell.name}`}
+                                onClick={() => chooseWizardSpellMastery(1, spell.name)}
+                                className={`rounded border p-3 text-left transition-all ${
+                                  selected
+                                    ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)]'
+                                    : 'border-[var(--color-accent)] bg-[var(--color-surface-3)] hover:bg-[var(--color-hover)]'
+                                }`}
+                              >
+                                <div className="text-sm font-bold text-[var(--color-text-strong)]">{spell.name}</div>
+                                <div className="mt-1 text-[0.68rem] uppercase tracking-wide text-[var(--color-accent)]">
+                                  {spell.school} · {spell.duration}
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {wizardSpellMasteryDetails.length > 0 && (
+                        <div className="mt-4">
+                          {renderCollapsibleSpellDetails(
+                            'wizard-spell-mastery',
+                            wizardSpellMasteryDetails,
+                            'Spell Mastery Choices'
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {level >= 20 && (
+                    <div className="section-box border-[var(--color-border-muted)] bg-[var(--color-surface-3)]">
+                      <div className="section-title">
+                        Signature Spells ({state.wizardSignatureSpells.length}/2)
+                      </div>
+                      <div className="mb-3 text-sm leading-6 text-[var(--color-text-soft)]">
+                        Choose two 3rd-level wizard spells as your signature spells.
+                      </div>
+                      <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
+                        {wizardSignatureSpellOptions.map(spell => {
+                          const selected = state.wizardSignatureSpells.includes(spell.name);
+                          const canAdd = selected || state.wizardSignatureSpells.length < 2;
+                          return (
+                            <button
+                              key={`wizard-signature-${spell.name}`}
+                              onClick={() => toggleWizardSignatureSpell(spell.name)}
+                              disabled={!canAdd}
+                              className={`rounded border p-3 text-left transition-all ${
+                                selected
+                                  ? 'border-[var(--color-text-strong)] bg-[var(--color-selected)]'
+                                  : canAdd
+                                  ? 'border-[var(--color-accent)] bg-[var(--color-surface-3)] hover:bg-[var(--color-hover)]'
+                                  : 'cursor-not-allowed border-[var(--color-border-subtle)] text-[var(--color-text-dim)]'
+                              }`}
+                            >
+                              <div className="text-sm font-bold text-[var(--color-text-strong)]">{spell.name}</div>
+                              <div className="mt-1 text-[0.68rem] uppercase tracking-wide text-[var(--color-accent)]">
+                                {spell.school} · {spell.duration}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {wizardSignatureSpellDetails.length > 0 && (
+                        <div className="mt-4">
+                          {renderCollapsibleSpellDetails(
+                            'wizard-signature-spells',
+                            wizardSignatureSpellDetails,
+                            'Signature Spell Choices'
+                          )}
                         </div>
                       )}
                     </div>

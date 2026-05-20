@@ -12,6 +12,7 @@ import {
   ROGUE_ARCHETYPES,
   SORCEROUS_ORIGINS,
   WARLOCK_PATRONS,
+  WIZARD_TRADITIONS,
   getEffectiveSpellcasting,
   getFeaturesUpToLevel,
   getSlotsAtLevel,
@@ -231,6 +232,7 @@ export function getTraitEntries(state: WizardState): string[] {
         fighterArchetype: state.fighterArchetype,
         rangerArchetype: state.rangerArchetype,
         rogueArchetype: state.rogueArchetype,
+        wizardTradition: state.wizardTradition,
         sorcerousOrigin: state.sorcerousOrigin,
         warlockPatron: state.warlockPatron,
         monkTradition: state.monkTradition,
@@ -308,6 +310,21 @@ export function getTraitEntries(state: WizardState): string[] {
   if (state.rogueArchetype) {
     const archetype = ROGUE_ARCHETYPES.find(option => option.name === state.rogueArchetype);
     if (archetype) entries.push(`Roguish Archetype: You chose ${archetype.name}.`);
+  }
+  if (state.wizardTradition) {
+    const tradition = WIZARD_TRADITIONS.find(option => option.name === state.wizardTradition);
+    if (tradition) entries.push(`Arcane Tradition: You chose ${tradition.name}.`);
+  }
+  const wizardSpellMasteryChoices = (state.wizardSpellMasteryChoices ?? []).filter(Boolean);
+  if (state.className === 'Wizard' && wizardSpellMasteryChoices.length) {
+    entries.push(`Spell Mastery: You chose ${wizardSpellMasteryChoices.join(' and ')}.`);
+  }
+  if (state.className === 'Wizard' && state.wizardImprovedMinorIllusionCantrip) {
+    entries.push(`Improved Minor Illusion Bonus Cantrip: You learned ${state.wizardImprovedMinorIllusionCantrip}.`);
+  }
+  const wizardSignatureSpells = (state.wizardSignatureSpells ?? []).filter(Boolean);
+  if (state.className === 'Wizard' && wizardSignatureSpells.length) {
+    entries.push(`Signature Spells: You chose ${wizardSignatureSpells.join(' and ')}.`);
   }
   if (state.sorcerousOrigin) {
     const origin = SORCEROUS_ORIGINS.find(option => option.name === state.sorcerousOrigin);
@@ -416,6 +433,7 @@ export function getFutureClassFeatures(state: WizardState): ClassFeature[] {
     fighterArchetype: state.fighterArchetype,
     rangerArchetype: state.rangerArchetype,
     rogueArchetype: state.rogueArchetype,
+    wizardTradition: state.wizardTradition,
     sorcerousOrigin: state.sorcerousOrigin,
     warlockPatron: state.warlockPatron,
     monkTradition: state.monkTradition,
@@ -537,10 +555,13 @@ function getExtraSpellNames(state: WizardState): string[] {
   if (state.className === 'Cleric' && state.clericNatureCantrip) names.push(state.clericNatureCantrip);
   if (state.className === 'Druid' && state.druidLandCantrip) names.push(state.druidLandCantrip);
   if (state.className === 'Rogue' && state.rogueArchetype === 'Arcane Trickster' && state.level >= 3) names.push('Mage Hand');
+  if (state.className === 'Wizard' && state.wizardImprovedMinorIllusionCantrip) names.push(state.wizardImprovedMinorIllusionCantrip);
   names.push(...(state.bardMagicalSecretChoices ?? []));
   names.push(...(state.bardAdditionalMagicalSecretChoices ?? []));
   names.push(...(state.className === 'Warlock' ? state.warlockTomeCantrips ?? [] : []));
   names.push(...(state.className === 'Warlock' ? state.warlockMysticArcanumChoices ?? [] : []));
+  names.push(...(state.className === 'Wizard' ? (state.wizardSpellMasteryChoices ?? []).filter(Boolean) : []));
+  names.push(...(state.className === 'Wizard' ? (state.wizardSignatureSpells ?? []).filter(Boolean) : []));
 
   return unique(names);
 }
