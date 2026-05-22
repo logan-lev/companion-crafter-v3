@@ -1,3 +1,5 @@
+import { PHB_GOD_OPTIONS } from './phb-gods';
+
 export interface BackgroundData {
   name: string;
   skillProfs: string[];
@@ -8,6 +10,9 @@ export interface BackgroundData {
   toolChoiceOptions?: string[];
   equipmentChoiceLabel?: string;
   equipmentChoiceOptions?: string[];
+  flavorChoiceLabel?: string;
+  flavorChoiceOptions?: string[];
+  flavorCustomOptionLabel?: string;
   feature: { name: string; description: string };
   flavorText: string;
   suggestedTraits?: string[];
@@ -43,16 +48,39 @@ export const CHARLATAN_CON_TOOL_OPTIONS = [
   'Deck of marked cards',
   'Signet ring of an imaginary duke',
 ];
-
+export const CHARLATAN_FAVORITE_SCHEMES = [
+  'I cheat at games of chance.',
+  'I shave coins or forge documents.',
+  "I insinuate myself into people's lives to prey on their weakness and secure their fortunes.",
+  'I put on new identities like clothes.',
+  'I run sleight-of-hand cons on street corners.',
+  "I convince people that worthless junk is worth their hard-earned money.",
+];
+export const CRIMINAL_SPECIALTIES = [
+  'Blackmailer',
+  'Burglar',
+  'Enforcer',
+  'Fence',
+  'Highway robber',
+  'Hired killer',
+  'Pickpocket',
+  'Smuggler',
+];
+export const CRIMINAL_VARIANT_OPTIONS = ['Normal Criminal', 'Spy Variant'];
 export const BACKGROUND_DATA: BackgroundData[] = [
   {
     name: 'Acolyte',
     skillProfs: ['Insight', 'Religion'],
     toolProfs: [],
     languages: 2,
-    equipment: 'Holy symbol, prayer book, 5 sticks of incense, vestments, common clothes, 15 gp',
-    feature: { name: 'Shelter of the Faithful', description: 'As an acolyte, you command the respect of those who share your faith, and you can perform the religious ceremonies of your deity. You and your adventuring companions can expect to receive free healing and care at a temple, shrine, or other established presence of your faith. Those who share your religion will support you (but only you) at a modest lifestyle.' },
-    flavorText: 'You have spent your life in the service of a temple to a specific god or pantheon of gods. You act as an intermediary between the realm of the holy and the mortal world.',
+    equipment: 'Holy symbol, prayer book or prayer wheel, 5 sticks of incense, vestments, common clothes, 15 gp',
+    equipmentChoiceLabel: 'Choose your devotional item',
+    equipmentChoiceOptions: ['Prayer Book', 'Prayer Wheel'],
+    flavorChoiceLabel: 'Choose the focus of your religious service',
+    flavorChoiceOptions: PHB_GOD_OPTIONS.filter(option => option !== 'Custom religious service'),
+    flavorCustomOptionLabel: 'Custom religious service',
+    feature: { name: 'Shelter of the Faithful', description: "As an acolyte, you command the respect of those who share your faith, and you can perform the religious ceremonies of your deity. You and your adventuring companions can expect to receive free healing and care at a temple, shrine, or other established presence of your faith, though you must provide any material components needed for spells. Those who share your religion will support you (but only you) at a modest lifestyle.\nYou might also have ties to a specific temple dedicated to your chosen deity or pantheon, and you have a residence there. This could be the temple where you used to serve, if you remain on good terms with it, or a temple where you have found a new home. While near your temple, you can call upon the priests for assistance, provided the assistance you ask for is not hazardous and you remain in good standing with your temple." },
+    flavorText: 'You have spent your life in the service of a temple to a specific god or pantheon of gods. You act as an intermediary between the realm of the holy and the mortal world, performing sacred rites and offering sacrifices in order to conduct worshipers into the presence of the divine. You are not necessarily a cleric - performing sacred rites is not the same thing as channeling divine power. Choose a god, a pantheon of gods, or some other quasi-divine being, and work with your DM to detail the nature of your religious service. Were you a lesser functionary in a temple, raised from childhood to assist the priests in the sacred rites? Or were you a high priest who suddenly experienced a call to serve your god in a different way? Perhaps you were the leader of a small cult outside of any established temple structure, or even an occult group that served a fiendish master that you now deny.',
     suggestedTraits: ['I idolize a particular hero and constantly refer to their deeds and example.', 'I can find common ground between the fiercest enemies, empathizing with them and always working toward peace.', 'I see omens in every event and action. The gods try to speak to us; we just need to listen.', 'Nothing can shake my optimistic attitude.'],
     suggestedIdeals: ['Tradition: The ancient traditions of worship must be preserved and upheld.', 'Charity: I always try to help those in need, no matter what the personal cost.', 'Change: We must help bring about the changes the gods are constantly working in the world.', 'Power: I hope to one day rise to the top of my faith\'s religious hierarchy.'],
     suggestedBonds: ['I would die to recover an ancient relic of my faith that was lost long ago.', 'I will someday get revenge on the corrupt temple hierarchy who branded me a heretic.', 'I owe my life to the priest who took me in when my parents died.'],
@@ -67,7 +95,7 @@ export const BACKGROUND_DATA: BackgroundData[] = [
     equipmentChoiceLabel: 'Choose your tools of the con',
     equipmentChoiceOptions: CHARLATAN_CON_TOOL_OPTIONS,
     feature: { name: 'False Identity', description: 'You have created a second identity that includes documentation, established acquaintances, and disguises that allow you to assume that persona. Additionally, you can forge documents including official papers and personal letters, as long as you have seen an example of the kind of document or the handwriting you are trying to copy.' },
-    flavorText: 'You have always had a talent for making people believe what you want them to believe. You know what people want and use that knowledge to get what you want.',
+    flavorText: "You have always had a way with people. You know what makes them tick, you can tease out their hearts' desires after a few minutes of conversation, and with a few leading questions you can read them like they were children's books. It's a useful talent, and one that you're perfectly willing to use for your advantage. You know what people want and you deliver, or rather, you promise to deliver. Common sense should steer people away from things that sound too good to be true, but common sense seems to be in short supply when you're around. The bottle of pink-colored liquid will surely cure that unseemly rash, this ointment nothing more than a bit of fat with a sprinkle of silver dust-can restore youth and vigor, and there's a bridge in the city that just happens to be for sale. These marvels sound implausible, but you make them sound like the real deal.",
     suggestedTraits: ['I fall in and out of love easily, and am always pursuing someone.', 'I have a joke for every occasion, especially occasions where humor is inappropriate.', 'Flattery is my preferred trick for getting what I want.', 'I\'m a born gambler who can\'t resist taking a risk for a potential payoff.'],
     suggestedIdeals: ['Independence: I am a free spirit — no one tells me what to do.', 'Fairness: I never target people who can\'t afford to lose a few coins.', 'Charity: I distribute the money I acquire to the people who really need it.', 'Creativity: I never run the same con twice.'],
     suggestedBonds: ['I fleeced the wrong person and must work to ensure that this individual never crosses paths with me or those I care about.', 'I owe everything to my mentor — a horrible person who\'s probably rotting in jail somewhere.'],
@@ -82,7 +110,7 @@ export const BACKGROUND_DATA: BackgroundData[] = [
     toolChoiceLabel: 'Choose your gaming set proficiency',
     toolChoiceOptions: BACKGROUND_GAMING_SET_OPTIONS,
     feature: { name: 'Criminal Contact', description: 'You have a reliable and trustworthy contact who acts as your liaison to a network of other criminals. You know how to get messages to and from your contact, even over great distances; specifically, you know the local messengers, corrupt caravan masters, and seedy sailors who can deliver messages for you.' },
-    flavorText: 'You are an experienced criminal with a history of breaking the law. You have spent a lot of time among other criminals and still have contacts within the criminal underworld.',
+    flavorText: "You are an experienced criminal with a history of breaking the law. You have spent a lot of time among other criminals and still have contacts within the criminal underworld. You're far closer than most people to the world of murder, theft, and violence that pervades the underbelly of civilization, and you have survived up to this point by flouting the rules and regulations of society.",
     suggestedTraits: ['I always have a plan for what to do when things go wrong.', 'I am always calm, no matter what the situation. I never raise my voice or let my emotions control me.', 'The first thing I do in a new place is note the locations of everything valuable — or where such things could be hidden.'],
     suggestedIdeals: ['Honor: I don\'t steal from others in the trade.', 'Freedom: Chains are meant to be broken, as are those who would forge them.', 'Greed: I will do whatever it takes to become wealthy.'],
     suggestedBonds: ['I\'m trying to pay off an old debt I owe to a generous benefactor.', 'My ill-gotten gains go to support my family.', 'Something important was taken from me, and I aim to steal it back.'],

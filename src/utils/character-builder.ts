@@ -105,10 +105,36 @@ export function getResolvedBackgroundEquipment(state: WizardState): string {
   if (equipmentChoice) {
     equipment = equipment
       .replace(/tools of the con of your choice/gi, equipmentChoice)
-      .replace(/set of bone dice or deck of cards/gi, equipmentChoice);
+      .replace(/set of bone dice or deck of cards/gi, equipmentChoice)
+      .replace(/prayer book or prayer wheel/gi, equipmentChoice);
   }
 
   return equipment;
+}
+
+export function getResolvedBackgroundEquipmentItems(state: WizardState): string[] {
+  const background = getSelectedBackground(state);
+  const equipment = getResolvedBackgroundEquipment(state);
+  if (!background || !equipment) return [];
+
+  const toolChoice = state.backgroundSelections['background-tool-choice'];
+  const equipmentChoice = state.backgroundSelections['background-equipment-choice'];
+
+  return equipment
+    .split(',')
+    .map(item => item.trim())
+    .filter(Boolean)
+    .filter(item => {
+      if (!equipmentChoice && /tools of the con of your choice|set of bone dice or deck of cards|prayer book or prayer wheel/i.test(item)) {
+        return false;
+      }
+
+      if (!toolChoice && /^(musical instrument|artisan's tools)$/i.test(item)) {
+        return false;
+      }
+
+      return true;
+    });
 }
 
 export function getRacialBonus(state: WizardState): Partial<Record<AbilityKey, number>> {
@@ -253,6 +279,28 @@ export function getTraitEntries(state: WizardState): string[] {
 
   if (state.dwarfToolProficiency) {
     entries.push(`Dwarven Tool Proficiency: You chose proficiency with ${state.dwarfToolProficiency}.`);
+  }
+
+  if (state.background === 'Acolyte') {
+    const acolyteFaithChoice = state.backgroundSelections['acolyte-faith-choice'];
+    const acolyteFaithCustom = state.backgroundSelections['acolyte-faith-custom'];
+    if (acolyteFaithChoice || acolyteFaithCustom) {
+      entries.push(
+        `Religious Service: ${
+          acolyteFaithChoice === 'Custom religious service'
+            ? acolyteFaithCustom || 'Custom religious service'
+            : acolyteFaithChoice || acolyteFaithCustom
+        }.`
+      );
+    }
+  }
+
+  if (state.background === 'Criminal' && state.backgroundSelections['criminal-specialty']) {
+    entries.push(`Criminal Specialty: ${state.backgroundSelections['criminal-specialty']}.`);
+  }
+
+  if (state.background === 'Criminal' && state.backgroundSelections['criminal-variant'] === 'Spy Variant') {
+    entries.push('Criminal Variant: Spy.');
   }
 
   if (state.dragonbornAncestry) {
