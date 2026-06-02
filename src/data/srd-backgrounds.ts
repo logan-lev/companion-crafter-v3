@@ -67,6 +67,21 @@ export const CRIMINAL_SPECIALTIES = [
   'Smuggler',
 ];
 export const CRIMINAL_VARIANT_OPTIONS = ['Normal Criminal', 'Spy Variant'];
+export const ENTERTAINER_VARIANT_OPTIONS = ['Normal Entertainer', 'Gladiator Variant'];
+export const GLADIATOR_WEAPON_OPTIONS = ['Trident', 'Net'];
+export const ENTERTAINER_ROUTINES = [
+  'Actor',
+  'Dancer',
+  'Fire-eater',
+  'Jester',
+  'Juggler',
+  'Instrumentalist',
+  'Poet',
+  'Singer',
+  'Storyteller',
+  'Tumbler',
+];
+export const ENTERTAINER_ADMIRER_FAVORS = ['Love Letter', 'Lock of Hair', 'Trinket'];
 export const BACKGROUND_DATA: BackgroundData[] = [
   {
     name: 'Acolyte',
@@ -124,8 +139,10 @@ export const BACKGROUND_DATA: BackgroundData[] = [
     equipment: 'Musical instrument, the favor of an admirer, costume, 15 gp',
     toolChoiceLabel: 'Choose your musical instrument',
     toolChoiceOptions: BACKGROUND_MUSICAL_INSTRUMENT_OPTIONS,
-    feature: { name: 'By Popular Demand', description: 'You can always find a place to perform, usually in an inn or tavern but possibly with a circus, at a theater, or even in a noble\'s court. At such a place, you receive free lodging and food of a modest or comfortable standard, as long as you perform each night. In addition, your performance makes you something of a local figure. When strangers recognize you in a town where you have performed, they typically take a liking to you.' },
-    flavorText: 'You thrive in front of an audience. You know how to entrance them, entertain them, and even inspire them. Your poetics can stir the hearts of those who hear you.',
+    equipmentChoiceLabel: 'Choose the favor of an admirer',
+    equipmentChoiceOptions: ENTERTAINER_ADMIRER_FAVORS,
+    feature: { name: 'By Popular Demand', description: 'You can always find a place to perform, usually in an inn or tavern but possibly with a circus, at a theater, or even in a noble\'s court. At such a place, you receive free lodging and food of a modest or comfortable standard (depending on the quality of the establishment), as long as you perform each night. In addition, your performance makes you something of a local figure. When strangers recognize you in a town where you have performed, they typically take a liking to you.' },
+    flavorText: 'You thrive in front of an audience. You know how to entrance them, entertain them, and even inspire them. Your poetics can stir the hearts of those who hear you, awakening grief or joy, laughter or anger. Your music raises their spirits or captures their sorrow. Your dance steps captivate, your humor cuts to the quick. Whatever techniques you use, your art is your life.',
     suggestedTraits: ['I know a story relevant to almost every situation.', 'Whenever I come to a new place, I collect local rumors and spread gossip.', 'I\'m a hopeless romantic, always searching for that "special someone."', 'Nobody stays angry at me or around me for long, since I can defuse any amount of tension.'],
     suggestedIdeals: ['Beauty: When I perform, I make the world better than it was.', 'Creativity: The world is in need of new ideas and bold action.', 'Elegance: I prefer the finer things in life, and beauty in all its forms.'],
     suggestedBonds: ['My instrument is my most treasured possession, and it reminds me of someone I love.', 'Someone stole my precious instrument, and someday I\'ll get it back.'],

@@ -95,18 +95,25 @@ export function getResolvedBackgroundEquipment(state: WizardState): string {
   let equipment = background.equipment;
   const toolChoice = state.backgroundSelections['background-tool-choice'];
   const equipmentChoice = state.backgroundSelections['background-equipment-choice'];
+  const entertainerVariant = state.backgroundSelections['entertainer-variant'];
+  const gladiatorWeapon = state.backgroundSelections['entertainer-gladiator-weapon'];
 
-  if (toolChoice) {
+  if (toolChoice && !(background.name === 'Entertainer' && entertainerVariant === 'Gladiator Variant')) {
     equipment = equipment
       .replace(/Musical instrument/gi, toolChoice)
       .replace(/Artisan's tools/gi, toolChoice);
+  }
+
+  if (background.name === 'Entertainer' && entertainerVariant === 'Gladiator Variant' && gladiatorWeapon) {
+    equipment = equipment.replace(/Musical instrument/gi, gladiatorWeapon);
   }
 
   if (equipmentChoice) {
     equipment = equipment
       .replace(/tools of the con of your choice/gi, equipmentChoice)
       .replace(/set of bone dice or deck of cards/gi, equipmentChoice)
-      .replace(/prayer book or prayer wheel/gi, equipmentChoice);
+      .replace(/prayer book or prayer wheel/gi, equipmentChoice)
+      .replace(/the favor of an admirer/gi, equipmentChoice);
   }
 
   return equipment;
@@ -119,17 +126,23 @@ export function getResolvedBackgroundEquipmentItems(state: WizardState): string[
 
   const toolChoice = state.backgroundSelections['background-tool-choice'];
   const equipmentChoice = state.backgroundSelections['background-equipment-choice'];
+  const entertainerVariant = state.backgroundSelections['entertainer-variant'];
+  const gladiatorWeapon = state.backgroundSelections['entertainer-gladiator-weapon'];
 
   return equipment
     .split(',')
     .map(item => item.trim())
     .filter(Boolean)
     .filter(item => {
-      if (!equipmentChoice && /tools of the con of your choice|set of bone dice or deck of cards|prayer book or prayer wheel/i.test(item)) {
+      if (!equipmentChoice && /tools of the con of your choice|set of bone dice or deck of cards|prayer book or prayer wheel|the favor of an admirer/i.test(item)) {
         return false;
       }
 
       if (!toolChoice && /^(musical instrument|artisan's tools)$/i.test(item)) {
+        return false;
+      }
+
+      if (background.name === 'Entertainer' && entertainerVariant === 'Gladiator Variant' && !gladiatorWeapon && /^musical instrument$/i.test(item)) {
         return false;
       }
 
@@ -301,6 +314,14 @@ export function getTraitEntries(state: WizardState): string[] {
 
   if (state.background === 'Criminal' && state.backgroundSelections['criminal-variant'] === 'Spy Variant') {
     entries.push('Criminal Variant: Spy.');
+  }
+
+  if (state.background === 'Entertainer' && state.backgroundSelections['entertainer-variant'] === 'Gladiator Variant') {
+    entries.push('Entertainer Variant: Gladiator.');
+  }
+
+  if (state.background === 'Entertainer' && state.backgroundSelections['entertainer-routines']) {
+    entries.push(`Entertainer Routines: ${state.backgroundSelections['entertainer-routines'].split('|').filter(Boolean).join(', ')}.`);
   }
 
   if (state.dragonbornAncestry) {
