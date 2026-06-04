@@ -68,7 +68,7 @@ export const CRIMINAL_SPECIALTIES = [
 ];
 export const CRIMINAL_VARIANT_OPTIONS = ['Normal Criminal', 'Spy Variant'];
 export const ENTERTAINER_VARIANT_OPTIONS = ['Normal Entertainer', 'Gladiator Variant'];
-export const GLADIATOR_WEAPON_OPTIONS = ['Trident', 'Net'];
+export const GLADIATOR_WEAPON_OPTIONS = ['Trident', 'Net', 'Whip', 'Shortsword', 'Javelin'];
 export const ENTERTAINER_ROUTINES = [
   'Actor',
   'Dancer',
@@ -82,6 +82,41 @@ export const ENTERTAINER_ROUTINES = [
   'Tumbler',
 ];
 export const ENTERTAINER_ADMIRER_FAVORS = ['Love Letter', 'Lock of Hair', 'Trinket'];
+export const FOLK_HERO_DEFINING_EVENTS = [
+  'I stood up to a tyrant’s agents.',
+  'I saved people during a natural disaster.',
+  'I stood alone against a terrible monster.',
+  'I stole from a corrupt merchant to help the poor.',
+  'I led a militia to fight off an invading army.',
+  'I broke into a tyrant’s castle and stole weapons to arm the people.',
+  'I trained the peasantry to use farm implements as weapons against a tyrant’s soldiers.',
+  'A lord rescinded an unpopular decree after I led a symbolic act of protest against it.',
+  'A celestial, fey, or similar creature gave me a blessing or revealed my secret origin.',
+  'Recruited into a lord’s army, I rose to leadership and was commended for my heroism.',
+];
+export const GUILD_ARTISAN_BUSINESSES = [
+  'Alchemists and apothecaries',
+  'Armorers, locksmiths, and finesmiths',
+  'Brewers, distillers, and vintners',
+  'Calligraphers, scribes, and scriveners',
+  'Carpenters, roofers, and plasterers',
+  'Cartographers, surveyors, and chart-makers',
+  'Cobblers and shoemakers',
+  'Cooks and bakers',
+  'Glassblowers and glaziers',
+  'Jewelers and gemcutters',
+  'Leatherworkers, skinners, and tanners',
+  'Masons and stonecutters',
+  'Painters, limners, and sign-makers',
+  'Potters and tile-makers',
+  'Shipwrights and sailmakers',
+  'Smiths and metal-forgers',
+  'Tinkers, pewterers, and casters',
+  'Wagon-makers and wheelwrights',
+  'Weavers and dyers',
+  'Woodcarvers, coopers, and bowyers',
+];
+export const GUILD_ARTISAN_VARIANT_OPTIONS = ['Normal Guild Artisan', 'Guild Merchant Variant'];
 export const BACKGROUND_DATA: BackgroundData[] = [
   {
     name: 'Acolyte',
@@ -158,6 +193,8 @@ export const BACKGROUND_DATA: BackgroundData[] = [
     toolChoiceOptions: BACKGROUND_ARTISAN_TOOL_OPTIONS,
     feature: { name: 'Rustic Hospitality', description: 'Since you come from the ranks of the common folk, you fit in among them with ease. You can find a place to hide, rest, or recuperate among other commoners, unless you have shown yourself to be a danger to them. They will shield you from the law or anyone else searching for you, though they will not risk their lives for you.' },
     flavorText: 'You come from a humble social rank, but you are destined for so much more. Already the people of your home village regard you as their champion, and your destiny calls you to stand against the tyrants and monsters that threaten the common folk everywhere.',
+    flavorChoiceLabel: 'Defining Event',
+    flavorChoiceOptions: FOLK_HERO_DEFINING_EVENTS,
     suggestedTraits: ['I judge people by their actions, not their words.', 'If someone is in trouble, I\'m always ready to lend help.', 'When I set my mind to something, I follow through no matter what gets in my way.'],
     suggestedIdeals: ['Respect: People deserve to be treated with dignity and respect.', 'Fairness: No one should get preferential treatment before the law, and no one is above the law.', 'People: I\'m committed to the people I care about, not to ideals.'],
     suggestedBonds: ['I have a family, but I have no idea where they are. One day, I hope to see them again.', 'I worked the land, I love the land, and I will protect the land.'],
@@ -171,8 +208,10 @@ export const BACKGROUND_DATA: BackgroundData[] = [
     equipment: "Artisan's tools, letter of introduction from guild, traveler's clothes, 15 gp",
     toolChoiceLabel: "Choose your artisan's tools",
     toolChoiceOptions: BACKGROUND_ARTISAN_TOOL_OPTIONS,
-    feature: { name: 'Guild Membership', description: 'As an established member of a guild, you can rely on certain benefits that membership provides. Your fellow guild members will provide you with lodging and food if necessary, and pay for your funeral if needed. In some cities and towns, a guildhall offers a central place to meet other members of your profession, which can be a good place to meet potential patrons, allies, or hirelings.' },
-    flavorText: 'You are a member of an artisan\'s guild, skilled in a particular field and closely associated with other artisans. You are a well-established part of the mercantile world, freed by talent and wealth from the constraints of a feudal social order.',
+    feature: { name: 'Guild Membership', description: "As an established and respected member of a guild, you can rely on certain benefits that membership provides. Your fellow guild members will provide you with lodging and food if necessary, and pay for your funeral if needed. In some cities and towns, a guildhall offers a central place to meet other members of your profession, which can be a good place to meet potential patrons, allies, or hirelings. Guilds often wield tremendous political power. If you are accused of a crime, your guild will support you if a good case can be made for your innocence or the crime is justifiable. You can also gain access to powerful political figures through the guild, if you are a member in good standing. Such connections might require the donation of money or magic items to the guild's coffers. You must pay dues of 5 gp per month to the guild. If you miss payments, you must make up back dues to remain in the guild's good graces." },
+    flavorText: "You are a member of an artisan's guild, skilled in a particular field and closely associated with other artisans. You are a well-established part of the mercantile world, freed by talent and wealth from the constraints of a feudal social order. You learned your skills as an apprentice to a master artisan, under the sponsorship of your guild, until you became a master in your own right.",
+    flavorChoiceLabel: 'Guild Business',
+    flavorChoiceOptions: GUILD_ARTISAN_BUSINESSES,
     suggestedTraits: ['I believe that anything worth doing is worth doing right. I can\'t help it — I\'m a perfectionist.', 'I\'m rude to people who lack my commitment to hard work and fair play.', 'I like to talk at length about my profession.'],
     suggestedIdeals: ['Community: It is the duty of all civilized people to strengthen the bonds of community.', 'Generosity: My talents were given to me so that I could use them to benefit the world.', 'Aspiration: I work hard to be the best there is at my craft.'],
     suggestedBonds: ['The workshop where I learned my trade is the most important place in the world to me.', 'I owe my guild a great debt for forging me into the person I am today.'],

@@ -76,8 +76,21 @@ export function getSelectedBackground(state: WizardState) {
 export function getResolvedBackgroundToolProficiencies(state: WizardState): string[] {
   const background = getSelectedBackground(state);
   if (!background) return [];
+  const entertainerVariant = state.backgroundSelections['entertainer-variant'];
+  const guildArtisanVariant = state.backgroundSelections['guild-artisan-variant'];
+  const guildMerchantProfChoice = state.backgroundSelections['guild-merchant-prof-choice'];
 
   return (background.toolProfs ?? []).flatMap(tool => {
+    if (background.name === 'Entertainer' && entertainerVariant === 'Gladiator Variant') {
+      if (tool === 'One type of musical instrument') return ['Herbalism Kit'];
+    }
+
+    if (background.name === 'Guild Artisan' && guildArtisanVariant === 'Guild Merchant Variant') {
+      if (/artisan's tools \(one type\)/i.test(tool)) {
+        return guildMerchantProfChoice === "Navigator's Tools" ? ["Navigator's Tools"] : [];
+      }
+    }
+
     if (/one type of gaming set/i.test(tool) || /one type of musical instrument/i.test(tool) || /artisan's tools \(one type\)/i.test(tool)) {
       return state.backgroundSelections['background-tool-choice']
         ? [state.backgroundSelections['background-tool-choice']]
@@ -97,6 +110,7 @@ export function getResolvedBackgroundEquipment(state: WizardState): string {
   const equipmentChoice = state.backgroundSelections['background-equipment-choice'];
   const entertainerVariant = state.backgroundSelections['entertainer-variant'];
   const gladiatorWeapon = state.backgroundSelections['entertainer-gladiator-weapon'];
+  const guildArtisanVariant = state.backgroundSelections['guild-artisan-variant'];
 
   if (toolChoice && !(background.name === 'Entertainer' && entertainerVariant === 'Gladiator Variant')) {
     equipment = equipment
@@ -106,6 +120,10 @@ export function getResolvedBackgroundEquipment(state: WizardState): string {
 
   if (background.name === 'Entertainer' && entertainerVariant === 'Gladiator Variant' && gladiatorWeapon) {
     equipment = equipment.replace(/Musical instrument/gi, gladiatorWeapon);
+  }
+
+  if (background.name === 'Guild Artisan' && guildArtisanVariant === 'Guild Merchant Variant') {
+    equipment = equipment.replace(/Artisan's tools/gi, 'Mule and cart');
   }
 
   if (equipmentChoice) {
@@ -128,6 +146,7 @@ export function getResolvedBackgroundEquipmentItems(state: WizardState): string[
   const equipmentChoice = state.backgroundSelections['background-equipment-choice'];
   const entertainerVariant = state.backgroundSelections['entertainer-variant'];
   const gladiatorWeapon = state.backgroundSelections['entertainer-gladiator-weapon'];
+  const guildArtisanVariant = state.backgroundSelections['guild-artisan-variant'];
 
   return equipment
     .split(',')
@@ -138,7 +157,11 @@ export function getResolvedBackgroundEquipmentItems(state: WizardState): string[
         return false;
       }
 
-      if (!toolChoice && /^(musical instrument|artisan's tools)$/i.test(item)) {
+      if (
+        !toolChoice &&
+        /^(musical instrument|artisan's tools)$/i.test(item) &&
+        !(background.name === 'Guild Artisan' && guildArtisanVariant === 'Guild Merchant Variant' && /^artisan's tools$/i.test(item))
+      ) {
         return false;
       }
 
@@ -190,14 +213,19 @@ export function getAllSkillProficiencies(state: WizardState): string[] {
   const race = getSelectedRace(state);
   const subrace = getSelectedSubrace(state);
   const background = getSelectedBackground(state);
+  const entertainerVariant = state.backgroundSelections['entertainer-variant'];
   const warlockInvocationSkills =
     state.className === 'Warlock' && state.warlockInvocations.includes('Beguiling Influence')
       ? ['Deception', 'Persuasion']
       : [];
+  const backgroundSkills =
+    background?.name === 'Entertainer' && entertainerVariant === 'Gladiator Variant'
+      ? ['Athletics', 'Perception']
+      : (background?.skillProfs ?? []);
 
   return unique([
     ...(state.classSkillChoices ?? []),
-    ...(background?.skillProfs ?? []),
+    ...backgroundSkills,
     ...((race?.proficiencies ?? []).filter(item => SKILL_NAMES.has(item))),
     ...((subrace?.proficiencies ?? []).filter(item => SKILL_NAMES.has(item))),
     ...(state.raceSkillChoices ?? []),
@@ -305,6 +333,24 @@ export function getTraitEntries(state: WizardState): string[] {
             : acolyteFaithChoice || acolyteFaithCustom
         }.`
       );
+    }
+  }
+
+  if (state.background === 'Folk Hero' && state.backgroundSelections['folk-hero-defining-event']) {
+    entries.push(`Defining Event: ${state.backgroundSelections['folk-hero-defining-event']}.`);
+  }
+
+  if (state.background === 'Guild Artisan' && state.backgroundSelections['guild-artisan-business']) {
+    entries.push(`Guild Business: ${state.backgroundSelections['guild-artisan-business']}.`);
+  }
+
+  if (state.background === 'Guild Artisan' && state.backgroundSelections['guild-artisan-variant'] === 'Guild Merchant Variant') {
+    entries.push('Guild Artisan Variant: Guild Merchant.');
+    if (state.backgroundSelections['guild-merchant-prof-choice'] === "Navigator's Tools") {
+      entries.push("Guild Merchant Trade Proficiency: Navigator's Tools.");
+    }
+    if (state.backgroundSelections['guild-merchant-extra-language']) {
+      entries.push(`Guild Merchant Extra Language: ${state.backgroundSelections['guild-merchant-extra-language']}.`);
     }
   }
 

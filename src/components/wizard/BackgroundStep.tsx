@@ -30,8 +30,16 @@ export default function BackgroundStep({ state, onChange }: Props) {
   const usedLanguages = new Set([
     ...builtInRaceLanguages,
     ...(state.raceLanguageChoices ?? []),
+    ...(state.backgroundSelections['guild-merchant-extra-language']
+      ? [state.backgroundSelections['guild-merchant-extra-language']]
+      : []),
   ]);
   const availableBackgroundLanguages = LANGUAGES.filter(language => !usedLanguages.has(language) || state.backgroundLanguageChoices.includes(language));
+  const availableGuildMerchantLanguages = LANGUAGES.filter(
+    language =>
+      (!usedLanguages.has(language) && !state.backgroundLanguageChoices.includes(language)) ||
+      state.backgroundSelections['guild-merchant-extra-language'] === language
+  );
   const resolvedToolProficiencies = preview ? getResolvedBackgroundToolProficiencies(state) : [];
   const resolvedEquipment = preview ? getResolvedBackgroundEquipment(state) : '';
   const resolvedEquipmentItems = preview ? getResolvedBackgroundEquipmentItems(state) : [];
@@ -42,6 +50,9 @@ export default function BackgroundStep({ state, onChange }: Props) {
   const isSpyVariant = preview?.name === 'Criminal' && criminalVariant === 'Spy Variant';
   const entertainerVariant = state.backgroundSelections['entertainer-variant'] ?? 'Normal Entertainer';
   const isGladiatorVariant = preview?.name === 'Entertainer' && entertainerVariant === 'Gladiator Variant';
+  const guildArtisanVariant = state.backgroundSelections['guild-artisan-variant'] ?? 'Normal Guild Artisan';
+  const isGuildMerchantVariant = preview?.name === 'Guild Artisan' && guildArtisanVariant === 'Guild Merchant Variant';
+  const guildMerchantProfChoice = state.backgroundSelections['guild-merchant-prof-choice'] ?? '';
   const entertainerRoutineChoices = (state.backgroundSelections['entertainer-routines'] ?? '')
     .split('|')
     .map(item => item.trim())
@@ -59,19 +70,44 @@ export default function BackgroundStep({ state, onChange }: Props) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     setShowGodsReference(true);
   };
-  const previewTitle = isSpyVariant ? 'Criminal (Spy Variant)' : preview?.name ?? '';
+  const previewTitle = isSpyVariant
+    ? 'Criminal (Spy Variant)'
+    : isGuildMerchantVariant
+    ? 'Guild Artisan (Guild Merchant Variant)'
+    : preview?.name ?? '';
   const finalPreviewTitle = isGladiatorVariant ? 'Entertainer (Gladiator Variant)' : previewTitle;
   const previewFlavorText = isSpyVariant
     ? 'Although your capabilities are not much different from those of a burglar or smuggler, you learned and practiced them in a very different context: as an espionage agent. You might have been an officially sanctioned agent of the crown, or perhaps you sold the secrets you uncovered to the highest bidder.'
     : isGladiatorVariant
     ? 'A gladiator is as much an entertainer as any minstrel or circus performer, trained to make the arts of combat into a spectacle the crowd can enjoy. This kind of flashy combat is your entertainer routine, though you might also have some skills as a tumbler or actor.'
+    : isGuildMerchantVariant
+    ? 'You are a merchant of a guild, connected to traders, caravan masters, and shopkeepers through a professional network that spans cities and towns. You understand the flow of goods and coin, know how to build trust with customers and partners, and have learned how commerce can open as many doors as noble birth or military rank.'
     : preview?.flavorText ?? '';
   const previewFeatureName = isSpyVariant ? 'Spy Contact' : preview?.feature.name ?? '';
   const previewFeatureDescription = isSpyVariant
     ? 'You have a reliable and trustworthy contact who acts as your liaison to a network of other spies. You know how to get messages to and from your contact, even over great distances; specifically, you know the local messengers, corrupt caravan masters, and seedy sailors who can deliver messages for you.'
     : isGladiatorVariant
     ? 'You can find a place to perform in any place that features combat for entertainment-perhaps a gladiatorial arena or secret pit fighting club. You can replace the musical instrument in your equipment package with an inexpensive but unusual weapon, such as a trident or net.'
+    : isGuildMerchantVariant
+    ? "Instead of an artisans' guild, you might belong to a guild of traders, caravan masters, or shopkeepers. You don't craft items yourself but earn a living by buying and selling the works of others or the raw materials artisans need to practice their craft). Your guild might be a large merchant consortium (or family) with interests across the region. Perhaps you transported goods from one place to another, by ship, wagon, or caravan, or bought them from traveling traders and sold them in your own little shop. In some ways, the traveling merchant's life lends itself to adventure far more than the life of an artisan."
     : preview?.feature.description ?? '';
+  const backgroundFlavorSelectionKey =
+    preview?.name === 'Folk Hero'
+      ? 'folk-hero-defining-event'
+      : preview?.name === 'Guild Artisan' && !isGuildMerchantVariant
+      ? 'guild-artisan-business'
+      : '';
+  const backgroundFlavorSelection = backgroundFlavorSelectionKey ? state.backgroundSelections[backgroundFlavorSelectionKey] ?? '' : '';
+  const displayedSkillProficiencies =
+    preview?.name === 'Entertainer' && isGladiatorVariant ? ['Athletics', 'Perception'] : (preview?.skillProfs ?? []);
+  const displayedToolProficiencies =
+    preview?.name === 'Entertainer' && isGladiatorVariant
+      ? ['Disguise Kit', 'Herbalism Kit']
+      : preview?.name === 'Guild Artisan' && isGuildMerchantVariant
+      ? guildMerchantProfChoice === "Navigator's Tools"
+        ? ["Navigator's Tools"]
+        : []
+      : (resolvedToolProficiencies.length ? resolvedToolProficiencies : preview?.toolProfs ?? []);
 
   if (showGodsReference) {
     return (
@@ -191,6 +227,53 @@ export default function BackgroundStep({ state, onChange }: Props) {
                               backgroundSelections: {
                                 ...state.backgroundSelections,
                                 'entertainer-variant': option.label,
+                                'background-tool-choice': option.label === 'Gladiator Variant' ? '' : state.backgroundSelections['background-tool-choice'],
+                                'entertainer-routines': option.label === 'Gladiator Variant' ? '' : state.backgroundSelections['entertainer-routines'],
+                                'entertainer-gladiator-weapon': option.label === 'Normal Entertainer' ? '' : state.backgroundSelections['entertainer-gladiator-weapon'],
+                              },
+                            })
+                          }
+                          className={`rounded border px-4 py-3 text-left transition-all ${
+                            selected
+                              ? 'border-[var(--color-text-strong)] bg-[var(--color-selected-strong)] text-[var(--color-text-strong)]'
+                              : 'border-[var(--color-accent)] bg-[var(--color-surface-2)] text-[var(--color-text-soft)] hover:bg-[var(--color-hover)]'
+                          }`}
+                        >
+                          <div className="text-sm font-bold">{option.label}</div>
+                          <div className="mt-1 text-xs leading-5">{option.description}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {state.background === preview.name && preview.name === 'Guild Artisan' && (
+                <div className="section-box border-[var(--color-border-muted)] bg-[var(--color-surface-3)]">
+                  <div className="field-label mb-2">Guild Artisan Variant</div>
+                  <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                    {[
+                      {
+                        label: 'Normal Guild Artisan',
+                        description: 'Use the standard guild artisan background centered on apprenticed craft and guild membership.',
+                      },
+                      {
+                        label: 'Guild Merchant Variant',
+                        description: 'Use the guild merchant variant, framing your guild ties around trade, caravans, and mercantile connections.',
+                      },
+                    ].map(option => {
+                      const selected = guildArtisanVariant === option.label;
+                      return (
+                        <button
+                          key={option.label}
+                          onClick={() =>
+                            onChange({
+                              backgroundSelections: {
+                                ...state.backgroundSelections,
+                                'guild-artisan-variant': option.label,
+                                'background-tool-choice': option.label === 'Guild Merchant Variant' ? '' : state.backgroundSelections['background-tool-choice'],
+                                'guild-merchant-prof-choice': option.label === 'Normal Guild Artisan' ? '' : state.backgroundSelections['guild-merchant-prof-choice'],
+                                'guild-merchant-extra-language': option.label === 'Normal Guild Artisan' ? '' : state.backgroundSelections['guild-merchant-extra-language'],
                               },
                             })
                           }
@@ -224,7 +307,7 @@ export default function BackgroundStep({ state, onChange }: Props) {
                 <div>
                   <div className="field-label mb-1">Skill Proficiencies</div>
                   <div className="flex gap-1 flex-wrap">
-                    {preview.skillProfs.map(s => (
+                    {displayedSkillProficiencies.map(s => (
                       <span key={s} className="text-[0.65rem] bg-[var(--color-selected)] border border-[var(--color-accent)] px-2 py-0.5 rounded text-[var(--color-text-strong)]">{s}</span>
                     ))}
                   </div>
@@ -370,10 +453,81 @@ export default function BackgroundStep({ state, onChange }: Props) {
                     <div className="mt-3">
                       <div className="field-label mb-1">Tool Proficiencies</div>
                       <div className="flex gap-1 flex-wrap">
-                        {(resolvedToolProficiencies.length ? resolvedToolProficiencies : preview.toolProfs).map(t => (
+                        {displayedToolProficiencies.map(t => (
                           <span key={t} className="text-[0.65rem] bg-[var(--color-selected)] border border-[var(--color-accent)] px-2 py-0.5 rounded text-[var(--color-text-strong)]">{t}</span>
                         ))}
                       </div>
+                      {state.background === preview.name && (preview.name === 'Folk Hero' || preview.name === 'Guild Artisan') && backgroundFlavorSelection && (
+                        <div className="mt-3 rounded border border-[var(--color-border-muted)] bg-[var(--color-surface-3)] px-3 py-3">
+                          <div className="field-label mb-1">{preview.flavorChoiceLabel}</div>
+                          <div className="text-sm leading-6 text-[var(--color-text-soft)]">{backgroundFlavorSelection}</div>
+                        </div>
+                      )}
+                      {state.background === preview.name && preview.name === 'Guild Artisan' && isGuildMerchantVariant && (
+                        <div className="mt-3">
+                          <div className="field-label mb-1">Guild Merchant Trade Option</div>
+                          <div className="mb-2 text-sm leading-6 text-[var(--color-text-soft)]">
+                            Choose whether your merchant background grants navigator&apos;s tools proficiency or one extra language.
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {["Navigator's Tools", 'Extra Language'].map(option => {
+                              const selected = guildMerchantProfChoice === option;
+                              return (
+                                <button
+                                  key={option}
+                                  onClick={() =>
+                                    onChange({
+                                      backgroundSelections: {
+                                        ...state.backgroundSelections,
+                                        'guild-merchant-prof-choice': option,
+                                        'guild-merchant-extra-language':
+                                          option === 'Extra Language' ? state.backgroundSelections['guild-merchant-extra-language'] : '',
+                                      },
+                                    })
+                                  }
+                                  className={`rounded border px-3 py-1 text-xs transition-all ${
+                                    selected
+                                      ? 'border-[var(--color-text-strong)] bg-[var(--color-selected-strong)] text-[var(--color-text-strong)]'
+                                      : 'border-[var(--color-accent)] bg-[var(--color-surface-3)] text-[var(--color-accent)] hover:bg-[var(--color-hover)]'
+                                  }`}
+                                >
+                                  {option}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          {guildMerchantProfChoice === 'Extra Language' && (
+                            <div className="mt-3">
+                              <div className="field-label mb-1">Guild Merchant Extra Language</div>
+                              <div className="flex flex-wrap gap-2">
+                                {availableGuildMerchantLanguages.map(language => {
+                                  const selected = state.backgroundSelections['guild-merchant-extra-language'] === language;
+                                  return (
+                                    <button
+                                      key={language}
+                                      onClick={() =>
+                                        onChange({
+                                          backgroundSelections: {
+                                            ...state.backgroundSelections,
+                                            'guild-merchant-extra-language': selected ? '' : language,
+                                          },
+                                        })
+                                      }
+                                      className={`rounded border px-3 py-1 text-xs transition-all ${
+                                        selected
+                                          ? 'border-[var(--color-text-strong)] bg-[var(--color-selected-strong)] text-[var(--color-text-strong)]'
+                                          : 'border-[var(--color-accent)] bg-[var(--color-surface-3)] text-[var(--color-accent)] hover:bg-[var(--color-hover)]'
+                                      }`}
+                                    >
+                                      {language}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                       {state.background === preview.name && preview.toolChoiceOptions && !backgroundToolChoiceAffectsEquipment && preview.name !== 'Criminal' && preview.name !== 'Spy' && (
                         <div className="mt-3">
                           <div className="mb-1 text-sm font-bold text-[var(--color-text-strong)]">
@@ -439,7 +593,7 @@ export default function BackgroundStep({ state, onChange }: Props) {
                           </div>
                         </div>
                       )}
-                      {state.background === preview.name && preview.name === 'Entertainer' && (
+                      {state.background === preview.name && preview.name === 'Entertainer' && !isGladiatorVariant && (
                         <div className="mt-3">
                           <div className="field-label mb-1">Entertainer Routines ({entertainerRoutineChoices.length}/3)</div>
                           <div className="mb-2 text-sm leading-6 text-[var(--color-text-soft)]">
@@ -535,94 +689,74 @@ export default function BackgroundStep({ state, onChange }: Props) {
                 </div>
               </div>
 
-              {state.background === preview.name && preview.flavorChoiceOptions && preview.name !== 'Acolyte' && (
+              {state.background === preview.name && preview.flavorChoiceOptions && (preview.name === 'Folk Hero' || (preview.name === 'Guild Artisan' && !isGuildMerchantVariant)) && (
                 <div>
                     <div className="mb-2 flex items-center justify-between gap-3">
                       <div className="section-title mb-0">{preview.flavorChoiceLabel ?? 'Choose Background Details'}</div>
                     </div>
-                  {preview.name === 'Acolyte' ? (
-                    <div className="space-y-3">
-                      <div className="rounded border border-[var(--color-border-muted)] bg-[var(--color-surface-3)] px-3 py-3">
-                        <div className="field-label mb-1">Chosen God</div>
-                        <div className="text-sm leading-6 text-[var(--color-text-soft)]">
-                          {acolyteIsCustomChoice
-                            ? state.backgroundSelections['acolyte-faith-custom'] || 'Custom god or religious service'
-                            : acolyteFaithChoice || 'No god selected yet.'}
-                        </div>
+                  {preview.name === 'Folk Hero' ? (
+                    <div>
+                      <div className="mb-2 text-sm leading-6 text-[var(--color-text-soft)]">
+                        You previously pursued a simple profession among the peasantry, perhaps as a farmer, miner, servant, shepherd, woodcutter, or gravedigger. But something happened that set you on a different path and marked you for greater things. Choose a defining event that marked you as a hero of the people.
                       </div>
-                      <div className="flex flex-wrap gap-2">
-                        <button onClick={openGodsReference} className="tab-btn">
-                          God List
-                        </button>
-                        {acolyteCustomOptionLabel && (
-                          <button
-                            onClick={() =>
-                              onChange({
-                                backgroundSelections: {
-                                  ...state.backgroundSelections,
-                                  'acolyte-faith-choice': acolyteCustomOptionLabel,
-                                },
-                              })
-                            }
-                            className={`rounded border px-3 py-1 text-xs transition-all ${
-                              acolyteIsCustomChoice
-                                ? 'border-[var(--color-text-strong)] bg-[var(--color-selected-strong)] text-[var(--color-text-strong)]'
-                                : 'border-[var(--color-accent)] bg-[var(--color-surface-3)] text-[var(--color-accent)] hover:bg-[var(--color-hover)]'
-                            }`}
-                          >
-                            Custom God or Religious Service
-                          </button>
-                        )}
+                      <div className="flex flex-col gap-2">
+                        {preview.flavorChoiceOptions.map(option => {
+                          const selected = state.backgroundSelections['folk-hero-defining-event'] === option;
+                          return (
+                            <button
+                              key={option}
+                              onClick={() =>
+                                onChange({
+                                  backgroundSelections: {
+                                    ...state.backgroundSelections,
+                                    'folk-hero-defining-event': option,
+                                  },
+                                })
+                              }
+                              className={`rounded border px-3 py-2 text-left text-sm transition-all ${
+                                selected
+                                  ? 'border-[var(--color-text-strong)] bg-[var(--color-selected-strong)] text-[var(--color-text-strong)]'
+                                  : 'border-[var(--color-accent)] bg-[var(--color-surface-3)] text-[var(--color-text-soft)] hover:bg-[var(--color-hover)]'
+                              }`}
+                            >
+                              {option}
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
                   ) : (
-                    <div className="flex flex-wrap gap-2">
-                      {preview.flavorChoiceOptions.map(option => {
-                        const selected = state.backgroundSelections['acolyte-faith-choice'] === option;
-                        return (
-                          <button
-                            key={option}
-                            onClick={() =>
-                              onChange({
-                                backgroundSelections: {
-                                  ...state.backgroundSelections,
-                                  'acolyte-faith-choice': option,
-                                },
-                              })
-                            }
-                            className={`rounded border px-3 py-1 text-xs transition-all ${
-                              selected
-                                ? 'border-[var(--color-text-strong)] bg-[var(--color-selected-strong)] text-[var(--color-text-strong)]'
-                                : 'border-[var(--color-accent)] bg-[var(--color-surface-3)] text-[var(--color-accent)] hover:bg-[var(--color-hover)]'
-                            }`}
-                          >
-                            {option}
-                          </button>
-                        );
-                      })}
+                    <div>
+                      <div className="mb-2 text-sm leading-6 text-[var(--color-text-soft)]">
+                        Guilds are generally found in cities large enough to support several artisans practicing the same trade. However, your guild might instead be a loose network of artisans who each work in a different village within a larger realm. Work with your DM to determine the nature of your guild. You can select your guild business from the Guild Business list. As a member of your guild, you know the skills needed to create finished items from raw materials, as well as the principles of trade and good business practices. The question now is whether you abandon your trade for adventure, or take on the extra effort to weave adventuring and trade together.
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        {preview.flavorChoiceOptions.map(option => {
+                          const selected = state.backgroundSelections['guild-artisan-business'] === option;
+                          return (
+                            <button
+                              key={option}
+                              onClick={() =>
+                                onChange({
+                                  backgroundSelections: {
+                                    ...state.backgroundSelections,
+                                    'guild-artisan-business': option,
+                                  },
+                                })
+                              }
+                              className={`rounded border px-3 py-2 text-left text-sm transition-all ${
+                                selected
+                                  ? 'border-[var(--color-text-strong)] bg-[var(--color-selected-strong)] text-[var(--color-text-strong)]'
+                                  : 'border-[var(--color-accent)] bg-[var(--color-surface-3)] text-[var(--color-text-soft)] hover:bg-[var(--color-hover)]'
+                              }`}
+                            >
+                              {option}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
                   )}
-
-                  {preview.flavorCustomOptionLabel &&
-                    acolyteIsCustomChoice && (
-                      <div className="mt-3">
-                        <label className="field-label mb-1 block">Custom God or Religious Service</label>
-                        <textarea
-                          value={state.backgroundSelections['acolyte-faith-custom'] ?? ''}
-                          onChange={event =>
-                            onChange({
-                              backgroundSelections: {
-                                ...state.backgroundSelections,
-                                'acolyte-faith-custom': event.target.value,
-                              },
-                            })
-                          }
-                          rows={3}
-                          className="w-full rounded border border-[var(--color-border-muted)] bg-[var(--color-surface-3)] px-3 py-2 text-sm leading-6 text-[var(--color-text)]"
-                          placeholder="Describe your god or religious service."
-                        />
-                      </div>
-                    )}
                 </div>
               )}
 
@@ -630,7 +764,7 @@ export default function BackgroundStep({ state, onChange }: Props) {
                 <div className="field-label mb-1">Starting Equipment</div>
                 {state.background === preview.name && (preview.toolChoiceOptions || preview.equipmentChoiceOptions) && (
                   <div className="mb-3 space-y-3">
-                    {preview.toolChoiceOptions && backgroundToolChoiceAffectsEquipment && !isGladiatorVariant && (
+                    {preview.toolChoiceOptions && backgroundToolChoiceAffectsEquipment && !isGladiatorVariant && !isGuildMerchantVariant && (
                       <div>
                         <div className="mb-1 text-sm font-bold text-[var(--color-text-strong)]">
                           {preview.toolChoiceLabel ?? 'Choose Included Tool or Instrument'}
