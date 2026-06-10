@@ -1,18 +1,18 @@
 import { useMemo, useState } from 'react';
 import type { Character } from '../types/character';
-import type { WizardState } from '../types/wizard';
-import { WIZARD_INITIAL_STATE } from '../types/wizard';
+import type { CharacterCreatorState } from '../types/character-creator';
+import { CHARACTER_CREATOR_INITIAL_STATE } from '../types/character-creator';
 import { ABILITY_NAMES, modStr, profBonusFromLevel } from '../data/srd';
-import RaceStep from './wizard/RaceStep';
-import ClassStep from './wizard/ClassStep';
-import BackgroundStep from './wizard/BackgroundStep';
-import AbilityScoreStep from './wizard/AbilityScoreStep';
-import SpellsStep from './wizard/SpellsStep';
-import DetailsStep from './wizard/DetailsStep';
-import ReviewStep from './wizard/ReviewStep';
+import RaceStep from './character-creator/RaceStep';
+import ClassStep from './character-creator/ClassStep';
+import BackgroundStep from './character-creator/BackgroundStep';
+import AbilityScoreStep from './character-creator/AbilityScoreStep';
+import SpellsStep from './character-creator/SpellsStep';
+import DetailsStep from './character-creator/DetailsStep';
+import ReviewStep from './character-creator/ReviewStep';
 import {
   ABILITY_KEYS,
-  createCharacterFromWizard,
+  createCharacterFromCreator,
   getAllOtherProficiencies,
   getAllSkillProficiencies,
   getArmorClass,
@@ -53,8 +53,8 @@ const SPELLS_STEP: StepDefinition = {
   description: 'Pick spells from the class list based on level and casting rules.',
 };
 
-export default function CharacterWizard({ onFinish, onCancel }: Props) {
-  const [state, setState] = useState<WizardState>(WIZARD_INITIAL_STATE);
+export default function CharacterCreator({ onFinish, onCancel }: Props) {
+  const [state, setState] = useState<CharacterCreatorState>(CHARACTER_CREATOR_INITIAL_STATE);
 
   const cls = getSelectedClass(state);
   const finalScores = getFinalAbilityScores(state);
@@ -78,14 +78,14 @@ export default function CharacterWizard({ onFinish, onCancel }: Props) {
 
   const currentStep = steps[stepIndex];
 
-  const updateState = (patch: Partial<WizardState>) => {
+  const updateState = (patch: Partial<CharacterCreatorState>) => {
     setState(prev => ({ ...prev, ...patch }));
   };
 
   const goNext = () => setStepIndex(current => Math.min(current + 1, steps.length - 1));
   const goBack = () => setStepIndex(current => Math.max(current - 1, 0));
 
-  const finishWizard = () => onFinish(createCharacterFromWizard(state));
+  const finishCharacterCreator = () => onFinish(createCharacterFromCreator(state));
 
   return (
     <div className="flex w-full flex-col gap-6">
@@ -170,7 +170,7 @@ export default function CharacterWizard({ onFinish, onCancel }: Props) {
             {currentStep.id === 'abilities' && <AbilityScoreStep state={state} onChange={updateState} />}
             {currentStep.id === 'spells' && <SpellsStep state={state} onChange={updateState} />}
             {currentStep.id === 'details' && <DetailsStep state={state} onChange={updateState} />}
-            {currentStep.id === 'review' && <ReviewStep state={state} onFinish={finishWizard} />}
+            {currentStep.id === 'review' && <ReviewStep state={state} onFinish={finishCharacterCreator} />}
           </div>
 
           {currentStep.id !== 'review' && (

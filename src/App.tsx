@@ -3,10 +3,10 @@ import type { Character } from './types/character';
 import { loadCharacters, saveCharacters, createBlankCharacter } from './utils/storage';
 import { normalizeCharacter } from './utils/character-sheet';
 import CharacterSheet from './components/CharacterSheet';
-import CharacterWizard from './components/CharacterWizard';
+import CharacterCreator from './components/CharacterCreator';
 import MainMenu from './components/MainMenu';
 
-type AppView = 'menu' | 'wizard' | 'sheet';
+type AppView = 'menu' | 'creator' | 'sheet';
 type ThemeMode = 'dark' | 'light';
 
 export default function App() {
@@ -34,7 +34,7 @@ export default function App() {
     setCharacters(updated);
     setActiveId(blank.id);
     setCreatingId(blank.id);
-    setView('wizard');
+    setView('creator');
   };
 
   const handleChange = (updated: Character) => {
@@ -128,8 +128,8 @@ export default function App() {
                 onDelete={handleDeleteFromMenu}
               />
             ) : activeCharacter ? (
-              view === 'wizard' && creatingId === activeCharacter.id ? (
-                <CharacterWizard
+              view === 'creator' && creatingId === activeCharacter.id ? (
+                <CharacterCreator
                   onFinish={handleFinishCreation}
                   onCancel={handleCancelCreation}
                 />

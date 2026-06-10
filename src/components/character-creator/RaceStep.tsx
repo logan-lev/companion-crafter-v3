@@ -1,4 +1,4 @@
-import type { WizardState } from '../../types/wizard';
+import type { CharacterCreatorState } from '../../types/character-creator';
 import { RACE_DATA } from '../../data/srd-races';
 import type { AbilityKey } from '../../types/character';
 import { ABILITY_NAMES, LANGUAGES, SKILLS } from '../../data/srd';
@@ -6,8 +6,8 @@ import { getSpellsForClass, SPELL_LIST } from '../../data/srd-spells';
 import type { RaceTrait } from '../../data/srd-races';
 
 interface Props {
-  state: WizardState;
-  onChange: (patch: Partial<WizardState>) => void;
+  state: CharacterCreatorState;
+  onChange: (patch: Partial<CharacterCreatorState>) => void;
 }
 
 const ABILITY_KEYS: AbilityKey[] = ['str', 'dex', 'con', 'int', 'wis', 'cha'];

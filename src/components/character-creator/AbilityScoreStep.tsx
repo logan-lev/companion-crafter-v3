@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { WizardState } from '../../types/wizard';
+import type { CharacterCreatorState } from '../../types/character-creator';
 import type { AbilityKey } from '../../types/character';
 import { ABILITY_NAMES, calcMod, modStr } from '../../data/srd';
 import { RACE_DATA } from '../../data/srd-races';
@@ -9,8 +9,8 @@ import { BACKGROUND_DATA } from '../../data/srd-backgrounds';
 import { CLASS_DATA } from '../../data/srd-classes';
 
 interface Props {
-  state: WizardState;
-  onChange: (patch: Partial<WizardState>) => void;
+  state: CharacterCreatorState;
+  onChange: (patch: Partial<CharacterCreatorState>) => void;
 }
 
 const ABILITY_KEYS: AbilityKey[] = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
@@ -27,7 +27,7 @@ function roll4d6drop1(): number {
   return dice.slice(1).reduce((a, b) => a + b, 0);
 }
 
-function getRacialBonus(state: WizardState): Partial<Record<AbilityKey, number>> {
+function getRacialBonus(state: CharacterCreatorState): Partial<Record<AbilityKey, number>> {
   const race = RACE_DATA.find(r => r.name === state.race);
   if (!race) return {};
 
@@ -53,7 +53,7 @@ function getRacialBonus(state: WizardState): Partial<Record<AbilityKey, number>>
   return bonus;
 }
 
-function getFinalScores(state: WizardState): Record<AbilityKey, number> {
+function getFinalScores(state: CharacterCreatorState): Record<AbilityKey, number> {
   const bonus = getRacialBonus(state);
   const result = {} as Record<AbilityKey, number>;
   for (const k of ABILITY_KEYS) {
@@ -63,7 +63,7 @@ function getFinalScores(state: WizardState): Record<AbilityKey, number> {
 }
 
 function clampClassBonuses(
-  state: WizardState,
+  state: CharacterCreatorState,
   nextBaseScores: Record<AbilityKey, number>
 ): Partial<Record<AbilityKey, number>> {
   const racialBonus = getRacialBonus(state);
@@ -87,7 +87,7 @@ function pointsSpent(scores: Record<AbilityKey, number>): number {
   return ABILITY_KEYS.reduce((sum, k) => sum + (POINT_COST[scores[k]] ?? 0), 0);
 }
 
-function getAbilityPriority(state: WizardState): AbilityKey[] {
+function getAbilityPriority(state: CharacterCreatorState): AbilityKey[] {
   const cls = CLASS_DATA.find(item => item.name === state.className);
   const byClass: Record<string, AbilityKey[]> = {
     Barbarian: ['str', 'con', 'dex', 'wis', 'cha', 'int'],
@@ -114,7 +114,7 @@ function getAbilityPriority(state: WizardState): AbilityKey[] {
   });
 }
 
-function getPointBuyTemplate(state: WizardState): number[] {
+function getPointBuyTemplate(state: CharacterCreatorState): number[] {
   const dualStatClasses = new Set(['Barbarian', 'Monk', 'Paladin', 'Ranger']);
   return dualStatClasses.has(state.className) ? [15, 15, 14, 10, 8, 8] : [15, 14, 14, 10, 10, 8];
 }

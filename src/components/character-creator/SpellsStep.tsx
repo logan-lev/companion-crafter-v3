@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { WizardState } from '../../types/wizard';
+import type { CharacterCreatorState } from '../../types/character-creator';
 import { CLASS_DATA } from '../../data/srd-classes';
 import { getSpellsForClass, SPELL_LIST, type SpellData } from '../../data/srd-spells';
 import { calcMod } from '../../data/srd';
@@ -7,8 +7,8 @@ import { profBonusFromLevel } from '../../data/srd';
 import { getFinalAbilityScores, getSpellcastingSummary } from '../../utils/character-builder';
 
 interface Props {
-  state: WizardState;
-  onChange: (patch: Partial<WizardState>) => void;
+  state: CharacterCreatorState;
+  onChange: (patch: Partial<CharacterCreatorState>) => void;
 }
 
 const SCHOOLS = ['Abjuration', 'Conjuration', 'Divination', 'Enchantment', 'Evocation', 'Illusion', 'Necromancy', 'Transmutation'];

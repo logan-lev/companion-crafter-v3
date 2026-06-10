@@ -1,4 +1,4 @@
-import type { WizardState } from '../../types/wizard';
+import type { CharacterCreatorState } from '../../types/character-creator';
 import type { AbilityKey } from '../../types/character';
 import { ABILITY_NAMES, calcMod, modStr, profBonusFromLevel, SKILLS } from '../../data/srd';
 import { CLASS_DATA, getFeaturesUpToLevel } from '../../data/srd-classes';
@@ -18,7 +18,7 @@ import {
 } from '../../utils/character-builder';
 
 interface Props {
-  state: WizardState;
+  state: CharacterCreatorState;
   onFinish: () => void;
 }
 

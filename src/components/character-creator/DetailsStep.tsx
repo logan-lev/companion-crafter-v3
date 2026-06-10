@@ -1,10 +1,10 @@
-import type { WizardState } from '../../types/wizard';
+import type { CharacterCreatorState } from '../../types/character-creator';
 import { ALIGNMENTS } from '../../data/srd';
 import { BACKGROUND_DATA } from '../../data/srd-backgrounds';
 
 interface Props {
-  state: WizardState;
-  onChange: (patch: Partial<WizardState>) => void;
+  state: CharacterCreatorState;
+  onChange: (patch: Partial<CharacterCreatorState>) => void;
 }
 
 const RACE_NAME_SUGGESTIONS: Record<string, string[]> = {
@@ -114,10 +114,10 @@ export default function DetailsStep({ state, onChange }: Props) {
             <div>
               <label className="field-label">Bonds</label>
               <textarea value={state.bonds ?? ''}
-                onChange={e => onChange({ bonds: e.target.value } as Partial<WizardState>)}
+                onChange={e => onChange({ bonds: e.target.value } as Partial<CharacterCreatorState>)}
                 className="field-input w-full" rows={2} placeholder="What connects your character to the world?" />
               {bg?.suggestedBonds && (
-                <button onClick={() => onChange({ bonds: bg.suggestedBonds![0] } as Partial<WizardState>)}
+                <button onClick={() => onChange({ bonds: bg.suggestedBonds![0] } as Partial<CharacterCreatorState>)}
                   className="text-left text-[0.6rem] text-[var(--color-text-dim)] hover:text-[var(--color-accent)] italic mt-0.5">
                   Suggestion: "{bg.suggestedBonds[0].slice(0, 60)}..."
                 </button>
@@ -126,10 +126,10 @@ export default function DetailsStep({ state, onChange }: Props) {
             <div>
               <label className="field-label">Flaws</label>
               <textarea value={state.flaws ?? ''}
-                onChange={e => onChange({ flaws: e.target.value } as Partial<WizardState>)}
+                onChange={e => onChange({ flaws: e.target.value } as Partial<CharacterCreatorState>)}
                 className="field-input w-full" rows={2} placeholder="What weaknesses does your character have?" />
               {bg?.suggestedFlaws && (
-                <button onClick={() => onChange({ flaws: bg.suggestedFlaws![0] } as Partial<WizardState>)}
+                <button onClick={() => onChange({ flaws: bg.suggestedFlaws![0] } as Partial<CharacterCreatorState>)}
                   className="text-left text-[0.6rem] text-[var(--color-text-dim)] hover:text-[var(--color-accent)] italic mt-0.5">
                   Suggestion: "{bg.suggestedFlaws[0].slice(0, 60)}..."
                 </button>

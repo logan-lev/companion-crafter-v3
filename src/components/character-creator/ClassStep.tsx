@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { WizardState } from '../../types/wizard';
+import type { CharacterCreatorState } from '../../types/character-creator';
 import {
   ARTISAN_TOOL_OPTIONS,
   BARD_COLLEGES,
@@ -54,8 +54,8 @@ import type { AbilityKey } from '../../types/character';
 import { getAllSkillProficiencies, getFinalAbilityScores, getLanguages, getRacialBonus } from '../../utils/character-builder';
 
 interface Props {
-  state: WizardState;
-  onChange: (patch: Partial<WizardState>) => void;
+  state: CharacterCreatorState;
+  onChange: (patch: Partial<CharacterCreatorState>) => void;
 }
 
 const ABILITY_KEYS: AbilityKey[] = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
@@ -261,11 +261,11 @@ function getAsiLevels(className: string, barbarianPath: string): number[] {
     .map(feature => feature.level);
 }
 
-function getAllocatedAsiPoints(state: WizardState): number {
+function getAllocatedAsiPoints(state: CharacterCreatorState): number {
   return Object.values(state.classAbilityBonuses).reduce((sum, value) => sum + (value ?? 0), 0);
 }
 
-function getAvailableAsiPoints(state: WizardState): number {
+function getAvailableAsiPoints(state: CharacterCreatorState): number {
   return getAsiLevels(state.className, state.barbarianPath).filter(level => level <= state.level).length * 2;
 }
 
@@ -454,7 +454,7 @@ function getDynamicEquipmentSelections(choiceKey: string, option: string) {
 }
 
 function resolveEquipmentChoiceDisplay(
-  state: WizardState,
+  state: CharacterCreatorState,
   choiceKey: string,
   option: string
 ): string[] {
@@ -497,7 +497,7 @@ function getAsiCap(): number {
   return 20;
 }
 
-function getDisplayedAbilityMax(state: WizardState, key: AbilityKey): number {
+function getDisplayedAbilityMax(state: CharacterCreatorState, key: AbilityKey): number {
   if (state.className === 'Barbarian' && state.level >= 20 && (key === 'str' || key === 'con')) {
     return 24;
   }
@@ -508,7 +508,7 @@ function getDisplayedAbilityMax(state: WizardState, key: AbilityKey): number {
 function getCombinedFeatureEffects(
   className: string,
   features: ClassFeature[],
-  state?: WizardState
+  state?: CharacterCreatorState
 ): { resistances: EffectSummary[]; advantages: EffectSummary[] } {
   if (
     className !== 'Barbarian' &&
@@ -750,8 +750,8 @@ function normalizeFeatureParagraphs(description: string): string[] {
 }
 
 function chooseWarlockPactBoon(
-  state: WizardState,
-  onChange: (patch: Partial<WizardState>) => void,
+  state: CharacterCreatorState,
+  onChange: (patch: Partial<CharacterCreatorState>) => void,
   boonName: string
 ) {
   const nextPactBoon = state.warlockPactBoon === boonName ? '' : boonName;
@@ -1208,7 +1208,7 @@ export default function ClassStep({ state, onChange }: Props) {
     const next = [...(state[key] ?? [])];
     next[index] = value;
     while (next.length && !next[next.length - 1]) next.pop();
-    onChange({ [key]: next } as Partial<WizardState>);
+    onChange({ [key]: next } as Partial<CharacterCreatorState>);
   };
 
   const selectRangerFavoredEnemy = (index: number, choice: string) => {

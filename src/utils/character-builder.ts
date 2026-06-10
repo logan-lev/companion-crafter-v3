@@ -1,5 +1,5 @@
 import type { Character, AbilityKey, Spell, SpellSlots } from '../types/character';
-import type { WizardState } from '../types/wizard';
+import type { CharacterCreatorState } from '../types/character-creator';
 import { calcMod, profBonusFromLevel } from '../data/srd';
 import { BACKGROUND_DATA, NOBLE_RETAINERS_DESCRIPTION, SAILOR_BAD_REPUTATION_DESCRIPTION } from '../data/srd-backgrounds';
 import {
@@ -59,7 +59,7 @@ function unique(values: string[]): string[] {
   return [...new Set(values.filter(Boolean))];
 }
 
-export interface WizardSpellcastingSummary {
+export interface CharacterCreatorSpellcastingSummary {
   spellcasting?: ReturnType<typeof getEffectiveSpellcasting>;
   slots: number[];
   maxSpellLevel: number;
@@ -72,23 +72,23 @@ export interface WizardSpellcastingSummary {
   extraLeveledSpellNames: string[];
 }
 
-export function getSelectedRace(state: WizardState) {
+export function getSelectedRace(state: CharacterCreatorState) {
   return RACE_DATA.find(race => race.name === state.race);
 }
 
-export function getSelectedSubrace(state: WizardState) {
+export function getSelectedSubrace(state: CharacterCreatorState) {
   return getSelectedRace(state)?.subraces?.find(subrace => subrace.name === state.subrace);
 }
 
-export function getSelectedClass(state: WizardState) {
+export function getSelectedClass(state: CharacterCreatorState) {
   return CLASS_DATA.find(cls => cls.name === state.className);
 }
 
-export function getSelectedBackground(state: WizardState) {
+export function getSelectedBackground(state: CharacterCreatorState) {
   return BACKGROUND_DATA.find(background => background.name === state.background);
 }
 
-export function getResolvedBackgroundToolProficiencies(state: WizardState): string[] {
+export function getResolvedBackgroundToolProficiencies(state: CharacterCreatorState): string[] {
   const background = getSelectedBackground(state);
   if (!background) return [];
   const entertainerVariant = state.backgroundSelections['entertainer-variant'];
@@ -116,7 +116,7 @@ export function getResolvedBackgroundToolProficiencies(state: WizardState): stri
   });
 }
 
-export function getResolvedBackgroundEquipment(state: WizardState): string {
+export function getResolvedBackgroundEquipment(state: CharacterCreatorState): string {
   const background = getSelectedBackground(state);
   if (!background) return '';
 
@@ -159,7 +159,7 @@ export function getResolvedBackgroundEquipment(state: WizardState): string {
   return equipment;
 }
 
-export function getResolvedBackgroundEquipmentItems(state: WizardState): string[] {
+export function getResolvedBackgroundEquipmentItems(state: CharacterCreatorState): string[] {
   const background = getSelectedBackground(state);
   const equipment = getResolvedBackgroundEquipment(state);
   if (!background || !equipment) return [];
@@ -195,7 +195,7 @@ export function getResolvedBackgroundEquipmentItems(state: WizardState): string[
     });
 }
 
-export function getRacialBonus(state: WizardState): Partial<Record<AbilityKey, number>> {
+export function getRacialBonus(state: CharacterCreatorState): Partial<Record<AbilityKey, number>> {
   const race = getSelectedRace(state);
   if (!race) return {};
 
@@ -217,7 +217,7 @@ export function getRacialBonus(state: WizardState): Partial<Record<AbilityKey, n
   return bonus;
 }
 
-export function getFinalAbilityScores(state: WizardState): Record<AbilityKey, number> {
+export function getFinalAbilityScores(state: CharacterCreatorState): Record<AbilityKey, number> {
   const racialBonus = getRacialBonus(state);
   return ABILITY_KEYS.reduce((scores, key) => {
     const preChampion = Math.min(
@@ -231,7 +231,7 @@ export function getFinalAbilityScores(state: WizardState): Record<AbilityKey, nu
   }, {} as Record<AbilityKey, number>);
 }
 
-export function getAllSkillProficiencies(state: WizardState): string[] {
+export function getAllSkillProficiencies(state: CharacterCreatorState): string[] {
   const race = getSelectedRace(state);
   const subrace = getSelectedSubrace(state);
   const background = getSelectedBackground(state);
@@ -258,7 +258,7 @@ export function getAllSkillProficiencies(state: WizardState): string[] {
   ]);
 }
 
-export function getAllOtherProficiencies(state: WizardState): string[] {
+export function getAllOtherProficiencies(state: CharacterCreatorState): string[] {
   const race = getSelectedRace(state);
   const subrace = getSelectedSubrace(state);
   const cls = getSelectedClass(state);
@@ -286,7 +286,7 @@ export function getAllOtherProficiencies(state: WizardState): string[] {
   ]);
 }
 
-export function getLanguages(state: WizardState): string[] {
+export function getLanguages(state: CharacterCreatorState): string[] {
   const race = getSelectedRace(state);
   const languages = [...(race?.languages ?? [])]
     .filter(language => !/extra language of your choice/i.test(language));
@@ -308,7 +308,7 @@ export function getLanguages(state: WizardState): string[] {
   return unique(languages);
 }
 
-export function getTraitEntries(state: WizardState): string[] {
+export function getTraitEntries(state: CharacterCreatorState): string[] {
   const race = getSelectedRace(state);
   const subrace = getSelectedSubrace(state);
   const background = getSelectedBackground(state);
@@ -617,7 +617,7 @@ export function getTraitEntries(state: WizardState): string[] {
   return entries;
 }
 
-export function getFutureClassFeatures(state: WizardState): ClassFeature[] {
+export function getFutureClassFeatures(state: CharacterCreatorState): ClassFeature[] {
   const cls = getSelectedClass(state);
   if (!cls) return [];
   return getFeaturesUpToLevel(cls.name, 20, {
@@ -641,7 +641,7 @@ export function getFutureClassFeatures(state: WizardState): ClassFeature[] {
     .slice(0, 6);
 }
 
-export function getFeatMilestones(state: WizardState): number[] {
+export function getFeatMilestones(state: CharacterCreatorState): number[] {
   const cls = getSelectedClass(state);
   if (!cls) return [];
 
@@ -661,7 +661,7 @@ export function getFeatMilestones(state: WizardState): number[] {
     .sort((a, b) => a - b);
 }
 
-export function getSpeed(state: WizardState): number {
+export function getSpeed(state: CharacterCreatorState): number {
   const race = getSelectedRace(state);
   const subrace = getSelectedSubrace(state);
   const cls = getSelectedClass(state);
@@ -680,7 +680,7 @@ export function getSpeed(state: WizardState): number {
   return speed;
 }
 
-export function getArmorClass(state: WizardState): number {
+export function getArmorClass(state: CharacterCreatorState): number {
   const cls = getSelectedClass(state);
   const scores = getFinalAbilityScores(state);
   const dex = calcMod(scores.dex);
@@ -691,7 +691,7 @@ export function getArmorClass(state: WizardState): number {
   return 10 + dex;
 }
 
-export function getMaxHp(state: WizardState): number {
+export function getMaxHp(state: CharacterCreatorState): number {
   const cls = getSelectedClass(state);
   const conMod = calcMod(getFinalAbilityScores(state).con);
   const hitDie = cls?.hitDie ?? 8;
@@ -703,7 +703,7 @@ export function getMaxHp(state: WizardState): number {
   return Math.max(1, firstLevel + laterLevels + hillDwarfBonus);
 }
 
-function getSpellSlotsRecord(state: WizardState): Record<number, SpellSlots> {
+function getSpellSlotsRecord(state: CharacterCreatorState): Record<number, SpellSlots> {
   const result = Object.fromEntries(
     Array.from({ length: 9 }, (_, index) => [index + 1, { total: 0, used: 0 }])
   ) as Record<number, SpellSlots>;
@@ -732,7 +732,7 @@ function getSpellSlotsRecord(state: WizardState): Record<number, SpellSlots> {
   return result;
 }
 
-export function getExtraSpellNames(state: WizardState): string[] {
+export function getExtraSpellNames(state: CharacterCreatorState): string[] {
   const names: string[] = [];
 
   if (state.highElfCantrip) names.push(state.highElfCantrip);
@@ -764,7 +764,7 @@ export function getExtraSpellNames(state: WizardState): string[] {
   return unique(names);
 }
 
-export function getSpellcastingSummary(state: WizardState): WizardSpellcastingSummary {
+export function getSpellcastingSummary(state: CharacterCreatorState): CharacterCreatorSpellcastingSummary {
   const cls = getSelectedClass(state);
   const spellcasting = cls
     ? getEffectiveSpellcasting(cls.name, {
@@ -856,7 +856,7 @@ function spellToCharacterSpell(name: string, prepared: boolean): Spell | null {
 }
 
 function resolveEquipmentOption(
-  state: WizardState,
+  state: CharacterCreatorState,
   choiceKey: string,
   option: string
 ): string[] {
@@ -877,7 +877,7 @@ function resolveEquipmentOption(
     .filter(Boolean);
 }
 
-function getResolvedClassEquipment(state: WizardState, className: string): string {
+function getResolvedClassEquipment(state: CharacterCreatorState, className: string): string {
   const classChoices = CLASS_EQUIPMENT_CHOICES[className] ?? [];
   const fixedItems = CLASS_FIXED_EQUIPMENT[className] ?? [];
 
@@ -896,7 +896,7 @@ function getResolvedClassEquipment(state: WizardState, className: string): strin
   return [...resolvedItems, ...fixedItems].join(', ');
 }
 
-export function createCharacterFromWizard(state: WizardState): Character {
+export function createCharacterFromCreator(state: CharacterCreatorState): Character {
   const character = createBlankCharacter();
   const cls = getSelectedClass(state);
   const spellcasting = cls

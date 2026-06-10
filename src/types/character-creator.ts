@@ -2,7 +2,7 @@ import type { AbilityKey } from './character';
 
 export type AbilityMethod = 'pointbuy' | 'standard' | 'roll';
 
-export interface WizardState {
+export interface CharacterCreatorState {
   // Step 1 - Race
   race: string;
   subrace: string;
@@ -97,7 +97,7 @@ export interface WizardState {
   highElfCantrip: string;
 }
 
-export const WIZARD_INITIAL_STATE: WizardState = {
+export const CHARACTER_CREATOR_INITIAL_STATE: CharacterCreatorState = {
   race: '',
   subrace: '',
   raceSkillChoices: [],

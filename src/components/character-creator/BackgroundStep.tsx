@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { WizardState } from '../../types/wizard';
+import type { CharacterCreatorState } from '../../types/character-creator';
 import { BACKGROUND_DATA } from '../../data/srd-backgrounds';
 import { CHARLATAN_FAVORITE_SCHEMES } from '../../data/srd-backgrounds';
 import { CRIMINAL_SPECIALTIES } from '../../data/srd-backgrounds';
@@ -28,8 +28,8 @@ import {
 import PhbGodsReference from './PhbGodsReference';
 
 interface Props {
-  state: WizardState;
-  onChange: (patch: Partial<WizardState>) => void;
+  state: CharacterCreatorState;
+  onChange: (patch: Partial<CharacterCreatorState>) => void;
 }
 
 export default function BackgroundStep({ state, onChange }: Props) {
