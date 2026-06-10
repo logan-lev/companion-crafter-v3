@@ -1,9 +1,21 @@
 import type { WizardState } from '../../types/wizard';
 import type { AbilityKey } from '../../types/character';
 import { ABILITY_NAMES, calcMod, modStr, profBonusFromLevel, SKILLS } from '../../data/srd';
-import { RACE_DATA } from '../../data/srd-races';
 import { CLASS_DATA, getFeaturesUpToLevel } from '../../data/srd-classes';
-import { BACKGROUND_DATA } from '../../data/srd-backgrounds';
+import {
+  BACKGROUND_DATA,
+  NOBLE_RETAINERS_DESCRIPTION,
+  SAILOR_BAD_REPUTATION_DESCRIPTION,
+} from '../../data/srd-backgrounds';
+import {
+  getAllOtherProficiencies,
+  getAllSkillProficiencies,
+  getArmorClass,
+  getFinalAbilityScores,
+  getLanguages,
+  getSpellcastingSummary,
+  getTraitEntries,
+} from '../../utils/character-builder';
 
 interface Props {
   state: WizardState;
@@ -12,31 +24,55 @@ interface Props {
 
 const ABILITY_KEYS: AbilityKey[] = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
 
-function getFinalScores(state: WizardState): Record<AbilityKey, number> {
-  const race = RACE_DATA.find(r => r.name === state.race);
-  const bonus: Partial<Record<AbilityKey, number>> = { ...race?.abilityBonus };
-  if (state.subrace && race?.subraces) {
-    const sub = race.subraces.find(s => s.name === state.subrace);
-    if (sub) ABILITY_KEYS.forEach(k => { bonus[k] = (bonus[k] ?? 0) + (sub.abilityBonus[k] ?? 0); });
-  }
-  if (state.race === 'Half-Elf') {
-    ABILITY_KEYS.forEach(k => { bonus[k] = (bonus[k] ?? 0) + (state.halfElfBonuses[k] ?? 0); });
-  }
-  const result = {} as Record<AbilityKey, number>;
-  ABILITY_KEYS.forEach(k => { result[k] = (state.baseScores[k] ?? 8) + (bonus[k] ?? 0); });
-  return result;
-}
-
 export default function ReviewStep({ state, onFinish }: Props) {
-  const finalScores = getFinalScores(state);
+  const finalScores = getFinalAbilityScores(state);
   const profBonus = profBonusFromLevel(state.level);
   const cls = CLASS_DATA.find(c => c.name === state.className);
   const bg = BACKGROUND_DATA.find(b => b.name === state.background);
-
-  const allSkillProfs = [
-    ...(state.classSkillChoices || []),
-    ...(bg?.skillProfs || []),
-  ];
+  const allSkillProfs = getAllSkillProficiencies(state);
+  const allOtherProfs = getAllOtherProficiencies(state);
+  const languages = getLanguages(state);
+  const traitEntries = getTraitEntries(state);
+  const spellSummary = getSpellcastingSummary(state);
+  const allGrantedSpellNames = new Set(spellSummary.extraSpellNames);
+  const selectedNormalSpells = state.selectedSpells.filter(name => !allGrantedSpellNames.has(name));
+  const selectedNormalCantrips = state.selectedCantrips.filter(name => !allGrantedSpellNames.has(name));
+  const isSpyVariant = state.background === 'Criminal' && state.backgroundSelections['criminal-variant'] === 'Spy Variant';
+  const isGladiatorVariant = state.background === 'Entertainer' && state.backgroundSelections['entertainer-variant'] === 'Gladiator Variant';
+  const isGuildMerchantVariant = state.background === 'Guild Artisan' && state.backgroundSelections['guild-artisan-variant'] === 'Guild Merchant Variant';
+  const isKnightVariant = state.background === 'Noble' && state.backgroundSelections['noble-variant'] === 'Knight Variant';
+  const isPirateVariant = state.background === 'Sailor' && state.backgroundSelections['sailor-variant'] === 'Pirate Variant';
+  const backgroundSummaryTitle = isSpyVariant
+    ? 'Criminal (Spy Variant)'
+    : isGladiatorVariant
+    ? 'Entertainer (Gladiator Variant)'
+    : isGuildMerchantVariant
+    ? 'Guild Artisan (Guild Merchant Variant)'
+    : isKnightVariant
+    ? 'Noble (Knight Variant)'
+    : isPirateVariant
+    ? 'Sailor (Pirate Variant)'
+    : bg?.name ?? '';
+  const backgroundFeatureName = isSpyVariant
+    ? 'Spy Contact'
+    : isGladiatorVariant
+    ? 'By Popular Demand'
+    : isKnightVariant
+    ? 'Retainers'
+    : isPirateVariant
+    ? 'Bad Reputation'
+    : bg?.feature.name ?? '';
+  const backgroundFeatureDescription = isSpyVariant
+    ? 'You have a reliable and trustworthy contact who acts as your liaison to a network of other spies. You know how to get messages to and from your contact, even over great distances.'
+    : isGladiatorVariant
+    ? 'You can find a place to perform in any place that features combat for entertainment, and you can replace the musical instrument in your equipment package with an inexpensive but unusual weapon.'
+    : isGuildMerchantVariant
+    ? "Instead of an artisans' guild, you belong to a guild of traders, caravan masters, or shopkeepers, and your merchant network can open doors throughout the region."
+    : isKnightVariant
+    ? NOBLE_RETAINERS_DESCRIPTION
+    : isPirateVariant
+    ? SAILOR_BAD_REPUTATION_DESCRIPTION
+    : bg?.feature.description ?? '';
 
   const features = cls
     ? getFeaturesUpToLevel(cls.name, state.level, {
@@ -108,8 +144,8 @@ export default function ReviewStep({ state, onFinish }: Props) {
 
         <div className="grid grid-cols-4 gap-2 mt-3">
           <div className="stat-box">
-            <div className="font-bold">{10 + calcMod(finalScores.dex)}</div>
-            <div className="field-label">Base AC</div>
+            <div className="font-bold">{getArmorClass(state)}</div>
+            <div className="field-label">Armor Class</div>
           </div>
           <div className="stat-box">
             <div className="font-bold">+{profBonus}</div>
@@ -148,6 +184,22 @@ export default function ReviewStep({ state, onFinish }: Props) {
           </div>
         </div>
 
+        <div className="section-box">
+          <div className="section-title">Languages & Proficiencies</div>
+          <div className="mb-3">
+            <div className="field-label mb-1">Languages</div>
+            <div className="text-[0.7rem] leading-6 text-[var(--color-text-soft)]">
+              {languages.length ? languages.join(', ') : 'No languages selected.'}
+            </div>
+          </div>
+          <div>
+            <div className="field-label mb-1">Other Proficiencies</div>
+            <div className="text-[0.7rem] leading-6 text-[var(--color-text-soft)]">
+              {allOtherProfs.length ? allOtherProfs.join(', ') : 'No additional proficiencies selected.'}
+            </div>
+          </div>
+        </div>
+
         {/* Features */}
         <div className="section-box max-h-64 overflow-y-auto">
           <div className="section-title">Class Features (Level 1–{state.level})</div>
@@ -164,25 +216,35 @@ export default function ReviewStep({ state, onFinish }: Props) {
         </div>
 
         {/* Spells */}
-        {(state.selectedCantrips.length > 0 || state.selectedSpells.length > 0) && (
+        {(selectedNormalCantrips.length > 0 || selectedNormalSpells.length > 0 || spellSummary.extraSpellNames.length > 0) && (
           <div className="section-box">
             <div className="section-title">Spells</div>
-            {state.selectedCantrips.length > 0 && (
+            {selectedNormalCantrips.length > 0 && (
               <div className="mb-2">
                 <div className="field-label mb-1">Cantrips</div>
                 <div className="flex flex-wrap gap-1">
-                  {state.selectedCantrips.map(s => (
+                  {selectedNormalCantrips.map(s => (
                     <span key={s} className="text-[0.65rem] bg-[var(--color-spell-panel)] border border-[var(--color-spell-border)] px-2 py-0.5 rounded text-[var(--color-spell-strong)]">{s}</span>
                   ))}
                 </div>
               </div>
             )}
-            {state.selectedSpells.length > 0 && (
+            {selectedNormalSpells.length > 0 && (
               <div>
-                <div className="field-label mb-1">Known/Prepared Spells</div>
+                <div className="field-label mb-1">{spellSummary.spellcasting?.prepares ? 'Prepared Class Spells' : 'Known Class Spells'}</div>
                 <div className="flex flex-wrap gap-1">
-                  {state.selectedSpells.map(s => (
+                  {selectedNormalSpells.map(s => (
                     <span key={s} className="text-[0.65rem] bg-[var(--color-spell-panel)] border border-[var(--color-spell-border)] px-2 py-0.5 rounded text-[var(--color-spell-strong)]">{s}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {spellSummary.extraSpellNames.length > 0 && (
+              <div className={selectedNormalCantrips.length > 0 || selectedNormalSpells.length > 0 ? 'mt-2' : ''}>
+                <div className="field-label mb-1">Granted / Bonus Spells</div>
+                <div className="flex flex-wrap gap-1">
+                  {spellSummary.extraSpellNames.map(s => (
+                    <span key={s} className="text-[0.65rem] bg-[var(--color-selected)] border border-[var(--color-border-muted)] px-2 py-0.5 rounded text-[var(--color-text-strong)]">{s}</span>
                   ))}
                 </div>
               </div>
@@ -193,10 +255,10 @@ export default function ReviewStep({ state, onFinish }: Props) {
         {/* Background */}
         {bg && (
           <div className="section-box">
-            <div className="section-title">Background: {bg.name}</div>
+            <div className="section-title">Background: {backgroundSummaryTitle}</div>
             <div className="text-[0.65rem] text-[var(--color-text-soft)] mb-1">{bg.flavorText.slice(0, 120)}...</div>
-            <div className="text-[var(--color-accent)] text-xs font-bold">{bg.feature.name}</div>
-            <div className="text-[var(--color-text-dim)] text-[0.6rem]">{bg.feature.description.slice(0, 100)}...</div>
+            <div className="text-[var(--color-accent)] text-xs font-bold">{backgroundFeatureName}</div>
+            <div className="text-[var(--color-text-dim)] text-[0.6rem]">{backgroundFeatureDescription.slice(0, 100)}...</div>
           </div>
         )}
       </div>
@@ -211,6 +273,19 @@ export default function ReviewStep({ state, onFinish }: Props) {
             {state.bonds && <div><span className="text-[var(--color-accent)] font-bold">Bonds: </span>{state.bonds}</div>}
             {state.flaws && <div><span className="text-[var(--color-accent)] font-bold">Flaws: </span>{state.flaws}</div>}
             {state.backstory && <div className="col-span-2"><span className="text-[var(--color-accent)] font-bold">Backstory: </span>{state.backstory.slice(0, 200)}{state.backstory.length > 200 ? '...' : ''}</div>}
+          </div>
+        </div>
+      )}
+
+      {traitEntries.length > 0 && (
+        <div className="section-box max-h-72 overflow-y-auto">
+          <div className="section-title">Traits & Benefits</div>
+          <div className="flex flex-col gap-2">
+            {traitEntries.map(entry => (
+              <div key={entry} className="border-l-2 border-[var(--color-border-muted)] pl-2 text-[0.7rem] leading-6 text-[var(--color-text-soft)]">
+                {entry}
+              </div>
+            ))}
           </div>
         </div>
       )}

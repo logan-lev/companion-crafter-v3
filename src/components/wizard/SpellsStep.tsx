@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import type { WizardState } from '../../types/wizard';
-import { CLASS_DATA, getCantripsKnown, getSpellsKnown, getSlotsAtLevel, maxSpellLevel } from '../../data/srd-classes';
-import { getSpellsForClass, type SpellData } from '../../data/srd-spells';
-import { RACE_DATA } from '../../data/srd-races';
+import { CLASS_DATA } from '../../data/srd-classes';
+import { getSpellsForClass, SPELL_LIST, type SpellData } from '../../data/srd-spells';
 import { calcMod } from '../../data/srd';
 import { profBonusFromLevel } from '../../data/srd';
+import { getFinalAbilityScores, getSpellcastingSummary } from '../../utils/character-builder';
 
 interface Props {
   state: WizardState;
@@ -17,20 +17,6 @@ const SCHOOL_COLORS: Record<string, string> = {
   Enchantment: 'text-pink-300', Evocation: 'text-orange-300', Illusion: 'text-[var(--color-spell-strong)]',
   Necromancy: 'text-green-300', Transmutation: 'text-red-300',
 };
-
-function getFinalScores(state: WizardState) {
-  const race = RACE_DATA.find(r => r.name === state.race);
-  const bonus: Record<string, number> = { ...race?.abilityBonus };
-  if (state.subrace && race?.subraces) {
-    const sub = race.subraces.find(s => s.name === state.subrace);
-    if (sub) Object.entries(sub.abilityBonus).forEach(([k, v]) => { bonus[k] = (bonus[k] ?? 0) + (v ?? 0); });
-  }
-  const result: Record<string, number> = {};
-  ['str', 'dex', 'con', 'int', 'wis', 'cha'].forEach(k => {
-    result[k] = (state.baseScores[k as keyof typeof state.baseScores] ?? 8) + (bonus[k] ?? 0);
-  });
-  return result;
-}
 
 function SpellCard({ spell, isSelected, onClick }: { spell: SpellData; isSelected: boolean; onClick: () => void }) {
   const [expanded, setExpanded] = useState(false);
@@ -68,7 +54,8 @@ export default function SpellsStep({ state, onChange }: Props) {
   const [search, setSearch] = useState('');
 
   const cls = CLASS_DATA.find(c => c.name === state.className);
-  if (!cls?.spellcasting) {
+  const summary = getSpellcastingSummary(state);
+  if (!summary.spellcasting || !cls) {
     return (
       <div className="section-box flex items-center justify-center h-48 text-[var(--color-text-dim)] italic">
         {state.className || 'Your class'} is not a spellcaster. Skip this step.
@@ -76,28 +63,27 @@ export default function SpellsStep({ state, onChange }: Props) {
     );
   }
 
-  const sc = cls.spellcasting;
-  const finalScores = getFinalScores(state);
+  const sc = summary.spellcasting;
+  const finalScores = getFinalAbilityScores(state);
   const spellAbilityScore = finalScores[sc.ability] ?? 10;
   const profBonus = profBonusFromLevel(state.level);
   const spellMod = calcMod(spellAbilityScore);
   const saveDC = 8 + spellMod + profBonus;
   const spellAttack = spellMod + profBonus;
-
-  const slots = getSlotsAtLevel(sc, state.level);
-  const maxSpLv = maxSpellLevel(slots);
-
-  const cantripsAllowed = getCantripsKnown(sc, state.level);
-  let spellsAllowed = getSpellsKnown(sc, state.level);
-  if (sc.prepares) {
-    const abilityMod = calcMod(finalScores[sc.ability] ?? 10);
-    const base = sc.type === 'half' ? Math.max(1, Math.ceil(state.level / 2)) : state.level;
-    spellsAllowed = Math.max(1, abilityMod + base);
-  }
+  const { slots, maxSpellLevel: maxSpLv, cantripsAllowed, spellsAllowed, reservedSpellChoices, totalSpellAllowance } = summary;
+  const grantedSpellNames = new Set(summary.extraSpellNames);
 
   const classSpells = getSpellsForClass(state.className);
-  const cantrips = classSpells.filter(s => s.level === 0);
-  const spells = classSpells.filter(s => s.level > 0 && s.level <= Math.max(1, maxSpLv));
+  const cantrips = classSpells.filter(s => s.level === 0 && (!grantedSpellNames.has(s.name) || state.selectedCantrips.includes(s.name)));
+  const spells = classSpells.filter(
+    s => s.level > 0 && s.level <= Math.max(1, maxSpLv) && (!grantedSpellNames.has(s.name) || state.selectedSpells.includes(s.name))
+  );
+  const grantedCantrips = summary.extraCantripNames
+    .map(name => SPELL_LIST.find(spell => spell.name === name))
+    .filter((spell): spell is SpellData => Boolean(spell));
+  const grantedLeveledSpells = summary.extraLeveledSpellNames
+    .map(name => SPELL_LIST.find(spell => spell.name === name))
+    .filter((spell): spell is SpellData => Boolean(spell));
 
   const filteredCantrips = cantrips.filter(s =>
     (!filterSchool || s.school === filterSchool) &&
@@ -144,10 +130,47 @@ export default function SpellsStep({ state, onChange }: Props) {
         </div>
         {sc.prepares && (
           <p className="text-[var(--color-text-dim)] text-[0.65rem] mt-2">
-            You can prepare {spellsAllowed} spells ({sc.ability.toUpperCase()} mod + {sc.type === 'half' ? 'half ' : ''}level). After a long rest, you may change your prepared spells.
+            You can prepare {spellsAllowed} class spells ({sc.ability.toUpperCase()} mod + {sc.type === 'half' ? 'half ' : ''}level). After a long rest, you may change your prepared spells.
+          </p>
+        )}
+        {reservedSpellChoices > 0 && (
+          <p className="text-[var(--color-text-dim)] text-[0.65rem] mt-2">
+            {reservedSpellChoices} spell {reservedSpellChoices === 1 ? 'choice is' : 'choices are'} already reserved for Magical Secrets on the class page. Total bard spell capacity: {totalSpellAllowance}.
           </p>
         )}
       </div>
+
+      {(grantedCantrips.length > 0 || grantedLeveledSpells.length > 0) && (
+        <div className="section-box">
+          <div className="section-title">Automatically Added</div>
+          <div className="flex flex-col gap-3">
+            {grantedCantrips.length > 0 && (
+              <div>
+                <div className="field-label mb-1">Granted Cantrips</div>
+                <div className="flex flex-wrap gap-1">
+                  {grantedCantrips.map(spell => (
+                    <span key={spell.name} className="rounded border border-[var(--color-border-muted)] bg-[var(--color-surface-accent)] px-2 py-1 text-[0.7rem] text-[var(--color-text-strong)]">
+                      {spell.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {grantedLeveledSpells.length > 0 && (
+              <div>
+                <div className="field-label mb-1">Auto-Prepared / Bonus Spells</div>
+                <div className="flex flex-wrap gap-1">
+                  {grantedLeveledSpells.map(spell => (
+                    <span key={spell.name} className="rounded border border-[var(--color-spell-border)] bg-[var(--color-spell-panel)] px-2 py-1 text-[0.7rem] text-[var(--color-spell-strong)]">
+                      {spell.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="flex flex-wrap gap-1 items-center">

@@ -1,7 +1,7 @@
 import type { Character, AbilityKey, Spell, SpellSlots } from '../types/character';
 import type { WizardState } from '../types/wizard';
 import { calcMod, profBonusFromLevel } from '../data/srd';
-import { BACKGROUND_DATA } from '../data/srd-backgrounds';
+import { BACKGROUND_DATA, NOBLE_RETAINERS_DESCRIPTION, SAILOR_BAD_REPUTATION_DESCRIPTION } from '../data/srd-backgrounds';
 import {
   BARD_COLLEGES,
   CLERIC_DOMAINS,
@@ -13,8 +13,10 @@ import {
   SORCEROUS_ORIGINS,
   WARLOCK_PATRONS,
   WIZARD_TRADITIONS,
+  getCantripsKnown,
   getEffectiveSpellcasting,
   getFeaturesUpToLevel,
+  getSpellsKnown,
   getSlotsAtLevel,
   getSubclassAutoPreparedSpells,
   type ClassFeature,
@@ -55,6 +57,19 @@ const SKILL_NAMES = new Set([
 
 function unique(values: string[]): string[] {
   return [...new Set(values.filter(Boolean))];
+}
+
+export interface WizardSpellcastingSummary {
+  spellcasting?: ReturnType<typeof getEffectiveSpellcasting>;
+  slots: number[];
+  maxSpellLevel: number;
+  cantripsAllowed: number;
+  spellsAllowed: number;
+  totalSpellAllowance: number;
+  reservedSpellChoices: number;
+  extraSpellNames: string[];
+  extraCantripNames: string[];
+  extraLeveledSpellNames: string[];
 }
 
 export function getSelectedRace(state: WizardState) {
@@ -111,6 +126,7 @@ export function getResolvedBackgroundEquipment(state: WizardState): string {
   const entertainerVariant = state.backgroundSelections['entertainer-variant'];
   const gladiatorWeapon = state.backgroundSelections['entertainer-gladiator-weapon'];
   const guildArtisanVariant = state.backgroundSelections['guild-artisan-variant'];
+  const nobleVariant = state.backgroundSelections['noble-variant'];
 
   if (toolChoice && !(background.name === 'Entertainer' && entertainerVariant === 'Gladiator Variant')) {
     equipment = equipment
@@ -126,12 +142,18 @@ export function getResolvedBackgroundEquipment(state: WizardState): string {
     equipment = equipment.replace(/Artisan's tools/gi, 'Mule and cart');
   }
 
+  if (background.name === 'Noble' && nobleVariant === 'Knight Variant') {
+    equipment = equipment.replace(/scroll of pedigree/gi, 'banner or other token from your noble lord');
+  }
+
   if (equipmentChoice) {
     equipment = equipment
       .replace(/tools of the con of your choice/gi, equipmentChoice)
       .replace(/set of bone dice or deck of cards/gi, equipmentChoice)
       .replace(/prayer book or prayer wheel/gi, equipmentChoice)
-      .replace(/the favor of an admirer/gi, equipmentChoice);
+      .replace(/the favor of an admirer/gi, equipmentChoice)
+      .replace(/lucky charm/gi, equipmentChoice)
+      .replace(/token to remember your parents by/gi, equipmentChoice);
   }
 
   return equipment;
@@ -153,7 +175,7 @@ export function getResolvedBackgroundEquipmentItems(state: WizardState): string[
     .map(item => item.trim())
     .filter(Boolean)
     .filter(item => {
-      if (!equipmentChoice && /tools of the con of your choice|set of bone dice or deck of cards|prayer book or prayer wheel|the favor of an admirer/i.test(item)) {
+      if (!equipmentChoice && /tools of the con of your choice|set of bone dice or deck of cards|prayer book or prayer wheel|the favor of an admirer|lucky charm|token to remember your parents by/i.test(item)) {
         return false;
       }
 
@@ -271,6 +293,9 @@ export function getLanguages(state: WizardState): string[] {
 
   languages.push(...(state.raceLanguageChoices ?? []));
   languages.push(...(state.backgroundLanguageChoices ?? []));
+  if (state.backgroundSelections['guild-merchant-extra-language']) {
+    languages.push(state.backgroundSelections['guild-merchant-extra-language']);
+  }
   languages.push(...(state.clericKnowledgeLanguageChoices ?? []));
   languages.push(...(state.rangerFavoredEnemyLanguages ?? []));
   if (state.className === 'Druid') {
@@ -307,10 +332,19 @@ export function getTraitEntries(state: WizardState): string[] {
       })
     : [];
 
+  const backgroundFeatureEntry =
+    background?.name === 'Noble' && state.backgroundSelections['noble-variant'] === 'Knight Variant'
+      ? `Retainers: ${NOBLE_RETAINERS_DESCRIPTION}`
+      : background?.name === 'Sailor' && state.backgroundSelections['sailor-variant'] === 'Pirate Variant'
+      ? `Bad Reputation: ${SAILOR_BAD_REPUTATION_DESCRIPTION}`
+      : background
+      ? `${background.feature.name}: ${background.feature.description}`
+      : '';
+
   const entries = [
     ...(race?.traits.map(trait => `${trait.name}: ${trait.description}`) ?? []),
     ...(subrace?.traits.map(trait => `${trait.name}: ${trait.description}`) ?? []),
-    ...(background ? [`${background.feature.name}: ${background.feature.description}`] : []),
+    ...(backgroundFeatureEntry ? [backgroundFeatureEntry] : []),
     ...classFeatures.map(feature => `Level ${feature.level} - ${feature.name}: ${feature.description}`),
   ];
 
@@ -342,6 +376,55 @@ export function getTraitEntries(state: WizardState): string[] {
 
   if (state.background === 'Guild Artisan' && state.backgroundSelections['guild-artisan-business']) {
     entries.push(`Guild Business: ${state.backgroundSelections['guild-artisan-business']}.`);
+  }
+
+  if (state.background === 'Hermit' && state.backgroundSelections['hermit-life-of-seclusion']) {
+    entries.push(`Life of Seclusion: ${state.backgroundSelections['hermit-life-of-seclusion']}`);
+  }
+
+  if (state.background === 'Noble' && state.backgroundSelections['noble-variant'] === 'Knight Variant') {
+    entries.push('Noble Variant: Knight.');
+  }
+  if (
+    state.background === 'Noble' &&
+    state.backgroundSelections['noble-variant'] !== 'Knight Variant' &&
+    state.backgroundSelections['noble-title']
+  ) {
+    const title =
+      state.backgroundSelections['noble-title'] === 'Custom noble title'
+        ? state.backgroundSelections['noble-title-custom'] || 'Custom noble title'
+        : state.backgroundSelections['noble-title'];
+    entries.push(`Noble Title: ${title}.`);
+  }
+  if (
+    state.background === 'Noble' &&
+    state.backgroundSelections['noble-variant'] !== 'Knight Variant' &&
+    state.backgroundSelections['noble-family-detail']
+  ) {
+    entries.push(`Family Standing: ${state.backgroundSelections['noble-family-detail']}`);
+  }
+
+  if (state.background === 'Outlander' && state.backgroundSelections['outlander-origin']) {
+    entries.push(`Outlander Origin: ${state.backgroundSelections['outlander-origin']}.`);
+  }
+  if (state.background === 'Sage' && state.backgroundSelections['sage-specialty']) {
+    entries.push(`Sage Specialty: ${state.backgroundSelections['sage-specialty']}.`);
+  }
+  if (state.background === 'Sailor' && state.backgroundSelections['sailor-variant'] === 'Pirate Variant') {
+    entries.push('Sailor Variant: Pirate.');
+  }
+  if (state.background === 'Soldier' && state.backgroundSelections['soldier-specialty']) {
+    entries.push(`Soldier Specialty: ${state.backgroundSelections['soldier-specialty']}.`);
+  }
+  if (state.background === 'Soldier' && state.backgroundSelections['soldier-rank']) {
+    const rank =
+      state.backgroundSelections['soldier-rank'] === 'Custom military rank'
+        ? state.backgroundSelections['soldier-rank-custom'] || 'Custom military rank'
+        : state.backgroundSelections['soldier-rank'];
+    entries.push(`Military Rank: ${rank}.`);
+  }
+  if (state.background === 'Urchin' && state.backgroundSelections['urchin-city-detail']) {
+    entries.push(`City Detail: ${state.backgroundSelections['urchin-city-detail']}`);
   }
 
   if (state.background === 'Guild Artisan' && state.backgroundSelections['guild-artisan-variant'] === 'Guild Merchant Variant') {
@@ -649,7 +732,7 @@ function getSpellSlotsRecord(state: WizardState): Record<number, SpellSlots> {
   return result;
 }
 
-function getExtraSpellNames(state: WizardState): string[] {
+export function getExtraSpellNames(state: WizardState): string[] {
   const names: string[] = [];
 
   if (state.highElfCantrip) names.push(state.highElfCantrip);
@@ -679,6 +762,79 @@ function getExtraSpellNames(state: WizardState): string[] {
   names.push(...(state.className === 'Wizard' ? (state.wizardSignatureSpells ?? []).filter(Boolean) : []));
 
   return unique(names);
+}
+
+export function getSpellcastingSummary(state: WizardState): WizardSpellcastingSummary {
+  const cls = getSelectedClass(state);
+  const spellcasting = cls
+    ? getEffectiveSpellcasting(cls.name, {
+        fighterArchetype: state.fighterArchetype,
+        rogueArchetype: state.rogueArchetype,
+      })
+    : undefined;
+
+  if (!spellcasting) {
+    return {
+      spellcasting: undefined,
+      slots: [],
+      maxSpellLevel: 0,
+      cantripsAllowed: 0,
+      spellsAllowed: 0,
+      totalSpellAllowance: 0,
+      reservedSpellChoices: 0,
+      extraSpellNames: [],
+      extraCantripNames: [],
+      extraLeveledSpellNames: [],
+    };
+  }
+
+  const slots =
+    spellcasting.type === 'pact'
+      ? (() => {
+          const result = Array(9).fill(0);
+          const pactLevel = Math.min(5, Math.ceil(state.level / 2));
+          result[pactLevel - 1] = state.level >= 17 ? 4 : state.level >= 11 ? 3 : state.level >= 2 ? 2 : 1;
+          return result;
+        })()
+      : getSlotsAtLevel(spellcasting, state.level);
+  const maxSpellLevel = slots.reduce((highest, count, index) => (count > 0 ? index + 1 : highest), 0);
+  const extraSpellNames = getExtraSpellNames(state);
+  const extraCantripNames = extraSpellNames.filter(name => SPELL_LIST.find(spell => spell.name === name)?.level === 0);
+  const extraLeveledSpellNames = extraSpellNames.filter(name => SPELL_LIST.find(spell => spell.name === name)?.level);
+  const spellAbilityMod = calcMod(getFinalAbilityScores(state)[spellcasting.ability] ?? 10);
+  const bonusClassCantrips =
+    (state.className === 'Cleric' && state.clericDomain === 'Light Domain' ? 1 : 0) +
+    (state.className === 'Cleric' && state.clericNatureCantrip ? 1 : 0) +
+    (state.className === 'Druid' && state.druidLandCantrip ? 1 : 0) +
+    (state.className === 'Rogue' && state.rogueArchetype === 'Arcane Trickster' && state.level >= 3 ? 1 : 0) +
+    (state.className === 'Warlock' ? state.warlockTomeCantrips.length : 0) +
+    (state.className === 'Wizard' && state.wizardImprovedMinorIllusionCantrip ? 1 : 0);
+  const cantripsAllowed = Math.max(0, getCantripsKnown(spellcasting, state.level) - bonusClassCantrips);
+  const baseSpellAllowance = spellcasting.prepares
+    ? Math.max(1, spellAbilityMod + (spellcasting.type === 'half' ? Math.max(1, Math.ceil(state.level / 2)) : state.level))
+    : getSpellsKnown(spellcasting, state.level);
+  const reservedSpellChoices =
+    state.className === 'Bard'
+      ? getFeaturesUpToLevel('Bard', state.level, { bardCollege: state.bardCollege })
+          .filter(feature => feature.name === 'Magical Secrets').length * 2
+      : 0;
+  const additionalBardSpells =
+    state.className === 'Bard' && state.bardCollege === 'College of Lore' && state.level >= 6 ? 2 : 0;
+  const totalSpellAllowance = state.className === 'Bard' ? baseSpellAllowance + additionalBardSpells : baseSpellAllowance;
+  const spellsAllowed = Math.max(0, baseSpellAllowance - reservedSpellChoices);
+
+  return {
+    spellcasting,
+    slots,
+    maxSpellLevel,
+    cantripsAllowed,
+    spellsAllowed,
+    totalSpellAllowance,
+    reservedSpellChoices,
+    extraSpellNames,
+    extraCantripNames,
+    extraLeveledSpellNames,
+  };
 }
 
 function spellToCharacterSpell(name: string, prepared: boolean): Spell | null {
